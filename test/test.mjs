@@ -4,7 +4,7 @@
 import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { normalizeIndicator, normalizeComponentStatus, normalizeGoogleImpact, worstOf, classifyKind, normalizeFailure, STATUSES, STATUS_LABELS } from '../lib/normalize.mjs';
-import { collectAll, buildOutput, buildProvider } from '../lib/collect.mjs';
+import { collectAll, buildOutput, buildProvider, GROUPS } from '../lib/collect.mjs';
 import { collectStatuspage } from '../adapters/statuspage.mjs';
 import { collectAlibaba } from '../adapters/alibaba.mjs';
 import { collectGoogle } from '../adapters/google.mjs';
@@ -184,7 +184,7 @@ assert.strictEqual(worstOf(['operationnel', 'operationnel', pillStatus('???')]),
 
 // 8. Assemblage v2 : collectAll isole les échecs, buildOutput produit le contrat.
 const decl = [
-  { id: 'a', name: 'A', statusUrl: 'https://a', scope: 'API A', source: { kind: 'sp' }, modelPattern: '^m-' },
+  { id: 'a', name: 'A', group: 'us', statusUrl: 'https://a', scope: 'API A', source: { kind: 'sp' }, modelPattern: '^m-' },
   // b : adaptateur inconnu ; c : sans motif ; d : source injoignable
   { id: 'b', name: 'B', statusUrl: 'https://b', source: { kind: 'boom' } },
   { id: 'c', name: 'C', statusUrl: 'https://c', source: { kind: 'sp' } },
@@ -206,6 +206,8 @@ assert.deepStrictEqual(out.summary.counts, { operationnel: 1, maintenance: 0, de
 assert.strictEqual(out.summary.activeIncidents, 1, 'incident résolu exclu');
 assert.strictEqual(out.summary.activeMaintenances, 0, 'maintenance planifiée non comptée comme active');
 const [pa, pb, , pd] = out.providers;
+assert.strictEqual(pa.group, 'us');
+assert.strictEqual(pb.group, null, 'groupe absent transmis tel quel, jamais inventé');
 assert.strictEqual(pa.components[0].kind, 'model');
 assert.strictEqual(pa.components[1].kind, 'service');
 assert.strictEqual(pa.reason, '1 composant en incident majeur');
@@ -255,8 +257,10 @@ validate(out2);
 // 10. providers.json : cohérence des déclarations.
 const providers = JSON.parse(readFileSync(new URL('../providers.json', import.meta.url), 'utf8'));
 const kinds = new Set(['statuspage', 'alibaba', 'google', 'flashcat', 'browser', 'unavailable']);
+assert.strictEqual(new Set(providers.map((p) => p.id)).size, providers.length, 'ids fournisseurs dupliqués');
 for (const p of providers) {
   assert.ok(p.id && p.name && p.statusUrl && p.source?.kind && p.source?.url, `fournisseur incomplet : ${p.id}`);
+  assert.ok(GROUPS.includes(p.group), `groupe absent ou inconnu : ${p.id} ${p.group}`);
   assert.ok(kinds.has(p.source.kind), `kind inconnu : ${p.id} ${p.source.kind}`);
   if (p.modelPattern) new RegExp(p.modelPattern);
   if (p.source.kind === 'unavailable') assert.ok(p.source.note, `note manquante : ${p.id}`);

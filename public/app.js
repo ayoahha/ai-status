@@ -3,6 +3,13 @@
 // externe exécuté ou interprété comme instructions
 const STALE_MS = 2 * 60 * 60 * 1000; // 4 cadences de collecte ratées
 const SEVERITY_ORDER = ['indisponible', 'incident_majeur', 'degradation', 'maintenance', 'inconnu', 'operationnel'];
+// Groupes d'affichage : ordre et libellés ; un groupe absent du contrat tombe dans « Autres »
+const GROUPS = [
+  { id: 'us', label: 'Grands fournisseurs US' },
+  { id: 'cn', label: 'Fournisseurs chinois' },
+  { id: 'cloud', label: 'Clouds d’inférence et API' },
+  { id: 'other', label: 'Autres' },
+];
 const METHOD_LABELS = {
   statuspage: 'API Statuspage',
   google: 'flux JSON Google Cloud',
@@ -47,6 +54,8 @@ const severity = (status) => {
   const i = SEVERITY_ORDER.indexOf(status);
   return i === -1 ? SEVERITY_ORDER.length : i;
 };
+// État réel = ni opérationnel ni non vérifié : c'est ce qui compte comme alerte
+const isAlert = (status) => status !== 'operationnel' && status !== 'inconnu';
 // Titres de sources en chinois ou en anglais : lang posé pour les lecteurs d'écran
 const langOf = (text) => (/[㐀-鿿]/.test(text) ? 'zh' : 'en');
 
@@ -58,13 +67,6 @@ function icon(status) {
   use.setAttribute('href', `#ic-${status}`);
   svg.appendChild(use);
   return svg;
-}
-
-function badge(status, text) {
-  const b = el('span', `badge s-${status}`);
-  b.appendChild(icon(status));
-  b.appendChild(el('span', null, text ?? label(status)));
-  return b;
 }
 
 function ageLabel(iso) {
@@ -84,6 +86,14 @@ function fmtDate(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+}
+
+// Âge relatif rafraîchi chaque minute par renderFreshness via data-age
+function ageSpan(iso) {
+  const s = el('span', null, ageLabel(iso) ?? '');
+  s.dataset.age = iso;
+  s.title = fmtDate(iso);
+  return s;
 }
 
 function sortedProviders() {
@@ -134,7 +144,7 @@ function countButton(status, text, n) {
   b.addEventListener('click', () => {
     filter = filter === status ? 'all' : status;
     document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.status === filter)));
-    renderGrid();
+    renderSections();
   });
   return b;
 }
@@ -142,9 +152,8 @@ function countButton(status, text, n) {
 function renderFreshness() {
   const at = $('collected-at');
   const age = ageLabel(data.generatedAt);
-  at.textContent = `Mis à jour ${fmtDate(data.generatedAt)}${age ? ` (${age})` : ''} · collecte toutes les 30 min`;
+  at.textContent = `Mis à jour ${fmtDate(data.generatedAt)}${age ? ` (${age})` : ''}`;
   const stale = Date.now() - new Date(data.generatedAt).getTime() > STALE_MS;
-  document.body.classList.toggle('is-stale', stale);
   const banner = $('stale');
   banner.hidden = !stale;
   banner.textContent = stale
@@ -155,13 +164,13 @@ function renderFreshness() {
   });
 }
 
-// Section « En cours » : tout ce qui n'est pas opérationnel, incidents et maintenances actives
+// Section « En cours » : états réels seulement ; les « non vérifiés » ont le bandeau et leur carte
 function renderOngoing() {
   const list = $('ongoing-list');
   list.textContent = '';
   const items = [];
   for (const p of sortedProviders()) {
-    if (p.status === 'operationnel') continue;
+    if (!isAlert(p.status)) continue;
     const li = el('li', `ongoing-item s-${p.status}`);
     li.appendChild(icon(p.status));
     const body = el('div', 'ongoing-body');
@@ -175,12 +184,19 @@ function renderOngoing() {
     if (alerted.length) body.appendChild(el('p', 'ongoing-comps', alerted.map((c) => c.name).join(', ')));
     for (const inc of p.incidents) body.appendChild(incidentLine(inc));
     for (const m of p.maintenances.filter((m) => m.state !== 'scheduled')) body.appendChild(maintenanceLine(m));
-    if (p.collect.state === 'error') body.appendChild(el('p', 'ongoing-err', p.collect.error));
     li.appendChild(body);
     items.push(li);
   }
   $('ongoing').hidden = items.length === 0;
   for (const li of items) list.appendChild(li);
+}
+
+function externalLink(href, text, className) {
+  const a = el('a', className, text);
+  a.href = href;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  return a;
 }
 
 function incidentLine(inc) {
@@ -193,12 +209,8 @@ function incidentLine(inc) {
   if (inc.components?.length) meta.push(inc.components.join(', '));
   p.appendChild(el('span', 'incident-meta', ` · ${meta.join(' · ')}`));
   if (inc.url) {
-    const a = el('a', 'incident-link', 'détail');
-    a.href = inc.url;
-    a.target = '_blank';
-    a.rel = 'noopener';
     p.appendChild(document.createTextNode(' · '));
-    p.appendChild(a);
+    p.appendChild(externalLink(inc.url, 'détail', 'incident-link'));
   }
   return p;
 }
@@ -213,19 +225,15 @@ function maintenanceLine(m) {
   if (m.scheduledUntil) meta.push(`jusqu’à ${fmtDate(m.scheduledUntil)}`);
   p.appendChild(el('span', 'incident-meta', ` · ${meta.join(' · ')}`));
   if (m.url) {
-    const a = el('a', 'incident-link', 'détail');
-    a.href = m.url;
-    a.target = '_blank';
-    a.rel = 'noopener';
     p.appendChild(document.createTextNode(' · '));
-    p.appendChild(a);
+    p.appendChild(externalLink(m.url, 'détail', 'incident-link'));
   }
   return p;
 }
 
 function componentList(title, comps) {
   const frag = document.createDocumentFragment();
-  frag.appendChild(el('h3', 'sub', `${title} (${comps.length})`));
+  frag.appendChild(el('h4', 'sub', `${title} (${comps.length})`));
   const ul = el('ul', 'complist');
   const sorted = [...comps].sort((a, b) => severity(a.status) - severity(b.status) || a.name.localeCompare(b.name, 'fr'));
   for (const c of sorted) {
@@ -241,56 +249,86 @@ function componentList(title, comps) {
   return frag;
 }
 
+// Ligne compacte, sans élément interactif dans <summary> : icône, nom (h3), état,
+// nombre de composants, raison hors opérationnel. L'état est toujours annoncé aux
+// lecteurs d'écran, visible seulement quand il n'est pas « opérationnel »
+function cardSummary(p) {
+  const summary = el('summary', 'card-line');
+  summary.appendChild(icon(p.status));
+  const h = el('h3', 'card-name', p.name);
+  summary.appendChild(h);
+  summary.appendChild(el('span', p.status === 'operationnel' ? 'sr' : 'card-state', label(p.status)));
+  if (p.components.length) {
+    const n = el('span', 'card-count', String(p.components.length));
+    n.appendChild(el('span', 'sr', ` composant${p.components.length > 1 ? 's' : ''} suivi${p.components.length > 1 ? 's' : ''}`));
+    summary.appendChild(n);
+  }
+  if (p.status !== 'operationnel') summary.appendChild(el('p', 'card-reason', p.reason));
+  return summary;
+}
+
+// Contenu déplié : tout ce que la carte fermée ne montre pas, lien officiel compris
+function cardBody(p) {
+  const body = el('div', 'card-body');
+  if (p.collect.state === 'error') body.appendChild(el('p', 'err', p.collect.error));
+  if (p.incidents.length) {
+    body.appendChild(el('h4', 'sub', 'Incidents'));
+    for (const inc of p.incidents) body.appendChild(incidentLine(inc));
+  }
+  if (p.maintenances.length) {
+    body.appendChild(el('h4', 'sub', 'Maintenances'));
+    for (const m of p.maintenances) body.appendChild(maintenanceLine(m));
+  }
+  const models = p.components.filter((c) => c.kind === 'model');
+  const services = p.components.filter((c) => c.kind !== 'model');
+  if (models.length) body.appendChild(componentList('Modèles', models));
+  if (services.length) body.appendChild(componentList(models.length ? 'Services' : 'Composants', services));
+  if (p.scope) body.appendChild(el('p', 'meta', `Périmètre : ${p.scope}`));
+  const meta = el('p', 'meta');
+  meta.appendChild(document.createTextNode(`Lu via ${METHOD_LABELS[p.collect.method] ?? p.collect.method} · `));
+  meta.appendChild(ageSpan(p.collectedAt));
+  meta.appendChild(document.createTextNode(' · '));
+  meta.appendChild(externalLink(p.statusUrl, 'page officielle'));
+  body.appendChild(meta);
+  return body;
+}
+
+// Infobulle ⓘ : périmètre, méthode, fraîcheur, erreur. Visible au survol du conteneur
+// (survolable) et au focus ; Échap la ferme ; clic ou toucher déplie la carte
+function infoBubble(p, details) {
+  const wrap = el('span', 'info-wrap');
+  const btn = el('button', 'info', 'i');
+  btn.type = 'button';
+  btn.setAttribute('aria-label', `Informations sur ${p.name}`);
+  btn.setAttribute('aria-describedby', `tip-${p.id}`);
+  const tip = el('span', 'tip');
+  tip.id = `tip-${p.id}`;
+  tip.setAttribute('role', 'tooltip');
+  if (p.scope) tip.appendChild(el('span', null, `Périmètre : ${p.scope}. `));
+  tip.appendChild(document.createTextNode(`Lu via ${METHOD_LABELS[p.collect.method] ?? p.collect.method}, `));
+  tip.appendChild(ageSpan(p.collectedAt));
+  tip.appendChild(document.createTextNode('.'));
+  if (p.collect.state === 'error') tip.appendChild(el('span', 'tip-err', ` ${p.collect.error}`));
+  btn.addEventListener('click', () => { details.open = !details.open; });
+  btn.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { wrap.classList.add('off'); btn.blur(); }
+  });
+  wrap.addEventListener('mouseleave', () => wrap.classList.remove('off'));
+  btn.addEventListener('blur', () => wrap.classList.remove('off'));
+  wrap.appendChild(btn);
+  wrap.appendChild(tip);
+  return wrap;
+}
+
 function makeCard(p) {
   const card = el('article', `card s-${p.status}`);
   card.id = p.id;
   card.dataset.status = p.status;
-
-  const head = el('div', 'card-head');
-  head.appendChild(el('h2', null, p.name));
-  head.appendChild(badge(p.status));
-  card.appendChild(head);
-  if (p.scope) card.appendChild(el('p', 'scope', p.scope));
-  card.appendChild(el('p', 'reason', p.reason));
-  if (p.collect.state === 'error') card.appendChild(el('p', 'err', p.collect.error));
-
-  const hasDetail = p.components.length || p.incidents.length || p.maintenances.length;
-  if (hasDetail) {
-    const details = el('details');
-    details.open = p.status !== 'operationnel';
-    const alerted = p.components.filter((c) => c.status !== 'operationnel').length;
-    const summaryParts = [];
-    if (p.components.length) summaryParts.push(`${countWord(p.components.length, 'composant')} suivi${p.components.length > 1 ? 's' : ''}${alerted ? `, ${alerted} en alerte` : ''}`);
-    if (p.incidents.length) summaryParts.push(countWord(p.incidents.length, 'incident'));
-    if (p.maintenances.length) summaryParts.push(countWord(p.maintenances.length, 'maintenance'));
-    details.appendChild(el('summary', null, summaryParts.join(' · ')));
-    if (p.incidents.length) {
-      details.appendChild(el('h3', 'sub', 'Incidents'));
-      for (const inc of p.incidents) details.appendChild(incidentLine(inc));
-    }
-    if (p.maintenances.length) {
-      details.appendChild(el('h3', 'sub', 'Maintenances'));
-      for (const m of p.maintenances) details.appendChild(maintenanceLine(m));
-    }
-    const models = p.components.filter((c) => c.kind === 'model');
-    const services = p.components.filter((c) => c.kind !== 'model');
-    if (models.length) details.appendChild(componentList('Modèles', models));
-    if (services.length) details.appendChild(componentList(models.length ? 'Services' : 'Composants', services));
-    card.appendChild(details);
-  }
-
-  const meta = el('p', 'meta');
-  const age = el('span', null, ageLabel(p.collectedAt) ?? '');
-  age.dataset.age = p.collectedAt;
-  age.title = fmtDate(p.collectedAt);
-  meta.appendChild(age);
-  meta.appendChild(document.createTextNode(` · ${METHOD_LABELS[p.collect.method] ?? p.collect.method} · `));
-  const a = el('a', null, 'page officielle');
-  a.href = p.statusUrl;
-  a.target = '_blank';
-  a.rel = 'noopener';
-  meta.appendChild(a);
-  card.appendChild(meta);
+  const details = el('details');
+  details.appendChild(cardSummary(p));
+  details.appendChild(cardBody(p));
+  card.appendChild(details);
+  card.appendChild(infoBubble(p, details));
   return card;
 }
 
@@ -301,37 +339,61 @@ function matches(p, q) {
   return p.incidents.some((i) => i.title.toLowerCase().includes(q));
 }
 
-function renderGrid() {
-  const grid = $('grid');
-  grid.textContent = '';
+function groupMeta(list) {
+  const parts = [countWord(list.length, 'fournisseur')];
+  const alerts = list.filter((p) => isAlert(p.status)).length;
+  const unknown = list.filter((p) => p.status === 'inconnu').length;
+  if (alerts) parts.push(`${alerts} en alerte`);
+  if (unknown) parts.push(`${unknown} non vérifié${unknown > 1 ? 's' : ''}`);
+  return parts.join(' · ');
+}
+
+// Une section par groupe, dans l'ordre de GROUPS ; le tri choisi est conservé dans chaque section
+function renderSections() {
+  const main = $('providers');
+  main.textContent = '';
   const q = query.trim().toLowerCase();
   const visible = sortedProviders().filter((p) => (filter === 'all' || p.status === filter) && matches(p, q));
   $('result-count').textContent = visible.length === data.providers.length
     ? ''
     : `${countWord(visible.length, 'fournisseur')} sur ${data.providers.length}`;
   if (visible.length === 0) {
-    grid.appendChild(el('p', 'noresults', 'Aucun fournisseur ne correspond.'));
+    main.appendChild(el('p', 'noresults', 'Aucun fournisseur ne correspond.'));
     return;
   }
-  for (const p of visible) grid.appendChild(makeCard(p));
+  const known = new Set(GROUPS.map((g) => g.id));
+  for (const g of GROUPS) {
+    const list = visible.filter((p) => (known.has(p.group) ? p.group : 'other') === g.id);
+    if (!list.length) continue;
+    const section = el('section', 'group');
+    section.setAttribute('aria-labelledby', `g-${g.id}`);
+    const h = el('h2', 'group-title', g.label);
+    h.id = `g-${g.id}`;
+    section.appendChild(h);
+    section.appendChild(el('p', 'group-meta', groupMeta(list)));
+    const grid = el('div', 'grid');
+    for (const p of list) grid.appendChild(makeCard(p));
+    section.appendChild(grid);
+    main.appendChild(section);
+  }
 }
 
 function renderAll() {
   labels = data.labels ?? FALLBACK_LABELS;
   renderSummary();
-  renderFreshness();
   renderOngoing();
-  renderGrid();
+  renderSections();
+  renderFreshness();
 }
 
 $('search').addEventListener('input', (e) => {
   query = e.target.value;
-  renderGrid();
+  renderSections();
 });
 $('sort').addEventListener('change', (e) => {
   sortMode = e.target.value;
   renderOngoing();
-  renderGrid();
+  renderSections();
 });
 
 (async () => {

@@ -2,6 +2,7 @@
   {
     "id": "anthropic",
     "name": "Anthropic",
+    "group": "us",
     "statusUrl": "https://status.claude.com",
     "source": {
       "kind": "statuspage",
@@ -12,6 +13,7 @@
   {
     "id": "openai",
     "name": "OpenAI",
+    "group": "us",
     "statusUrl": "https://status.openai.com",
     "source": {
       "kind": "statuspage",
@@ -22,6 +24,7 @@
   {
     "id": "xai",
     "name": "xAI",
+    "group": "us",
     "statusUrl": "https://status.x.ai",
     "source": {
       "kind": "browser",
@@ -32,6 +35,7 @@
   {
     "id": "google",
     "name": "Google Cloud (Vertex AI / Gemini)",
+    "group": "us",
     "statusUrl": "https://status.cloud.google.com",
     "source": {
       "kind": "google",
@@ -46,6 +50,7 @@
   {
     "id": "cursor",
     "name": "Cursor",
+    "group": "us",
     "statusUrl": "https://status.cursor.com",
     "source": {
       "kind": "statuspage",
@@ -56,6 +61,7 @@
   {
     "id": "alibaba",
     "name": "Alibaba Cloud (statut global)",
+    "group": "cn",
     "statusUrl": "https://status.alibabacloud.com",
     "source": {
       "kind": "alibaba",
@@ -66,6 +72,7 @@
   {
     "id": "deepseek",
     "name": "DeepSeek",
+    "group": "cn",
     "statusUrl": "https://status.deepseek.com",
     "source": {
       "kind": "flashcat",
@@ -78,6 +85,7 @@
   {
     "id": "moonshot",
     "name": "Kimi / Moonshot AI",
+    "group": "cn",
     "statusUrl": "https://status.moonshot.cn",
     "source": {
       "kind": "statuspage",
@@ -89,6 +97,7 @@
   {
     "id": "zhipu",
     "name": "GLM / Zhipu AI",
+    "group": "cn",
     "statusUrl": "https://status.zhipuai.cn",
     "source": {
       "kind": "unavailable",
@@ -100,6 +109,7 @@
   {
     "id": "minimax",
     "name": "MiniMax",
+    "group": "cn",
     "statusUrl": "https://status.minimaxi.com",
     "source": {
       "kind": "statuspage",
@@ -110,6 +120,7 @@
   {
     "id": "groq",
     "name": "Groq",
+    "group": "cloud",
     "statusUrl": "https://groqstatus.com",
     "source": {
       "kind": "statuspage",
@@ -121,6 +132,7 @@
   {
     "id": "replicate",
     "name": "Replicate",
+    "group": "cloud",
     "statusUrl": "https://replicatestatus.com",
     "source": {
       "kind": "statuspage",
@@ -131,6 +143,7 @@
   {
     "id": "cohere",
     "name": "Cohere",
+    "group": "cloud",
     "statusUrl": "https://status.cohere.com",
     "source": {
       "kind": "statuspage",
@@ -142,6 +155,7 @@
   {
     "id": "fireworks",
     "name": "Fireworks AI",
+    "group": "cloud",
     "statusUrl": "https://status.fireworks.ai",
     "source": {
       "kind": "statuspage",
