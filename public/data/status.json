@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T17:16:38.290Z",
+  "generatedAt": "2026-09-03T17:19:46.795Z",
   "providers": [
     {
       "id": "anthropic",
@@ -269,7 +269,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-03T17:09:11.108Z",
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -446,7 +446,7 @@
         }
       ],
       "sourcePublishedAt": "2026-07-09T19:25:56Z",
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -462,7 +462,7 @@
       "components": [],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -478,7 +478,7 @@
       "components": [],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -754,7 +754,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-03T17:09:14.391Z",
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -791,7 +791,7 @@
         }
       ],
       "sourcePublishedAt": "2026-07-28T09:27:09.000Z",
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -811,7 +811,7 @@
       ],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1094,7 +1094,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-04T01:09:16.137+08:00",
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1110,7 +1110,7 @@
       "components": [],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "error",
         "error": "timeout sur https://status.zhipuai.cn"
@@ -1381,7 +1381,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-04T01:09:04.455+08:00",
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1544,7 +1544,7 @@
         }
       ],
       "sourcePublishedAt": "2026-01-01T17:30:35Z",
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1700,7 +1700,7 @@
         }
       ],
       "sourcePublishedAt": "2025-06-12T19:31:32Z",
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1875,7 +1875,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-01T15:46:17Z",
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -2036,7 +2036,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-02T23:38:41Z",
-      "collectedAt": "2026-09-03T17:16:38.290Z",
+      "collectedAt": "2026-09-03T17:19:46.795Z",
       "collect": {
         "state": "ok",
         "error": null
