@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>État des fournisseurs IA</title>
+  <meta name="description" content="Statut opérationnel des principaux fournisseurs de modèles IA, collecté par GitHub Actions et publié en statique.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>État des fournisseurs IA</h1>
+    <p class="meta" id="collected-at">Données non chargées.</p>
+  </header>
+
+  <section class="controls" aria-label="Filtres">
+    <div class="filters" role="group" aria-label="Filtrer par statut">
+      <button class="chip is-active" data-status="all" type="button">Tous</button>
+      <button class="chip" data-status="operationnel" type="button">Opérationnel</button>
+      <button class="chip" data-status="degradation" type="button">Dégradation</button>
+      <button class="chip" data-status="incident_majeur" type="button">Incident majeur</button>
+      <button class="chip" data-status="maintenance" type="button">Maintenance</button>
+      <button class="chip" data-status="indisponible" type="button">Indisponible</button>
+      <button class="chip" data-status="inconnu" type="button">Non vérifié</button>
+    </div>
+    <input id="search" type="search" placeholder="Rechercher un fournisseur ou un composant…"
+           aria-label="Recherche par fournisseur ou composant">
+  </section>
+
+  <main id="grid" class="grid" aria-live="polite"></main>
+
+  <footer class="foot">
+    <p>Collecte automatique par GitHub Actions — chaque carte reste liée à sa source officielle.
+    Les données obsolètes (plus de 24 h) sont signalées visuellement.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "ai-status",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Statut opérationnel des fournisseurs de modèles IA — site statique GitHub Pages",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "collect": "node collect.mjs",
+    "test": "node test/test.mjs",
+    "serve": "npx --yes http-server public -p 8080"
+  }
+}

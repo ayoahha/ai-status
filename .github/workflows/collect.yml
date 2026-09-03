@@ -1,0 +1,36 @@
+name: collect
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Collecter les statuts
+        run: node collect.mjs
+      - name: Commeter les données
+        run: |
+          if [ -z "$(git diff --name-only public/data/status.json 2>/dev/null)" ]
+          then
+            echo "Aucun changement, rien à commettre."
+            exit 0
+          fi
+          git config user.name "ai-status-bot"
+          git config user.email "ai-status@users.noreply.github.com"
+          git add public/data/status.json
+          git commit -m "collecte statuts : $(date -u +%Y-%m-%dT%H:%M)Z"
+          git push

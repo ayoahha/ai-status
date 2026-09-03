@@ -1,0 +1,130 @@
+:root {
+  --bg: #0e1116;
+  --card: #171c24;
+  --card-hover: #1d242e;
+  --text: #e8ecf1;
+  --muted: #9aa4b2;
+  --ok: #2ea86b;
+  --warn: #d9a441;
+  --major: #d9534f;
+  --down: #a05ad9;
+  --unknown: #7b8794;
+  --border: #2a3340;
+  --focus: #5aa9e6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.top { max-width: 1100px; margin: 0 auto; padding: 24px 20px 8px; }
+.top h1 { margin: 0 0 4px; font-size: 1.5rem; }
+.meta { margin: 0; color: var(--muted); font-size: .85rem; }
+
+.controls {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+#search {
+  margin-left: auto;
+  min-width: 220px;
+  max-width: 320px;
+  flex: 1;
+}
+
+input, button {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: inherit;
+}
+.chip { cursor: pointer; transition: background .15s; }
+.chip:hover { background: var(--card-hover); }
+.chip.is-active {
+  background: var(--focus);
+  border-color: var(--focus);
+  color: #fff;
+}
+.chip:focus-visible, input:focus-visible, a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.grid {
+  max-width: 1100px;
+  margin: 8px auto 24px;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.card h2 { margin: 0 0 6px; font-size: 1.05rem; }
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: #fff;
+}
+.badge.operationnel { background: var(--ok); }
+.badge.degradation { background: var(--warn); color: #1a1204; }
+.badge.incident_majeur { background: var(--major); }
+.badge.maintenance { background: var(--muted); }
+.badge.indisponible { background: var(--down); }
+.badge.inconnu { background: var(--unknown); }
+
+.card .raw { margin: 8px 0; font-size: .88rem; color: var(--text); }
+.card .comps, .card .incidents { margin: 6px 0; font-size: .82rem; color: var(--muted); }
+.card .comps strong, .card .incidents strong { color: var(--text); }
+.complist { margin: 2px 0 0; padding-left: 18px; font-size: .82rem; color: var(--muted); }
+.complist li { margin: 2px 0; }
+.incident { margin: 2px 0; font-size: .82rem; }
+.incident .state { color: var(--muted); font-size: .75rem; }
+
+.card .meta { font-size: .78rem; color: var(--muted); margin: 8px 0 4px; }
+.card a { color: var(--focus); }
+.card a:hover { text-decoration: underline; }
+
+.stale {
+  display: none;
+  background: #4a3d8f;
+  color: #fff;
+  font-size: .72rem;
+  padding: 1px 8px;
+  border-radius: 999px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.card.is-stale .stale { display: inline-block; }
+
+.foot { max-width: 1100px; margin: 0 auto; padding: 0 20px 32px; }
+.foot p { color: var(--muted); font-size: .8rem; }
+
+.noresults { color: var(--muted); grid-column: 1/-1; text-align: center; padding: 40px 0; }
+
+@media (max-width: 480px) {
+  .grid { grid-template-columns: 1fr; }
+  #search { margin-left: 0; max-width: none; flex-basis: 100%; }
+}
