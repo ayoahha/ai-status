@@ -32,7 +32,7 @@ Le front ne lit que ce fichier ; aucune API propriétaire côté client.
 | Qwen / Alibaba Cloud | https://status.alibabacloud.com | API JSON publique `/api/status/listHistoryEvent` |
 | DeepSeek | https://status.deepseek.com | SPA (données côté client) → « Non vérifié » sans API publique |
 | Kimi / Moonshot | https://status.moonshot.cn | API publique Statuspage v2 |
-| GLM / Zhipu | https://status.zhipuai.cn | Source inatteignable (timeout depuis la CI locale) → « Non vérifié » |
+| GLM / Zhipu | https://status.zhipuai.cn | Domaine .cn inatteignable depuis la machine locale (timeout) ; la CI US peut y accéder → « Non vérifié » en attendant |
 | MiniMax | https://status.minimaxi.com | API publique Statuspage v2 |
 | Groq | https://groqstatus.com (redirige depuis status.groq.com) | API publique Statuspage v2 |
 | Replicate | https://replicatestatus.com (redirige depuis status.replicate.com) | API publique Statuspage v2 |
@@ -101,19 +101,22 @@ sinon le workflow `pages.yml` suffit.
   est préservée.
 - Les CAPTCHA/Cloudflare ne sont jamais contournés ; les pages protégées restent « Non vérifié ».
 
-### Pourquoi xAI, DeepSeek et GLM / Zhipu restent « Non vérifié »
+### xAI, DeepSeek et GLM / Zhipu : adaptateur navigateur
 
-Investigation approfondie (2026-09-03) :
+Les trois sources « Non vérifié » ont été résolues avec un adaptateur navigateur
+(`adapters/browser.mjs`, Playwright + Chromium headless) :
 
-- **xAI** — `status.x.ai` est une page Statuspage classique (shell Atlassian) derrière Cloudflare :
-  HTTP 403 « Attention Required » (défi JS). On ne contourne pas le défi.
-  Aucune variante trouvée (`x.ai/status`, `www.x.ai/status`, `/api/v2/status.json` — tout est 403).
-  Tant que Cloudflare ne bloque plus, l'adaptateur « simple » fonctionnera automatiquement.
-- **DeepSeek** — `status.deepseek.com` est une SPA Flashcat/Instatus : seules la config de page
-  (`initialPageConfig`, page_id 6410630422455) et les chaînes i18n sont dans le HTML ;
-  le statut réel est chargé côté client depuis le backend Flashcat. Toutes les routes
-  `/api/*` répondent 404 JSON « RouteNotFound » : aucune API/flux public documenté.
-- **GLM / Zhipu** — `status.zhipuai.cn` : timeout de connexion (domaine .cn inatteignable
-  depuis cette machine, probablement pareil depuis les runners US). Aucun autre domaine
-  fiable : `status.zhipuai.com` ne résout pas en DNS, et `bigmodel.cn/status` est une
-  simple page catch-all (titre « 智谱丨BigModel 平台 »).
+- **xAI** — le défi Cloudflare « Attention Required » (non interactif) est franchi
+  par le navigateur ; on masque `navigator.webdriver` et on attend que le défi se
+  résolve. Le DOM de la page Statuspage rendue est analysé : pilules d'état par
+  service (`available`/`degraded`/`outage`/`maintenance`) et liste d'incidents.
+- **DeepSeek** — SPA Flashcat : le statut et les composants ne sont lisibles que dans
+  le DOM rendu (bannière « Everything is running smoothly » + liste des services avec
+  disponibilité sur 90 jours).
+- **GLM / Zhipu** — `status.zhipuai.cn` : timeout depuis la machine locale ; depuis la
+  CI (runners US) le domaine .cn est normalement joignable. En attente, le fournisseur
+  reste « Non vérifié » (jamais « Opérationnel » par défaut).
+
+Règle conservée : un défi Cloudflare interactif (CAPTCHA) n'est jamais contourné ;
+seul le défi automatique (JS) est attendu.
+

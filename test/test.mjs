@@ -110,6 +110,15 @@ const r8 = await collectGoogle(provider, async () => noStruct);
 assert.strictEqual(r8.status, 'inconnu');
 assert.ok(/psd-status-icon/.test(r8.collect.error));
 
+// 10. Adaptateur navigateur : mapping des pilules d'état xAI → statut.
+import { mapStatusFromPills } from '../adapters/browser.mjs';
+assert.strictEqual(mapStatusFromPills(['available', 'available']), 'operationnel');
+assert.strictEqual(mapStatusFromPills(['available', 'degraded']), 'degradation');
+assert.strictEqual(mapStatusFromPills(['available', 'maintenance']), 'degradation');
+assert.strictEqual(mapStatusFromPills(['outage']), 'incident_majeur');
+assert.strictEqual(mapStatusFromPills(['major outage']), 'incident_majeur');
+assert.strictEqual(mapStatusFromPills([]), 'inconnu');
+
 // 9. Valide le JSON généré par la collecte.
 const { readFileSync } = await import('node:fs');
 import { fileURLToPath } from 'node:url';

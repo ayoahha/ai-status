@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T16:57:32.245Z",
+  "generatedAt": "2026-09-03T17:14:27.779Z",
   "providers": [
     {
       "id": "anthropic",
@@ -268,8 +268,8 @@
           "createdAt": "2026-07-21T15:35:03.996Z"
         }
       ],
-      "sourcePublishedAt": "2026-09-03T16:23:12.073Z",
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "sourcePublishedAt": "2026-09-03T17:09:11.108Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -446,7 +446,7 @@
         }
       ],
       "sourcePublishedAt": "2026-07-09T19:25:56Z",
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -456,16 +456,16 @@
       "id": "xai",
       "name": "xAI",
       "statusUrl": "https://status.x.ai",
-      "status": "inconnu",
-      "rawStatus": null,
-      "rawIndicator": "http_403",
+      "status": "operationnel",
+      "rawStatus": "services : available, available, available, available, available, available, available, available, available, available, available, available, available",
+      "rawIndicator": "statuspage_dom",
       "components": [],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
-        "state": "error",
-        "error": "HTTP 403 (page protégée, non contournée)"
+        "state": "ok",
+        "error": null
       }
     },
     {
@@ -478,7 +478,7 @@
       "components": [],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -488,9 +488,9 @@
       "id": "cursor",
       "name": "Cursor",
       "statusUrl": "https://status.cursor.com",
-      "status": "incident_majeur",
-      "rawStatus": "Partial System Outage",
-      "rawIndicator": "major",
+      "status": "operationnel",
+      "rawStatus": "All Systems Operational",
+      "rawIndicator": "none",
       "components": [
         "Automations",
         "Review Agents",
@@ -503,19 +503,19 @@
       ],
       "incidents": [
         {
-          "title": "Elevated errors for Anthropic Models",
+          "title": "Investigating service degradation",
           "state": "resolved",
-          "createdAt": "2026-09-03T14:17:07.085Z"
+          "createdAt": "2026-09-03T13:41:00.000Z"
         },
         {
           "title": "Elevated errors for OpenAI Models",
-          "state": "investigating",
+          "state": "resolved",
           "createdAt": "2026-09-03T15:17:05.510Z"
         },
         {
-          "title": "Investigating service degradation",
-          "state": "identified",
-          "createdAt": "2026-09-03T13:41:25.002Z"
+          "title": "Elevated errors for Anthropic Models",
+          "state": "resolved",
+          "createdAt": "2026-09-03T14:17:07.085Z"
         },
         {
           "title": "Investigating service degradation — Automations, Cloud Agents, Review Agents",
@@ -753,8 +753,8 @@
           "createdAt": "2026-07-16T08:32:00.000Z"
         }
       ],
-      "sourcePublishedAt": "2026-09-03T16:31:46.540Z",
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "sourcePublishedAt": "2026-09-03T17:09:14.391Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -791,7 +791,7 @@
         }
       ],
       "sourcePublishedAt": "2026-07-28T09:27:09.000Z",
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -801,16 +801,20 @@
       "id": "deepseek",
       "name": "DeepSeek",
       "statusUrl": "https://status.deepseek.com",
-      "status": "inconnu",
-      "rawStatus": null,
-      "rawIndicator": "spa",
-      "components": [],
+      "status": "operationnel",
+      "rawStatus": "Everything is running smoothly",
+      "rawIndicator": "flashcat_dom",
+      "components": [
+        "DeepSeek V4 Pro API服务(API Service)",
+        "DeepSeek V4 Flash API服务(API Service)",
+        "DeepSeek-V4-Flash-Vision-Exp API服务(API Service)"
+      ],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
-        "state": "error",
-        "error": "réponse HTML (SPA) : données chargées côté client, aucune API/flux public trouvé"
+        "state": "ok",
+        "error": null
       }
     },
     {
@@ -1089,8 +1093,8 @@
           "createdAt": "2026-07-12T11:29:16.309+08:00"
         }
       ],
-      "sourcePublishedAt": "2026-09-03T23:39:19.559+08:00",
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "sourcePublishedAt": "2026-09-04T01:09:16.137+08:00",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1106,10 +1110,10 @@
       "components": [],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "error",
-        "error": "erreur réseau : fetch failed"
+        "error": "timeout sur https://status.zhipuai.cn"
       }
     },
     {
@@ -1376,8 +1380,8 @@
           "createdAt": "2026-08-07T15:34:46.560+08:00"
         }
       ],
-      "sourcePublishedAt": "2026-09-03T23:39:06.836+08:00",
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "sourcePublishedAt": "2026-09-04T01:09:04.455+08:00",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1540,7 +1544,7 @@
         }
       ],
       "sourcePublishedAt": "2026-01-01T17:30:35Z",
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1696,7 +1700,7 @@
         }
       ],
       "sourcePublishedAt": "2025-06-12T19:31:32Z",
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1871,7 +1875,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-01T15:46:17Z",
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -2032,7 +2036,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-02T23:38:41Z",
-      "collectedAt": "2026-09-03T16:57:32.245Z",
+      "collectedAt": "2026-09-03T17:14:27.779Z",
       "collect": {
         "state": "ok",
         "error": null

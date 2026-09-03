@@ -1,16 +1,128 @@
 [
-  { "id": "anthropic", "name": "Anthropic", "statusUrl": "https://status.claude.com", "source": { "kind": "statuspage", "url": "https://status.claude.com" } },
-  { "id": "openai", "name": "OpenAI", "statusUrl": "https://status.openai.com", "source": { "kind": "statuspage", "url": "https://status.openai.com" } },
-  { "id": "xai", "name": "xAI", "statusUrl": "https://status.x.ai", "source": { "kind": "simple", "url": "https://status.x.ai" } },
-  { "id": "google", "name": "Google / Gemini", "statusUrl": "https://status.cloud.google.com", "source": { "kind": "google", "url": "https://status.cloud.google.com" } },
-  { "id": "cursor", "name": "Cursor", "statusUrl": "https://status.cursor.com", "source": { "kind": "statuspage", "url": "https://status.cursor.com" } },
-  { "id": "alibaba", "name": "Qwen / Alibaba Cloud", "statusUrl": "https://status.alibabacloud.com", "source": { "kind": "alibaba", "url": "https://status.alibabacloud.com" } },
-  { "id": "deepseek", "name": "DeepSeek", "statusUrl": "https://status.deepseek.com", "source": { "kind": "simple", "url": "https://status.deepseek.com" } },
-  { "id": "moonshot", "name": "Kimi / Moonshot AI", "statusUrl": "https://status.moonshot.cn", "source": { "kind": "statuspage", "url": "https://status.moonshot.cn" } },
-  { "id": "zhipu", "name": "GLM / Zhipu AI", "statusUrl": "https://status.zhipuai.cn", "source": { "kind": "simple", "url": "https://status.zhipuai.cn" } },
-  { "id": "minimax", "name": "MiniMax", "statusUrl": "https://status.minimaxi.com", "source": { "kind": "statuspage", "url": "https://status.minimaxi.com" } },
-  { "id": "groq", "name": "Groq", "statusUrl": "https://groqstatus.com", "source": { "kind": "statuspage", "url": "https://groqstatus.com" } },
-  { "id": "replicate", "name": "Replicate", "statusUrl": "https://replicatestatus.com", "source": { "kind": "statuspage", "url": "https://replicatestatus.com" } },
-  { "id": "cohere", "name": "Cohere", "statusUrl": "https://status.cohere.com", "source": { "kind": "statuspage", "url": "https://status.cohere.com" } },
-  { "id": "fireworks", "name": "Fireworks AI", "statusUrl": "https://status.fireworks.ai", "source": { "kind": "statuspage", "url": "https://status.fireworks.ai" } }
+  {
+    "id": "anthropic",
+    "name": "Anthropic",
+    "statusUrl": "https://status.claude.com",
+    "source": {
+      "kind": "statuspage",
+      "url": "https://status.claude.com"
+    }
+  },
+  {
+    "id": "openai",
+    "name": "OpenAI",
+    "statusUrl": "https://status.openai.com",
+    "source": {
+      "kind": "statuspage",
+      "url": "https://status.openai.com"
+    }
+  },
+  {
+    "id": "xai",
+    "name": "xAI",
+    "statusUrl": "https://status.x.ai",
+    "source": {
+      "kind": "browser",
+      "url": "https://status.x.ai"
+    }
+  },
+  {
+    "id": "google",
+    "name": "Google / Gemini",
+    "statusUrl": "https://status.cloud.google.com",
+    "source": {
+      "kind": "google",
+      "url": "https://status.cloud.google.com"
+    }
+  },
+  {
+    "id": "cursor",
+    "name": "Cursor",
+    "statusUrl": "https://status.cursor.com",
+    "source": {
+      "kind": "statuspage",
+      "url": "https://status.cursor.com"
+    }
+  },
+  {
+    "id": "alibaba",
+    "name": "Qwen / Alibaba Cloud",
+    "statusUrl": "https://status.alibabacloud.com",
+    "source": {
+      "kind": "alibaba",
+      "url": "https://status.alibabacloud.com"
+    }
+  },
+  {
+    "id": "deepseek",
+    "name": "DeepSeek",
+    "statusUrl": "https://status.deepseek.com",
+    "source": {
+      "kind": "browser",
+      "url": "https://status.deepseek.com"
+    }
+  },
+  {
+    "id": "moonshot",
+    "name": "Kimi / Moonshot AI",
+    "statusUrl": "https://status.moonshot.cn",
+    "source": {
+      "kind": "statuspage",
+      "url": "https://status.moonshot.cn"
+    }
+  },
+  {
+    "id": "zhipu",
+    "name": "GLM / Zhipu AI",
+    "statusUrl": "https://status.zhipuai.cn",
+    "source": {
+      "kind": "browser",
+      "url": "https://status.zhipuai.cn"
+    }
+  },
+  {
+    "id": "minimax",
+    "name": "MiniMax",
+    "statusUrl": "https://status.minimaxi.com",
+    "source": {
+      "kind": "statuspage",
+      "url": "https://status.minimaxi.com"
+    }
+  },
+  {
+    "id": "groq",
+    "name": "Groq",
+    "statusUrl": "https://groqstatus.com",
+    "source": {
+      "kind": "statuspage",
+      "url": "https://groqstatus.com"
+    }
+  },
+  {
+    "id": "replicate",
+    "name": "Replicate",
+    "statusUrl": "https://replicatestatus.com",
+    "source": {
+      "kind": "statuspage",
+      "url": "https://replicatestatus.com"
+    }
+  },
+  {
+    "id": "cohere",
+    "name": "Cohere",
+    "statusUrl": "https://status.cohere.com",
+    "source": {
+      "kind": "statuspage",
+      "url": "https://status.cohere.com"
+    }
+  },
+  {
+    "id": "fireworks",
+    "name": "Fireworks AI",
+    "statusUrl": "https://status.fireworks.ai",
+    "source": {
+      "kind": "statuspage",
+      "url": "https://status.fireworks.ai"
+    }
+  }
 ]

@@ -20,6 +20,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Installer les dépendances
+        run: npm ci
+      - name: Mettre en cache les navigateurs Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-chromium-
+      - name: Installer Chromium (Playwright)
+        run: npx playwright install chromium
       - name: Collecter les statuts
         run: node collect.mjs
       - name: Commeter les données

@@ -11,5 +11,8 @@
     "collect": "node collect.mjs",
     "test": "node test/test.mjs",
     "serve": "npx --yes http-server public -p 8080"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
   }
 }

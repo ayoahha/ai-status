@@ -8,6 +8,7 @@ import { collectStatuspage } from './adapters/statuspage.mjs';
 import { collectAlibaba } from './adapters/alibaba.mjs';
 import { collectGoogle } from './adapters/google.mjs';
 import { collectSimple } from './adapters/simple.mjs';
+import { collectBrowser } from './adapters/browser.mjs';
 import { fetchJson, fetchText } from './lib/http.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -20,6 +21,7 @@ const ADAPTERS = {
   alibaba: (p) => collectAlibaba(p, fetchJson),
   google: (p) => collectGoogle(p, fetchText),
   simple: (p) => collectSimple(p, fetchText),
+  browser: (p) => collectBrowser(p),
 };
 
 const now = new Date().toISOString();
