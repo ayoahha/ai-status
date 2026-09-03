@@ -102,14 +102,14 @@ function makeCard(p) {
 
   if (p.statusUrl) {
     const mp = document.createElement('p');
-    p.className = 'meta';
+    mp.className = 'meta';
     const a = document.createElement('a');
     a.href = p.statusUrl;
     a.target = '_blank';
     a.rel = 'noopener';
     a.textContent = 'Page de statut officielle →';
-    p.appendChild(a);
-    card.appendChild(p);
+    mp.appendChild(a);
+    card.appendChild(mp);
   }
   return card;
 }
@@ -149,16 +149,22 @@ document.getElementById('search').addEventListener('input', (e) => {
 });
 
 (async () => {
+  let data;
   try {
     const res = await fetch('data/status.json', { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    providers = data.providers ?? [];
-    const at = document.getElementById('collected-at');
-    const age = ageLabel(data.generatedAt);
-    at.textContent = `Dernière collecte : ${data.generatedAt ? new Date(data.generatedAt).toLocaleString('fr-FR') : '—'}${age ? ` (${age})` : ''}`;
-    render();
+    data = await res.json();
   } catch (err) {
     document.getElementById('collected-at').textContent = `Impossible de charger les données (${err.message}).`;
+    return;
+  }
+  providers = data.providers ?? [];
+  const at = document.getElementById('collected-at');
+  const age = ageLabel(data.generatedAt);
+  at.textContent = `Dernière collecte : ${data.generatedAt ? new Date(data.generatedAt).toLocaleString('fr-FR') : '—'}${age ? ` (${age})` : ''}`;
+  try {
+    render();
+  } catch (err) {
+    at.textContent = `Erreur d'affichage : ${err.message}`;
   }
 })();
