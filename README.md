@@ -1,38 +1,36 @@
 # ai-status
 
-Statut opérationnel des principaux fournisseurs de modèles IA, affiché de façon
-lisible et honnête sur une page statique déployable sur GitHub Pages.
+Statut opérationnel des principaux fournisseurs de modèles IA, affiché de façon lisible et honnête sur une page statique GitHub Pages.
 
 ## Architecture
 
 ```
 providers.json          liste déclarative des fournisseurs (id, nom, URL de statut, source)
 collect.mjs             collecteur : lance un adaptateur par fournisseur
-adapters/*.mjs         un adaptateur par famille de source (échec isolé)
+adapters/*.mjs          un adaptateur par famille de source (échec isolé)
 lib/normalize.mjs       normalisation vers l'enum du site
 lib/http.mjs            fetch avec timeout + UA navigateur
-public/                 site statique (index.html, style.css, app.js, data/status.json)
-public/data/status.json généré par la collecte, versionné avec le dépôt
-.github/workflows/      collect.yml (périodique + manuel), pages.yml (GitHub Pages)
+public/                 site statique (index.html, style.css, app.js)
+public/data/status.json généré par la collecte, jamais versionné (dans .gitignore)
+test/                   tests sans réseau, fixtures réelles dans test/fixtures/
+.github/workflows/      collect.yml : tests, collecte, publication GitHub Pages
 ```
 
-Flux : GitHub Actions exécute `node collect.mjs` (toutes les 30 min et sur
-`workflow_dispatch`), qui écrit `public/data/status.json` (commit + push si modifié).
-Le front ne lit que ce fichier ; aucune API propriétaire côté client.
+Flux : GitHub Actions exécute `node collect.mjs` toutes les 30 minutes (et sur push `main` ou lancement manuel), vérifie le JSON produit, puis publie `public/` comme artefact GitHub Pages dans le même workflow. Rien n'est commité par la CI : la page et ses données partent ensemble, atomiquement. Le front ne lit que `data/status.json` ; aucune API propriétaire côté client.
 
 ## Fournisseurs et méthode de collecte
 
 | Fournisseur | Source officielle | Méthode |
 |---|---|---|
-| Anthropic | https://status.claude.com | API publique Statuspage v2 (`/api/v2/status.json`) |
+| Anthropic | https://status.claude.com | API publique Statuspage v2 |
 | OpenAI | https://status.openai.com | API publique Statuspage v2 |
-| xAI | https://status.x.ai | Page bloquée par Cloudflare (HTTP 403) → affiché « Non vérifié », sans contourner |
-| Google / Gemini | https://status.cloud.google.com | Scraping HTML isolé (icônes `psd-status-icon` par produit) |
+| xAI | https://status.x.ai | Navigateur headless (Playwright + Chromium) : la page répond 403 à tout client non navigateur ; le défi Cloudflare automatique est attendu et `navigator.webdriver` est masqué. Un CAPTCHA interactif n'est jamais contourné |
+| Google / Gemini | https://status.cloud.google.com | Scraping HTML (icônes `psd-status-icon`) ; périmètre = tout Google Cloud, à restreindre |
 | Cursor | https://status.cursor.com | API publique Statuspage v2 |
-| Qwen / Alibaba Cloud | https://status.alibabacloud.com | API JSON publique `/api/status/listHistoryEvent` |
-| DeepSeek | https://status.deepseek.com | SPA (données côté client) → « Non vérifié » sans API publique |
+| Qwen / Alibaba Cloud | https://status.alibabacloud.com | API JSON publique `/api/status/listHistoryEvent` (statut cloud global, pas Qwen en particulier) |
+| DeepSeek | https://status.deepseek.com | Navigateur headless : SPA Flashcat, bannière et liste des services lues dans le DOM rendu |
 | Kimi / Moonshot | https://status.moonshot.cn | API publique Statuspage v2 |
-| GLM / Zhipu | https://status.zhipuai.cn | Domaine .cn inatteignable depuis la machine locale (timeout) ; la CI US peut y accéder → « Non vérifié » en attendant |
+| GLM / Zhipu | https://status.zhipuai.cn | Aucune requête : le domaine résout mais ne répond ni en 80 ni en 443 depuis l'extérieur de la Chine, y compris depuis les runners GitHub. Affiché « Non vérifié » avec cette explication |
 | MiniMax | https://status.minimaxi.com | API publique Statuspage v2 |
 | Groq | https://groqstatus.com (redirige depuis status.groq.com) | API publique Statuspage v2 |
 | Replicate | https://replicatestatus.com (redirige depuis status.replicate.com) | API publique Statuspage v2 |
@@ -41,16 +39,12 @@ Le front ne lit que ce fichier ; aucune API propriétaire côté client.
 
 ### Évalués mais non intégrés (pas de source publique stable trouvée)
 
-- **AWS Bedrock** — la page statut régionale est une SPA sans flux RSS/API publics documentés.
-- **Microsoft Azure AI** — https://status.azure.com : SPA custom, flux RSS inexistants.
-- **Mistral, Perplexity, Together AI, Hugging Face** — pages hébergées par Instatus :
-  données chargées côté client, aucune API/flux public documenté.
-- **Baidu ERNIE, Tencent Hunyuan, ByteDance / Doubao** — pas de page de statut
-  publique fiable trouvée depuis cette machine.
+- **AWS Bedrock** : la page statut régionale est une SPA sans flux RSS/API publics documentés.
+- **Microsoft Azure AI** (https://status.azure.com) : SPA custom, flux RSS inexistants.
+- **Mistral, Perplexity, Together AI, Hugging Face** : pages hébergées par Instatus, données chargées côté client, aucune API/flux public documenté.
+- **Baidu ERNIE, Tencent Hunyuan, ByteDance / Doubao** : pas de page de statut publique fiable trouvée.
 
-Règle : un fournisseur n'est intégré que s'il existe une source publique, stable et
-attribuable. Sinon il est signalé « Non vérifié » avec la date de dernière tentative
-et le lien de la source connue — jamais « Opérationnel ».
+Règle : un fournisseur n'est intégré que s'il existe une source publique, stable et attribuable. Sinon il est signalé « Non vérifié » avec la raison et le lien de la source connue, jamais « Opérationnel ».
 
 ## Schéma de `public/data/status.json`
 
@@ -64,7 +58,7 @@ et le lien de la source connue — jamais « Opérationnel ».
     "status": "operationnel",           // operationnel | degradation | incident_majeur | maintenance | indisponible | inconnu
     "rawStatus": "All Systems Operational",   // texte original, si la source le fournit
     "rawIndicator": "none",                    // indicateur brut de la source
-    "components": ["API"],           // seuls les composants explicitement fournis par la source
+    "components": ["API"],           // composants dont l'état source n'est pas « operational »
     "incidents": [{ "title": "…", "state": "resolved", "createdAt": "…" }],
     "sourcePublishedAt": "2026-09-03T15:39:13Z", // horodatage source si disponible
     "collectedAt": "2026-09-03T15:40:00Z",
@@ -76,47 +70,25 @@ et le lien de la source connue — jamais « Opérationnel ».
 ## Lancer localement
 
 ```sh
-node collect.mjs                  # génère public/data/status.json
-node test/test.mjs                # tests légers (normalisation, adaptateurs en échec, validité JSON)
-npx --yes http-server public -p 8080   # puis http://localhost:8080
+npm ci && npx playwright install chromium   # une fois (Chromium sert à xAI et DeepSeek)
+node test/test.mjs                          # tests sans réseau
+node collect.mjs                            # génère public/data/status.json
+npm run serve                               # puis http://localhost:8080
 ```
 
-## Workflows
+## Workflow `.github/workflows/collect.yml`
 
-- `.github/workflows/collect.yml` : collecte toutes les 30 min (`cron: '*/30 * * * *'`)
-  et exécutable manuellement (bouton *Run workflow*). Commite et pousse le JSON modifié.
-- `.github/workflows/pages.yml` : déploie le contenu de `public/` sur GitHub Pages
-  (actions officielles `upload-pages-artifact` + `deploy-pages`).
+- `test` : `npm test` sur chaque push `main`, lancement manuel, cron et pull request.
+- `collect` (hors pull request) : collecte, vérifie que le JSON est non vide et bien formé, téléverse `public/` comme artefact Pages. Sans JSON valide, le job est rouge et Pages conserve la publication précédente.
+- `deploy` : publie l'artefact, uniquement sur `main`.
 
-À activer dans Settings → Pages : « Build and deployment → Source: Deploy from branch,
-branche `main`, dossier `/public` si on préfère le déploiement sans workflow ;
-sinon le workflow `pages.yml` suffit.
+Réglage requis dans Settings → Pages : « Build and deployment → Source : GitHub Actions ». Le mode « Deploy from branch » servirait un site sans données, puisque `status.json` n'est pas versionné.
+
+Permissions : `contents: read` pour les tests et la collecte (aucun jeton n'est conservé dans le checkout pendant que Chromium charge des pages tierces), `pages: write` et `id-token: write` pour le seul job de déploiement. Les actions sont épinglées par SHA.
 
 ## Limites
 
-- Les sources externes sont non fiables : contenu non exécuté, pas de secret ni jeton
-  stockés ; tout texte affiché est inséré via `textContent` (pas d'innerHTML).
-- Un échec de collecte produit toujours le statut `inconnu` (« Non vérifié »), jamais
-  `operationnel` — la distinction « aucun incident déclaré » et « information inconnue »
-  est préservée.
-- Les CAPTCHA/Cloudflare ne sont jamais contournés ; les pages protégées restent « Non vérifié ».
-
-### xAI, DeepSeek et GLM / Zhipu : adaptateur navigateur
-
-Les trois sources « Non vérifié » ont été résolues avec un adaptateur navigateur
-(`adapters/browser.mjs`, Playwright + Chromium headless) :
-
-- **xAI** — le défi Cloudflare « Attention Required » (non interactif) est franchi
-  par le navigateur ; on masque `navigator.webdriver` et on attend que le défi se
-  résolve. Le DOM de la page Statuspage rendue est analysé : pilules d'état par
-  service (`available`/`degraded`/`outage`/`maintenance`) et liste d'incidents.
-- **DeepSeek** — SPA Flashcat : le statut et les composants ne sont lisibles que dans
-  le DOM rendu (bannière « Everything is running smoothly » + liste des services avec
-  disponibilité sur 90 jours).
-- **GLM / Zhipu** — `status.zhipuai.cn` : timeout depuis la machine locale ; depuis la
-  CI (runners US) le domaine .cn est normalement joignable. En attente, le fournisseur
-  reste « Non vérifié » (jamais « Opérationnel » par défaut).
-
-Règle conservée : un défi Cloudflare interactif (CAPTCHA) n'est jamais contourné ;
-seul le défi automatique (JS) est attendu.
-
+- Les sources externes sont non fiables : contenu jamais exécuté, aucun secret ni jeton stocké ; tout texte affiché est inséré via `textContent`, pas `innerHTML`.
+- Un échec de collecte produit toujours le statut `inconnu` (« Non vérifié »), jamais `operationnel` : la distinction « aucun incident déclaré » et « information inconnue » est préservée.
+- Un CAPTCHA ou défi Cloudflare interactif n'est jamais contourné ; seul le défi automatique (JavaScript) est attendu, pour xAI.
+- Les listes « composants impactés » reflètent l'état par composant publié par la source ; un fournisseur dont la source ne publie pas cet état affiche une liste vide.

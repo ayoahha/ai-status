@@ -6,29 +6,54 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+  pull_request:
 
-permissions:
-  contents: write
+# Aucun droit par défaut : chaque job déclare le minimum
+permissions: {}
 
-# Une seule collecte à la fois (les runs s'annulent au lieu de se percuter en push).
+# Une collecte à la fois par ref ; on met en file plutôt que d'annuler, pour ne jamais
+# interrompre un déploiement Pages en cours
 concurrency:
-  group: collect
-  cancel-in-progress: true
+  group: collect-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  collect:
+  test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm test
+
+  collect:
+    # Les PR ne collectent ni ne déploient : tests seulement
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      # persist-credentials: false : pas de jeton dans .git/config pendant que Chromium
+      # charge des pages tierces
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
       - name: Installer les dépendances
         run: npm ci
       - name: Mettre en cache les navigateurs Playwright
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ hashFiles('package-lock.json') }}
@@ -38,18 +63,27 @@ jobs:
         run: npx playwright install chromium
       - name: Collecter les statuts
         run: node collect.mjs
-      - name: Commeter les données
+      - name: Vérifier le JSON produit
+        # Sans JSON valide, le job est rouge et Pages conserve l'artefact précédent
         run: |
-          if [ -z "$(git diff --name-only public/data/status.json 2>/dev/null)" ]
-          then
-            echo "Aucun changement, rien à commettre."
-            exit 0
-          fi
-          git config user.name "ai-status-bot"
-          git config user.email "ai-status@users.noreply.github.com"
-          git add public/data/status.json
-          git commit -m "collecte statuts : $(date -u +%Y-%m-%dT%H:%M)Z"
-          # Devant un push refusé (un autre run a poussé avant) : on rébase en gardant
-          # les données de cette collecte (les nôtres), puis on repousse.
-          git pull --rebase -X theirs
-          git push
+          test -s public/data/status.json
+          jq -e '(.generatedAt | type == "string") and (.providers | length > 0)' public/data/status.json
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+        with:
+          path: public
+
+  deploy:
+    # Seule main publie : un workflow_dispatch sur une autre branche s'arrête à la collecte
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: collect
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5

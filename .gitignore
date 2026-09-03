@@ -1,3 +1,5 @@
 node_modules/
 .DS_Store
 *.log
+# Généré par node collect.mjs, publié comme artefact Pages (jamais versionné)
+public/data/status.json

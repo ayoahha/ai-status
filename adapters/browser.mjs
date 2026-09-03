@@ -1,7 +1,8 @@
 // Adaptateur navigateur (Playwright + Chromium) : charge la page de statut « comme un
 // navigateur », laisse le défi Cloudflare se résoudre seul (les CAPTCHA interactifs ne
 // sont jamais contournés), puis analyse le DOM rendu.
-// Utilisé par : xAI (Cloudflare), DeepSeek (SPA Flashcat), GLM/Zhipu (domaine .cn).
+// Utilisé par : xAI (Cloudflare), DeepSeek (SPA Flashcat). Un fournisseur sans parseur
+// dédié reste « Non vérifié » : pas de repli par mots-clés sur le texte de la page
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
 // Pilule d'état (xAI) → statut normalisé.
@@ -48,7 +49,14 @@ export async function collectBrowser(provider) {
       await page.waitForFunction(() => !/Attention Required/i.test(document.title), { timeout: 45000 }).catch(() => {});
     }
     await page.waitForTimeout(provider.renderWaitMs ?? 2500);
-    const parsed = await (PARSE[provider.id] ?? parseGeneric)(page, provider);
+    const parse = PARSE[provider.id];
+    if (!parse) {
+      return {
+        status: 'inconnu',
+        collect: { state: 'error', error: `aucun parseur navigateur pour ${provider.id}` },
+      };
+    }
+    const parsed = await parse(page, provider);
     return {
       ...parsed,
       collect: { state: parsed.error ? 'error' : 'ok', error: parsed.error ?? null },
@@ -123,25 +131,6 @@ async function parseDeepseek(page) {
     rawStatus: banner || null,
     rawIndicator: 'flashcat_dom',
     components,
-    incidents: [],
-    sourcePublishedAt: null,
-  };
-}
-
-// Repli générique (Zhipu) : on lit le texte du body et on cherche un mot-clé d'état.
-async function parseGeneric(page) {
-  const text = await page.$eval('body', (b) => b.innerText);
-  let status;
-  if (/运行正常|all systems (are )?operational|tous les systèmes/i.test(text)) status = 'operationnel';
-  else if (/outage|中断|panne majeure/i.test(text)) status = 'incident_majeur';
-  else if (/degraded|降级|dégradé/i.test(text)) status = 'degradation';
-  else if (/maintenance|维护/i.test(text)) status = 'maintenance';
-  else status = 'inconnu';
-  return {
-    status,
-    rawStatus: status !== 'inconnu' ? text.slice(0, 160) : null,
-    rawIndicator: 'texte_corps',
-    components: [],
     incidents: [],
     sourcePublishedAt: null,
   };

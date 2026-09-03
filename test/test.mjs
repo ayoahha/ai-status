@@ -1,10 +1,15 @@
 // Tests légers sans framework : node test/test.mjs
+// Aucun accès réseau, aucune lecture de fichier généré : tout passe par des fixtures
 import assert from 'node:assert';
-import { normalizeIndicator, normalizeGoogleClass, normalizeFailure, STATUS_LABELS } from '../lib/normalize.mjs';
+import { readFileSync } from 'node:fs';
+import { normalizeIndicator, normalizeGoogleClass, normalizeFailure } from '../lib/normalize.mjs';
 import { collectStatuspage } from '../adapters/statuspage.mjs';
 import { collectAlibaba } from '../adapters/alibaba.mjs';
 import { collectSimple } from '../adapters/simple.mjs';
 import { collectGoogle } from '../adapters/google.mjs';
+import { mapStatusFromPills } from '../adapters/browser.mjs';
+
+const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8'));
 
 const provider = {
   id: 'test', name: 'Test', statusUrl: 'https://ex.com',
@@ -16,6 +21,7 @@ assert.strictEqual(normalizeIndicator('none'), 'operationnel');
 assert.strictEqual(normalizeIndicator('minor'), 'degradation');
 assert.strictEqual(normalizeIndicator('major'), 'incident_majeur');
 assert.strictEqual(normalizeIndicator('critical'), 'indisponible');
+assert.strictEqual(normalizeIndicator('maintenance'), 'maintenance');
 assert.strictEqual(normalizeIndicator('inexistant'), 'inconnu');
 
 // 2. Échec de collecte → jamais "operationnel".
@@ -44,22 +50,37 @@ const r2 = await collectStatuspage(provider, async () => ({
 assert.strictEqual(r2.status, 'inconnu');
 assert.ok(/HTTP 500/.test(r2.collect.error));
 
-// 4c. Succès : indicateur minor → degradation.
-const okGet = async (url) => ({
+// 4c. Succès sur fixture réelle : 6 composants "operational" → aucun impacté.
+const statuspageGet = (statusBody, componentsBody) => async (url) => ({
   ok: true, status: 200,
   json: async () => {
-    if (url.includes('/status.json')) {
-      return { page: { updated_at: '2026-01-01T00:00:00Z' }, status: { indicator: 'minor', description: 'Partial degradation' } };
-    }
+    if (url.includes('/status.json')) return statusBody;
     if (url.includes('/incidents.json')) return { incidents: [] };
-    return { components: [{ name: 'API', status: 'minor' }] };
+    return componentsBody;
   },
 });
-const r3 = await collectStatuspage(provider, okGet);
-assert.strictEqual(r3.status, 'degradation');
-assert.strictEqual(r3.rawStatus, 'Partial degradation');
-assert.deepStrictEqual(r3.components, ['API']);
+const allOperational = fixture('statuspage-components-anthropic.json');
+assert.ok(allOperational.components.every((c) => c.status === 'operational'), 'fixture attendue 100 % operational');
+const r3 = await collectStatuspage(provider, statuspageGet(
+  { page: { updated_at: '2026-01-01T00:00:00Z' }, status: { indicator: 'none', description: 'All Systems Operational' } },
+  allOperational,
+));
+assert.strictEqual(r3.status, 'operationnel');
+assert.deepStrictEqual(r3.components, []);
 assert.strictEqual(r3.collect.state, 'ok');
+
+// 4d. Un composant dégradé, un groupe dégradé (agrégat) → seul le composant est listé.
+const r3b = await collectStatuspage(provider, statuspageGet(
+  { status: { indicator: 'minor', description: 'Partial degradation' } },
+  { components: [
+    { name: 'API', status: 'degraded_performance' },
+    { name: 'Modèles', status: 'degraded_performance', group: true },
+    { name: 'Console', status: 'operational' },
+  ] },
+));
+assert.strictEqual(r3b.status, 'degradation');
+assert.strictEqual(r3b.rawStatus, 'Partial degradation');
+assert.deepStrictEqual(r3b.components, ['API']);
 
 // 5. Adaptateur simple : réponse SPA → inconnu, jamais operationnel.
 const spaResponse = {
@@ -110,8 +131,7 @@ const r8 = await collectGoogle(provider, async () => noStruct);
 assert.strictEqual(r8.status, 'inconnu');
 assert.ok(/psd-status-icon/.test(r8.collect.error));
 
-// 10. Adaptateur navigateur : mapping des pilules d'état xAI → statut.
-import { mapStatusFromPills } from '../adapters/browser.mjs';
+// 9. Adaptateur navigateur : mapping des pilules d'état xAI → statut.
 assert.strictEqual(mapStatusFromPills(['available', 'available']), 'operationnel');
 assert.strictEqual(mapStatusFromPills(['available', 'degraded']), 'degradation');
 assert.strictEqual(mapStatusFromPills(['available', 'maintenance']), 'degradation');
@@ -119,16 +139,11 @@ assert.strictEqual(mapStatusFromPills(['outage']), 'incident_majeur');
 assert.strictEqual(mapStatusFromPills(['major outage']), 'incident_majeur');
 assert.strictEqual(mapStatusFromPills([]), 'inconnu');
 
-// 9. Valide le JSON généré par la collecte.
-const { readFileSync } = await import('node:fs');
-import { fileURLToPath } from 'node:url';
-const json = JSON.parse(readFileSync(fileURLToPath(new URL('../public/data/status.json', import.meta.url))), 'utf8');
-assert.ok(Array.isArray(json.providers));
-for (const p of json.providers) {
-  assert.ok(Object.keys(STATUS_LABELS).includes(p.status), `statut inconnu : ${p.status}`);
-  assert.ok(Array.isArray(p.components));
-  assert.ok(Array.isArray(p.incidents));
-  assert.strictEqual(typeof p.collectedAt, 'string');
-  assert.ok(p.collect.state === 'ok' || p.collect.state === 'error');
+// 10. providers.json : chaque source injoignable porte une note affichable.
+const providers = JSON.parse(readFileSync(new URL('../providers.json', import.meta.url), 'utf8'));
+for (const p of providers) {
+  assert.ok(p.id && p.name && p.statusUrl && p.source?.kind && p.source?.url, `fournisseur incomplet : ${p.id}`);
+  if (p.source.kind === 'unavailable') assert.ok(p.source.note, `note manquante : ${p.id}`);
 }
-console.log(`OK — ${json.providers.length} fournisseurs validés`);
+
+console.log(`OK — ${providers.length} fournisseurs déclarés, tests verts`);
