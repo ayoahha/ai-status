@@ -7,9 +7,9 @@ import path from 'node:path';
 import { collectStatuspage } from './adapters/statuspage.mjs';
 import { collectAlibaba } from './adapters/alibaba.mjs';
 import { collectGoogle } from './adapters/google.mjs';
-import { collectSimple } from './adapters/simple.mjs';
+import { collectFlashcat } from './adapters/flashcat.mjs';
 import { collectBrowser } from './adapters/browser.mjs';
-import { fetchJson, fetchText } from './lib/http.mjs';
+import { fetchJson } from './lib/http.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const providers = JSON.parse(
@@ -19,8 +19,8 @@ const providers = JSON.parse(
 const ADAPTERS = {
   statuspage: (p) => collectStatuspage(p, fetchJson),
   alibaba: (p) => collectAlibaba(p, fetchJson),
-  google: (p) => collectGoogle(p, fetchText),
-  simple: (p) => collectSimple(p, fetchText),
+  google: (p) => collectGoogle(p, fetchJson),
+  flashcat: (p) => collectFlashcat(p, fetchJson),
   browser: (p) => collectBrowser(p),
   // Source connue mais injoignable (ex. Zhipu) : aucune requête, jamais « opérationnel »
   unavailable: async (p) => ({
@@ -47,7 +47,7 @@ const settled = await Promise.allSettled(
         rawIndicator: r.rawIndicator ?? null,
         components: r.components ?? [],
         incidents: r.incidents ?? [],
-        sourcePublishedAt: r.sourcePublishedAt ?? null,
+        maintenances: r.maintenances ?? [],
         collectedAt: new Date().toISOString(),
         collect: r.collect,
       }))
@@ -58,7 +58,7 @@ const out = {
   generatedAt: now,
   providers: providers.map((p, i) => {
     const r = settled[i];
-    const base = { id: p.id, name: p.name, statusUrl: p.statusUrl };
+    const base = { id: p.id, name: p.name, scope: p.scope ?? null, statusUrl: p.statusUrl };
     if (r.status === 'fulfilled') return { ...base, ...r.value };
     return {
       ...base,
@@ -67,7 +67,7 @@ const out = {
       rawIndicator: null,
       components: [],
       incidents: [],
-      sourcePublishedAt: null,
+      maintenances: [],
       collectedAt: new Date().toISOString(),
       collect: { state: 'error', error: String(r.reason?.message ?? r.reason) },
     };

@@ -22,13 +22,13 @@ Flux : GitHub Actions exécute `node collect.mjs` toutes les 30 minutes (et sur 
 
 | Fournisseur | Source officielle | Méthode |
 |---|---|---|
-| Anthropic | https://status.claude.com | API publique Statuspage v2 |
+| Anthropic | https://status.claude.com | API publique Statuspage v2 (`/api/v2/summary.json` : indicateur, composants, incidents non résolus, maintenances) |
 | OpenAI | https://status.openai.com | API publique Statuspage v2 |
-| xAI | https://status.x.ai | Navigateur headless (Playwright + Chromium) : la page répond 403 à tout client non navigateur ; le défi Cloudflare automatique est attendu et `navigator.webdriver` est masqué. Un CAPTCHA interactif n'est jamais contourné |
-| Google / Gemini | https://status.cloud.google.com | Scraping HTML (icônes `psd-status-icon`) ; périmètre = tout Google Cloud, à restreindre |
+| xAI | https://status.x.ai | Navigateur headless (Playwright + Chromium) : la page répond 403 à tout client non navigateur, y compris `/api/v2/*`, `/feed` et `/rss` ; le défi Cloudflare automatique est attendu et `navigator.webdriver` est masqué. Un CAPTCHA interactif n'est jamais contourné. Une pilule d'état inconnue rend le fournisseur « Non vérifié » |
+| Google Cloud (Vertex AI / Gemini) | https://status.cloud.google.com | Flux JSON officiels `products.json` + `incidents.json`, restreints aux produits dont le titre commence par « Vertex » ou « Gemini », toutes régions. « Opérationnel » signifie « aucun incident déclaré sur ce périmètre » |
 | Cursor | https://status.cursor.com | API publique Statuspage v2 |
-| Qwen / Alibaba Cloud | https://status.alibabacloud.com | API JSON publique `/api/status/listHistoryEvent` (statut cloud global, pas Qwen en particulier) |
-| DeepSeek | https://status.deepseek.com | Navigateur headless : SPA Flashcat, bannière et liste des services lues dans le DOM rendu |
+| Alibaba Cloud (statut global) | https://status.alibabacloud.com | API JSON publique `/api/status/listHistoryEvent` : statut cloud global, pas Qwen ni Model Studio en particulier ; seuls les événements en cours sont exposés |
+| DeepSeek | https://status.deepseek.com | API JSON de la page Flashcat (`/api/status-page/<pageId>/summary/active`) : composants et changements actifs, sans navigateur. Un payload sans composants n'est jamais traité comme sain |
 | Kimi / Moonshot | https://status.moonshot.cn | API publique Statuspage v2 |
 | GLM / Zhipu | https://status.zhipuai.cn | Aucune requête : le domaine résout mais ne répond ni en 80 ni en 443 depuis l'extérieur de la Chine, y compris depuis les runners GitHub. Affiché « Non vérifié » avec cette explication |
 | MiniMax | https://status.minimaxi.com | API publique Statuspage v2 |
