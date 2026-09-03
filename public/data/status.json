@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T16:53:49.271Z",
+  "generatedAt": "2026-09-03T16:57:32.245Z",
   "providers": [
     {
       "id": "anthropic",
@@ -269,7 +269,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-03T16:23:12.073Z",
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -279,9 +279,9 @@
       "id": "openai",
       "name": "OpenAI",
       "statusUrl": "https://status.openai.com",
-      "status": "degradation",
-      "rawStatus": "Partial System Degradation",
-      "rawIndicator": "minor",
+      "status": "operationnel",
+      "rawStatus": "All Systems Operational",
+      "rawIndicator": "none",
       "components": [
         "Images",
         "Responses",
@@ -321,7 +321,7 @@
       "incidents": [
         {
           "title": "Elevated errors across ChatGPT and Codex",
-          "state": "monitoring",
+          "state": "resolved",
           "createdAt": "2026-09-03T14:58:23Z"
         },
         {
@@ -445,8 +445,8 @@
           "createdAt": "2026-07-31T09:04:13Z"
         }
       ],
-      "sourcePublishedAt": "2026-09-03T15:17:00Z",
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "sourcePublishedAt": "2026-07-09T19:25:56Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -462,7 +462,7 @@
       "components": [],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "error",
         "error": "HTTP 403 (page protégée, non contournée)"
@@ -478,7 +478,7 @@
       "components": [],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -754,7 +754,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-03T16:31:46.540Z",
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -791,7 +791,7 @@
         }
       ],
       "sourcePublishedAt": "2026-07-28T09:27:09.000Z",
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -807,7 +807,7 @@
       "components": [],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "error",
         "error": "réponse HTML (SPA) : données chargées côté client, aucune API/flux public trouvé"
@@ -1090,7 +1090,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-03T23:39:19.559+08:00",
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1106,7 +1106,7 @@
       "components": [],
       "incidents": [],
       "sourcePublishedAt": null,
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "error",
         "error": "erreur réseau : fetch failed"
@@ -1377,7 +1377,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-03T23:39:06.836+08:00",
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1540,7 +1540,7 @@
         }
       ],
       "sourcePublishedAt": "2026-01-01T17:30:35Z",
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1696,7 +1696,7 @@
         }
       ],
       "sourcePublishedAt": "2025-06-12T19:31:32Z",
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -1871,7 +1871,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-01T15:46:17Z",
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
@@ -2032,7 +2032,7 @@
         }
       ],
       "sourcePublishedAt": "2026-09-02T23:38:41Z",
-      "collectedAt": "2026-09-03T16:53:49.271Z",
+      "collectedAt": "2026-09-03T16:57:32.245Z",
       "collect": {
         "state": "ok",
         "error": null
