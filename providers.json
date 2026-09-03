@@ -76,8 +76,9 @@
     "name": "GLM / Zhipu AI",
     "statusUrl": "https://status.zhipuai.cn",
     "source": {
-      "kind": "browser",
-      "url": "https://status.zhipuai.cn"
+      "kind": "unavailable",
+      "url": "https://status.zhipuai.cn",
+      "note": "Page de statut inaccessible depuis l'extérieur de la Chine (connexion filtrée, vérifié depuis la CI). Aucune requête n'est tentée."
     }
   },
   {

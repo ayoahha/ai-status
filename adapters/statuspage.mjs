@@ -40,13 +40,15 @@ export async function collectStatuspage(provider, get) {
       // Les incidents sont optionnels ; le statut principal reste fiable.
     }
 
-    // Composants impactés : seuls ceux dont l'indicateur n'est pas "none".
+    // Composants impactés : l'API renvoie operational | degraded_performance |
+    // partial_outage | major_outage | under_maintenance ; les groupes agrègent
+    // leurs enfants et sont ignorés pour ne pas compter deux fois
     try {
       const cres = await get(`${base}/api/v2/components.json?per_page=100`);
       if (cres.ok) {
         const cdata = await cres.json();
         result.components = (cdata.components ?? [])
-          .filter((c) => c.status && c.status !== 'none')
+          .filter((c) => c.status && c.status !== 'operational' && !c.group)
           .map((c) => c.name);
       }
     } catch {

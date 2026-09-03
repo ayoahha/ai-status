@@ -22,42 +22,56 @@ const ADAPTERS = {
   google: (p) => collectGoogle(p, fetchText),
   simple: (p) => collectSimple(p, fetchText),
   browser: (p) => collectBrowser(p),
+  // Source connue mais injoignable (ex. Zhipu) : aucune requête, jamais « opérationnel »
+  unavailable: async (p) => ({
+    status: 'inconnu',
+    collect: { state: 'error', error: p.source.note ?? 'source indisponible' },
+  }),
 };
 
 const now = new Date().toISOString();
 
-const providersOut = await Promise.allSettled(
-  providers.map((p) => {
-    const run = ADAPTERS[p.source.kind];
-    if (!run) throw new Error(`adaptateur inconnu : ${p.source.kind}`);
-    return run(p).then((r) => ({
-      id: p.id,
-      name: p.name,
-      statusUrl: p.statusUrl,
-      status: r.status,
-      rawStatus: r.rawStatus ?? null,
-      rawIndicator: r.rawIndicator ?? null,
-      components: r.components ?? [],
-      incidents: r.incidents ?? [],
-      sourcePublishedAt: r.sourcePublishedAt ?? null,
-      collectedAt: now,
-      collect: r.collect,
-    }));
-  })
+// Promise.resolve().then(...) : un adaptateur inconnu devient un rejet capturé par
+// allSettled au lieu d'un throw synchrone qui tuerait toute la collecte
+const settled = await Promise.allSettled(
+  providers.map((p) =>
+    Promise.resolve()
+      .then(() => {
+        const run = ADAPTERS[p.source.kind];
+        if (!run) throw new Error(`adaptateur inconnu : ${p.source.kind}`);
+        return run(p);
+      })
+      .then((r) => ({
+        status: r.status,
+        rawStatus: r.rawStatus ?? null,
+        rawIndicator: r.rawIndicator ?? null,
+        components: r.components ?? [],
+        incidents: r.incidents ?? [],
+        sourcePublishedAt: r.sourcePublishedAt ?? null,
+        collectedAt: new Date().toISOString(),
+        collect: r.collect,
+      }))
+  )
 );
 
 const out = {
   generatedAt: now,
-  providers: providersOut.map((r) =>
-    r.status === 'fulfilled'
-      ? r.value
-      : {
-          id: '?',
-          name: 'Erreur de collecte',
-          status: 'inconnu',
-          collect: { state: 'error', error: String(r.reason) },
-        }
-  ),
+  providers: providers.map((p, i) => {
+    const r = settled[i];
+    const base = { id: p.id, name: p.name, statusUrl: p.statusUrl };
+    if (r.status === 'fulfilled') return { ...base, ...r.value };
+    return {
+      ...base,
+      status: 'inconnu',
+      rawStatus: null,
+      rawIndicator: null,
+      components: [],
+      incidents: [],
+      sourcePublishedAt: null,
+      collectedAt: new Date().toISOString(),
+      collect: { state: 'error', error: String(r.reason?.message ?? r.reason) },
+    };
+  }),
 };
 
 const outPath = path.join(root, 'public', 'data', 'status.json');
