@@ -1,0 +1,104 @@
+{
+  "products": [
+    {
+      "id": "yVW8aiPWipjd3j67XzDL",
+      "title": "Vertex AI Batch Prediction"
+    },
+    {
+      "id": "qnhcw8D1c8iMEwP8TzkA",
+      "title": "Vertex AI Feature Store"
+    },
+    {
+      "id": "baQeYW2fsPA2vvLCqN93",
+      "title": "Vertex AI Training"
+    },
+    {
+      "id": "sWNXmWFmBKpXg2xeTNkH",
+      "title": "Vertex AI ML Metadata"
+    },
+    {
+      "id": "sdXM79fz1FS6ekNpu37K",
+      "title": "Vertex AI Online Prediction"
+    },
+    {
+      "id": "jgyDXnasZm6pwoCR1uif",
+      "title": "Vertex AI Pipelines"
+    },
+    {
+      "id": "9TtWTtvEUYnPidW2z4aM",
+      "title": "Vertex AI TensorBoard"
+    },
+    {
+      "id": "GewfNoG6JvJ1kjnL9jb8",
+      "title": "Vertex AI Workbench User Managed Notebooks"
+    },
+    {
+      "id": "vNncXxtSVvqyhvSkQ6PJ",
+      "title": "Vertex AI Search"
+    },
+    {
+      "id": "deUeOEPYanfJ9w8cpyBJ",
+      "title": "Gemini Code Assist"
+    },
+    {
+      "id": "cxUh24jPxEXgyRlaVhuk",
+      "title": "Gemini Enterprise"
+    },
+    {
+      "id": "Z0FZJAMvEB4j3NbCJs6B",
+      "title": "Vertex Gemini API"
+    },
+    {
+      "id": "zeBmbgdSyHGTvPAiXwVS",
+      "title": "Vertex Imagen API"
+    },
+    {
+      "id": "t8Vzas4iWLRcCyNYcvpN",
+      "title": "Vertex AI Model Monitoring"
+    },
+    {
+      "id": "U213XEHGhALownYuxpFM",
+      "title": "Vertex AI Model Registry"
+    },
+    {
+      "id": "p5rCvyraXdeC6HFE8XJJ",
+      "title": "Vertex Veo API"
+    },
+    {
+      "id": "s0huLpuA7LiYVMlVc8lv",
+      "title": "Vertex AI Agent Engine"
+    },
+    {
+      "id": "1UYAL6urhdrrr6emD8ce",
+      "title": "Vertex AI AutoML Image"
+    },
+    {
+      "id": "5CfpoAfoMxWT4zGzX4yW",
+      "title": "Vertex AI AutoML Tabular"
+    },
+    {
+      "id": "h5DuWxu8KdW1qipvwBta",
+      "title": "Vertex AI AutoML Text"
+    },
+    {
+      "id": "gWWqvMgwnZ1a5VQ2kjUw",
+      "title": "Vertex AI AutoML Video"
+    },
+    {
+      "id": "T3mQNvrm8YJVLM11N4bq",
+      "title": "Vertex AI Data Labeling"
+    },
+    {
+      "id": "FJ8YR1L7CvooMVxbTSD4",
+      "title": "Vertex AI Explainable AI"
+    },
+    {
+      "id": "2iFHW5WNBkTWjX5k3jnZ",
+      "title": "Vertex AI Matching Engine"
+    },
+    {
+      "id": "SNSm5dv1cRELFSGhuvpc",
+      "title": "Vertex AI Vizier"
+    }
+  ]
+}

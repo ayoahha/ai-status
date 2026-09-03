@@ -5,12 +5,12 @@
   "type": "module",
   "description": "Statut opérationnel des fournisseurs de modèles IA — site statique GitHub Pages",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "scripts": {
     "collect": "node collect.mjs",
     "test": "node test/test.mjs",
-    "serve": "npx --yes http-server public -p 8080"
+    "serve": "python3 -m http.server 8080 -d public"
   },
   "devDependencies": {
     "playwright": "1.62.1"

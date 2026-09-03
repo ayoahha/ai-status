@@ -24,16 +24,22 @@
     "source": {
       "kind": "browser",
       "url": "https://status.x.ai"
-    }
+    },
+    "scope": "Services xAI listés sur status.x.ai (API, Grok, apps)"
   },
   {
     "id": "google",
-    "name": "Google / Gemini",
+    "name": "Google Cloud (Vertex AI / Gemini)",
     "statusUrl": "https://status.cloud.google.com",
     "source": {
       "kind": "google",
-      "url": "https://status.cloud.google.com"
-    }
+      "url": "https://status.cloud.google.com",
+      "productPrefixes": [
+        "Vertex",
+        "Gemini"
+      ]
+    },
+    "scope": "Produits Vertex AI et Gemini de Google Cloud, toutes régions"
   },
   {
     "id": "cursor",
@@ -42,24 +48,27 @@
     "source": {
       "kind": "statuspage",
       "url": "https://status.cursor.com"
-    }
+    },
+    "scope": "Client Cursor et ses modèles hébergés"
   },
   {
     "id": "alibaba",
-    "name": "Qwen / Alibaba Cloud",
+    "name": "Alibaba Cloud (statut global)",
     "statusUrl": "https://status.alibabacloud.com",
     "source": {
       "kind": "alibaba",
       "url": "https://status.alibabacloud.com"
-    }
+    },
+    "scope": "Statut global du cloud Alibaba, pas Qwen ni Model Studio en particulier"
   },
   {
     "id": "deepseek",
     "name": "DeepSeek",
     "statusUrl": "https://status.deepseek.com",
     "source": {
-      "kind": "browser",
-      "url": "https://status.deepseek.com"
+      "kind": "flashcat",
+      "url": "https://status.deepseek.com",
+      "pageId": "6410630422455"
     }
   },
   {

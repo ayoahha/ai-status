@@ -1,0 +1,30 @@
+[
+  {
+    "id": "41E5S3mkTGDfkZuJZH5k",
+    "service_name": "Multiple Products",
+    "begin": "2026-02-27T12:37:00+00:00",
+    "end": "2026-02-27T14:35:00+00:00",
+    "severity": "low",
+    "status_impact": "SERVICE_INFORMATION",
+    "uri": "incidents/41E5S3mkTGDfkZuJZH5k",
+    "external_desc": "Vertex AI Gemini API customers experienced increased error rates when accessing the global endpoint.",
+    "affected_products": [
+      {
+        "id": "eUntUKqUrHdbBLNcVVXq",
+        "title": "Agent Assist"
+      },
+      {
+        "id": "BnCicQdHSdxaCv8Ya6Vm",
+        "title": "Dialogflow CX"
+      },
+      {
+        "id": "Z0FZJAMvEB4j3NbCJs6B",
+        "title": "Vertex Gemini API"
+      },
+      {
+        "id": "bGThzF7oEGP5jcuDdMuk",
+        "title": "Google Cloud Support"
+      }
+    ]
+  }
+]
