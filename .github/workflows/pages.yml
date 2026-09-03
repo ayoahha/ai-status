@@ -18,8 +18,8 @@ jobs:
       url: ${{ steps.deployment.page }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: public
       - id: deployment
-        uses: actions/deploy-pages@v3
+        uses: actions/deploy-pages@v5
