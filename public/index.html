@@ -3,35 +3,56 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
   <title>État des fournisseurs IA</title>
   <meta name="description" content="Statut opérationnel des principaux fournisseurs de modèles IA, collecté par GitHub Actions et publié en statique.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%232ea86b'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 12' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <a class="skip" href="#grid">Aller à la liste des fournisseurs</a>
+
+  <!-- Icônes d'état : une forme distincte par état, la couleur n'est jamais seule -->
+  <svg hidden aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="ic-operationnel" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="currentColor"/><path d="M6 10.5l2.7 2.7L14 7.5" fill="none" stroke="var(--bg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="ic-degradation" viewBox="0 0 20 20"><path d="M10 2.5l8 14H2z" fill="currentColor"/><path d="M10 8v4.2M10 14.6v.4" stroke="var(--bg)" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="ic-incident_majeur" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="currentColor"/><path d="M7 7l6 6M13 7l-6 6" stroke="var(--bg)" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="ic-indisponible" viewBox="0 0 20 20"><path d="M6.5 2h7l4.5 4.5v7L13.5 18h-7L2 13.5v-7z" fill="currentColor"/><path d="M6.5 10h7" stroke="var(--bg)" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="ic-maintenance" viewBox="0 0 20 20"><rect x="2.5" y="2.5" width="15" height="15" rx="3" fill="currentColor"/><path d="M6 12.5l3-3 2 2 3-3" fill="none" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="ic-inconnu" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2"/><path d="M8 8a2 2 0 1 1 3 1.7c-.7.4-1 .8-1 1.6M10 14.2v.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  </svg>
+
   <header class="top">
-    <h1>État des fournisseurs IA</h1>
-    <p class="meta" id="collected-at">Données non chargées.</p>
+    <div class="summary">
+      <h1 id="overall" class="overall">Chargement…</h1>
+      <p class="meta" id="collected-at"></p>
+    </div>
+    <div class="counts" id="counts" role="group" aria-label="Filtrer par état"></div>
   </header>
 
-  <section class="controls" aria-label="Filtres">
-    <div class="filters" role="group" aria-label="Filtrer par statut">
-      <button class="chip is-active" data-status="all" type="button">Tous</button>
-      <button class="chip" data-status="operationnel" type="button">Opérationnel</button>
-      <button class="chip" data-status="degradation" type="button">Dégradation</button>
-      <button class="chip" data-status="incident_majeur" type="button">Incident majeur</button>
-      <button class="chip" data-status="maintenance" type="button">Maintenance</button>
-      <button class="chip" data-status="indisponible" type="button">Indisponible</button>
-      <button class="chip" data-status="inconnu" type="button">Non vérifié</button>
-    </div>
-    <input id="search" type="search" placeholder="Rechercher un fournisseur ou un composant…"
-           aria-label="Recherche par fournisseur ou composant">
+  <p class="stale" id="stale" role="status" hidden></p>
+
+  <section class="ongoing" id="ongoing" aria-labelledby="ongoing-title" hidden>
+    <h2 id="ongoing-title">En cours</h2>
+    <ul id="ongoing-list" class="ongoing-list"></ul>
   </section>
 
-  <main id="grid" class="grid" aria-live="polite"></main>
+  <section class="controls" aria-label="Recherche et tri">
+    <input id="search" type="search" placeholder="Fournisseur, modèle ou service…" aria-label="Rechercher un fournisseur, un modèle ou un service">
+    <label class="sort">Tri
+      <select id="sort">
+        <option value="severity">par gravité</option>
+        <option value="name">par nom</option>
+      </select>
+    </label>
+    <p class="meta" id="result-count" aria-live="polite"></p>
+  </section>
+
+  <main id="grid" class="grid"></main>
 
   <footer class="foot">
-    <p>Collecte automatique par GitHub Actions — chaque carte reste liée à sa source officielle.
-    Les données obsolètes (plus de 24 h) sont signalées visuellement.</p>
+    <p>Collecte automatique toutes les 30 minutes par GitHub Actions, publiée avec la page dans le même déploiement. Chaque carte lie sa source officielle et indique la méthode de lecture. « Non vérifié » signifie que la source n'a pas pu être lue : ce n'est jamais un « opérationnel » par défaut.</p>
+    <p><a href="https://github.com/ayoahha/ai-status">Code source et méthode par fournisseur</a></p>
   </footer>
 
   <script src="app.js"></script>

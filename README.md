@@ -50,22 +50,33 @@ Règle : un fournisseur n'est intégré que s'il existe une source publique, sta
 
 ```jsonc
 {
+  "schemaVersion": 2,
   "generatedAt": "2026-09-03T15:40:00Z",
+  "labels": { "operationnel": "Opérationnel", "…": "…" },   // libellés FR, source unique pour la page
+  "summary": {
+    "worst": "degradation",            // pire état réel ; « inconnu » n'y entre pas, il a son compteur
+    "counts": { "operationnel": 12, "degradation": 1, "inconnu": 1, "…": 0 },
+    "activeIncidents": 1,
+    "activeMaintenances": 0
+  },
   "providers": [{
     "id": "anthropic",
     "name": "Anthropic",
+    "scope": "Claude API, claude.ai, Claude Code",   // ce que la carte mesure réellement
     "statusUrl": "https://status.claude.com",
-    "status": "operationnel",           // operationnel | degradation | incident_majeur | maintenance | indisponible | inconnu
-    "rawStatus": "All Systems Operational",   // texte original, si la source le fournit
-    "rawIndicator": "none",                    // indicateur brut de la source
-    "components": ["API"],           // composants dont l'état source n'est pas « operational »
-    "incidents": [{ "title": "…", "state": "resolved", "createdAt": "…" }],
-    "sourcePublishedAt": "2026-09-03T15:39:13Z", // horodatage source si disponible
-    "collectedAt": "2026-09-03T15:40:00Z",
-    "collect": { "state": "ok", "error": null }  // "ok" ou "error" + message court, sans secret
+    "status": "degradation",           // operationnel | degradation | incident_majeur | maintenance | indisponible | inconnu
+    "reason": "1 composant en dégradation",          // phrase générée, jamais du texte brut de la source
+    "sourceText": "Partial System Outage",           // texte original si la source le fournit
+    "collectedAt": "2026-09-03T15:40:01Z",
+    "collect": { "state": "ok", "method": "statuspage", "error": null },   // error : message court, sans secret
+    "components": [{ "name": "Claude API", "kind": "service", "status": "degradation" }],   // kind ∈ model | service, affichage seulement
+    "incidents": [{ "title": "…", "status": "investigating", "impact": "minor", "startedAt": "…", "updatedAt": "…", "url": "…", "components": ["Claude API"] }],   // actifs seulement
+    "maintenances": [{ "title": "…", "state": "scheduled", "scheduledFor": "…", "scheduledUntil": "…", "url": "…" }]
   }]
 }
 ```
+
+Règles : un `collect.state = error` force `status = inconnu` ; un composant à l'état illisible interdit `operationnel` au fournisseur sans écraser un état dégradé réel (`worstOf` dans `lib/normalize.mjs`) ; `kind = model` vient du motif `modelPattern` déclaré par fournisseur dans `providers.json`, sinon `service`.
 
 ## Lancer localement
 

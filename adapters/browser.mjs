@@ -100,7 +100,7 @@ async function parseXai(page) {
     status: services.length ? worstOf(services.map((s) => s.status)) : 'inconnu',
     rawStatus: services.length ? `${services.length} services : ${summarize(services)}` : null,
     rawIndicator: 'statuspage_dom',
-    components: services.filter((s) => s.status !== 'operationnel').map((s) => s.name),
+    components: services.map((s) => ({ name: s.name, status: s.status })),
     incidents,
   };
   if (!rows.length) out.error = 'aucun service trouvé dans le DOM (page non rendue ou défi non résolu)';

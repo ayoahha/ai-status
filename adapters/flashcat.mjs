@@ -23,7 +23,8 @@ export async function collectFlashcat(provider, get) {
       status: changes.length === 0 ? 'operationnel' : 'degradation',
       rawStatus: changes.length === 0 ? `Aucun changement actif (${components.length} services)` : titles.join(' ; '),
       rawIndicator: changes.length === 0 ? 'no_active_change' : 'active_change',
-      components: [],
+      // Sans schéma connu des changements, l'état par service reste illisible en incident
+      components: components.map((c) => ({ name: c.name, status: changes.length === 0 ? 'operationnel' : 'inconnu' })),
       incidents: titles.map((t) => ({ title: t, state: 'en cours', createdAt: null })),
       collect: { state: 'ok', error: null },
     };

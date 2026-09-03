@@ -44,6 +44,8 @@ export async function collectGoogle(provider, get) {
       .filter((i) => i.products.length > 0 && i.impact);
 
     const impacted = [...new Set(ongoing.flatMap((i) => i.products))];
+    // État d'un produit = pire impact des incidents ouverts qui le citent
+    const productStatus = (title) => worstOf(ongoing.filter((i) => i.products.includes(title)).map((i) => i.impact));
     return {
       status: worstOf(ongoing.map((i) => i.impact)),
       rawStatus:
@@ -51,7 +53,7 @@ export async function collectGoogle(provider, get) {
           ? `Aucun incident déclaré (périmètre ${prefixes.join(' / ')}, ${scoped.length} produits)`
           : `${ongoing.length} incident(s) en cours : ${impacted.join(', ')}`,
       rawIndicator: ongoing.length === 0 ? 'no_incident' : 'incident',
-      components: impacted,
+      components: scoped.map((title) => ({ name: title, status: productStatus(title) })),
       incidents: ongoing.map((i) => ({
         title: i.title,
         state: 'en cours',

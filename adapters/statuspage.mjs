@@ -46,7 +46,7 @@ export async function collectStatuspage(provider, get) {
       status,
       rawStatus: data.status?.description ?? null,
       rawIndicator: indicator,
-      components: impacted.map((c) => c.name),
+      components,
       incidents: (data.incidents ?? []).map((i) => ({
         title: i.name,
         state: i.status, // investigating | identified | monitoring
