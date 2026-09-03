@@ -5,16 +5,23 @@ Statut opérationnel des principaux fournisseurs de modèles IA, affiché de fa�
 ## Architecture
 
 ```
-providers.json          liste déclarative des fournisseurs (id, nom, URL de statut, source)
-collect.mjs             collecteur : lance un adaptateur par fournisseur
-adapters/*.mjs          un adaptateur par famille de source (échec isolé)
-lib/normalize.mjs       normalisation vers l'enum du site
+providers.json          liste déclarative des fournisseurs (id, nom, périmètre, source, motif « modèle »)
+collect.mjs             CLI : lit providers.json, lance la collecte, écrit le JSON
+lib/collect.mjs         assemblage du contrat v2 (pur, testé) : résumé, raisons, composants typés
+lib/normalize.mjs       enum des états, tables de correspondance, worstOf, classifyKind
 lib/http.mjs            fetch avec timeout + UA navigateur
-public/                 site statique (index.html, style.css, app.js)
+adapters/statuspage.mjs Atlassian Statuspage (summary.json)
+adapters/google.mjs     Google Cloud (products.json + incidents.json)
+adapters/flashcat.mjs   pages Flashcat (DeepSeek)
+adapters/alibaba.mjs    Alibaba Cloud (listHistoryEvent)
+adapters/browser.mjs    Playwright + Chromium, xAI seulement
+public/                 site statique (index.html, style.css, app.js), sans dépendance
 public/data/status.json généré par la collecte, jamais versionné (dans .gitignore)
 test/                   tests sans réseau, fixtures réelles dans test/fixtures/
 .github/workflows/      collect.yml : tests, collecte, publication GitHub Pages
 ```
+
+Ajouter un fournisseur Statuspage : une entrée dans `providers.json` (`kind: statuspage`, `url`, `scope`, éventuellement `modelPattern`) et une ligne dans la table ci-dessous. Toute autre famille de source demande un adaptateur avec sa fixture réelle et ses tests.
 
 Flux : GitHub Actions exécute `node collect.mjs` toutes les 30 minutes (et sur push `main` ou lancement manuel), vérifie le JSON produit, puis publie `public/` comme artefact GitHub Pages dans le même workflow. Rien n'est commité par la CI : la page et ses données partent ensemble, atomiquement. Le front ne lit que `data/status.json` ; aucune API propriétaire côté client.
 
@@ -81,7 +88,7 @@ Règles : un `collect.state = error` force `status = inconnu` ; un composant à 
 ## Lancer localement
 
 ```sh
-npm ci && npx playwright install chromium   # une fois (Chromium sert à xAI et DeepSeek)
+npm ci && npx playwright install chromium   # une fois (Chromium ne sert qu'à xAI)
 node test/test.mjs                          # tests sans réseau
 node collect.mjs                            # génère public/data/status.json
 npm run serve                               # puis http://localhost:8080
@@ -97,9 +104,20 @@ Réglage requis dans Settings → Pages : « Build and deployment → Source : G
 
 Permissions : `contents: read` pour les tests et la collecte (aucun jeton n'est conservé dans le checkout pendant que Chromium charge des pages tierces), `pages: write` et `id-token: write` pour le seul job de déploiement. Les actions sont épinglées par SHA.
 
+Concurrence : un seul run à la fois par ref (`concurrency.group = collect-<ref>`), mis en file d'attente et jamais annulé, pour ne pas interrompre un déploiement Pages en cours. Un run dure moins d'une minute ; le cron toutes les 30 minutes ne crée pas de file. Le cron GitHub peut partir avec plusieurs minutes de retard et le CDN Pages garde la page en cache une dizaine de minutes : la fraîcheur affichée tolère ces délais, l'alerte « données obsolètes » ne se déclenche qu'après deux heures.
+
+## Page
+
+- Bandeau : pire état réel parmi les fournisseurs, nombre de sources non vérifiées, horodatage avec fuseau et âge relatif rafraîchi chaque minute. Les compteurs par état filtrent la grille.
+- « En cours » : fournisseurs non opérationnels, incidents actifs, maintenances en cours ; absent quand tout est vert.
+- Cartes triées par gravité puis par nom ; détail ouvert quand il y a un problème ; modèles et services listés avec leur état.
+- Chaque état a une forme d'icône distincte et un libellé : la couleur n'est jamais le seul signal. Thème sombre par défaut, clair si le système le demande ; contrastes ≥ 4,5:1 mesurés dans les deux thèmes.
+- Données de plus de deux heures : bandeau d'alerte et page atténuée.
+
 ## Limites
 
 - Les sources externes sont non fiables : contenu jamais exécuté, aucun secret ni jeton stocké ; tout texte affiché est inséré via `textContent`, pas `innerHTML`.
 - Un échec de collecte produit toujours le statut `inconnu` (« Non vérifié »), jamais `operationnel` : la distinction « aucun incident déclaré » et « information inconnue » est préservée.
 - Un CAPTCHA ou défi Cloudflare interactif n'est jamais contourné ; seul le défi automatique (JavaScript) est attendu, pour xAI.
-- Les listes « composants impactés » reflètent l'état par composant publié par la source ; un fournisseur dont la source ne publie pas cet état affiche une liste vide.
+- L'état par composant reflète ce que la source publie. Statuspage masque les composants « only_show_if_degraded » tant qu'ils sont sains ; Google et Alibaba n'exposent pas d'état par produit hors incident ; DeepSeek n'a jamais été observé en incident, le mapping de ses changements actifs reste à affiner sur un cas réel.
+- Le type « modèle » ou « service » d'un composant est un motif déclaré par fournisseur, pour le regroupement à l'affichage seulement ; il n'influence aucun état.
