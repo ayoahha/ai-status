@@ -1,5 +1,5 @@
 // Collecteur : parcourt providers.json, lance l'adaptateur adéquat par fournisseur,
-// et écrit public/data/status.json. Un échec ne bloque jamais les autres.
+// et écrit public/data/status.json (contrat v2). Un échec ne bloque jamais les autres.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -10,11 +10,10 @@ import { collectGoogle } from './adapters/google.mjs';
 import { collectFlashcat } from './adapters/flashcat.mjs';
 import { collectBrowser } from './adapters/browser.mjs';
 import { fetchJson } from './lib/http.mjs';
+import { collectAll, buildOutput } from './lib/collect.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-const providers = JSON.parse(
-  readFileSync(path.join(root, 'providers.json'), 'utf8')
-);
+const providers = JSON.parse(readFileSync(path.join(root, 'providers.json'), 'utf8'));
 
 const ADAPTERS = {
   statuspage: (p) => collectStatuspage(p, fetchJson),
@@ -30,53 +29,13 @@ const ADAPTERS = {
 };
 
 const now = new Date().toISOString();
-
-// Promise.resolve().then(...) : un adaptateur inconnu devient un rejet capturé par
-// allSettled au lieu d'un throw synchrone qui tuerait toute la collecte
-const settled = await Promise.allSettled(
-  providers.map((p) =>
-    Promise.resolve()
-      .then(() => {
-        const run = ADAPTERS[p.source.kind];
-        if (!run) throw new Error(`adaptateur inconnu : ${p.source.kind}`);
-        return run(p);
-      })
-      .then((r) => ({
-        status: r.status,
-        rawStatus: r.rawStatus ?? null,
-        rawIndicator: r.rawIndicator ?? null,
-        components: r.components ?? [],
-        incidents: r.incidents ?? [],
-        maintenances: r.maintenances ?? [],
-        collectedAt: new Date().toISOString(),
-        collect: r.collect,
-      }))
-  )
-);
-
-const out = {
-  generatedAt: now,
-  providers: providers.map((p, i) => {
-    const r = settled[i];
-    const base = { id: p.id, name: p.name, scope: p.scope ?? null, statusUrl: p.statusUrl };
-    if (r.status === 'fulfilled') return { ...base, ...r.value };
-    return {
-      ...base,
-      status: 'inconnu',
-      rawStatus: null,
-      rawIndicator: null,
-      components: [],
-      incidents: [],
-      maintenances: [],
-      collectedAt: new Date().toISOString(),
-      collect: { state: 'error', error: String(r.reason?.message ?? r.reason) },
-    };
-  }),
-};
+const settled = await collectAll(providers, ADAPTERS);
+const out = buildOutput(providers, settled, now);
 
 const outPath = path.join(root, 'public', 'data', 'status.json');
 mkdirSync(path.dirname(outPath), { recursive: true });
-writeFileSync(outPath, JSON.stringify(out, null, 2) + '\n');
+// Compact : le fichier est servi tel quel à chaque visiteur
+writeFileSync(outPath, JSON.stringify(out) + '\n');
 console.log(`écrit ${outPath} (${out.providers.length} fournisseurs)`);
-const ok = out.providers.filter((p) => p.collect?.state === 'ok').length;
-console.log(`collecte ok : ${ok}/${out.providers.length}`);
+const ok = out.providers.filter((p) => p.collect.state === 'ok').length;
+console.log(`collecte ok : ${ok}/${out.providers.length} ; pire état : ${out.summary.worst}`);

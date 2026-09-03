@@ -6,7 +6,8 @@
     "source": {
       "kind": "statuspage",
       "url": "https://status.claude.com"
-    }
+    },
+    "scope": "Claude API, claude.ai, Claude Code"
   },
   {
     "id": "openai",
@@ -15,7 +16,8 @@
     "source": {
       "kind": "statuspage",
       "url": "https://status.openai.com"
-    }
+    },
+    "scope": "API OpenAI, ChatGPT, Codex"
   },
   {
     "id": "xai",
@@ -69,7 +71,9 @@
       "kind": "flashcat",
       "url": "https://status.deepseek.com",
       "pageId": "6410630422455"
-    }
+    },
+    "modelPattern": "^DeepSeek",
+    "scope": "API DeepSeek par modèle"
   },
   {
     "id": "moonshot",
@@ -78,7 +82,9 @@
     "source": {
       "kind": "statuspage",
       "url": "https://status.moonshot.cn"
-    }
+    },
+    "modelPattern": "Model$",
+    "scope": "Kimi, plateforme ouverte et modèles"
   },
   {
     "id": "zhipu",
@@ -88,7 +94,8 @@
       "kind": "unavailable",
       "url": "https://status.zhipuai.cn",
       "note": "Page de statut inaccessible depuis l'extérieur de la Chine (connexion filtrée, vérifié depuis la CI). Aucune requête n'est tentée."
-    }
+    },
+    "scope": "GLM / plateforme BigModel"
   },
   {
     "id": "minimax",
@@ -97,7 +104,8 @@
     "source": {
       "kind": "statuspage",
       "url": "https://status.minimaxi.com"
-    }
+    },
+    "scope": "API MiniMax (LLM, voix, vidéo)"
   },
   {
     "id": "groq",
@@ -106,7 +114,9 @@
     "source": {
       "kind": "statuspage",
       "url": "https://groqstatus.com"
-    }
+    },
+    "modelPattern": "^(llama|whisper|\\S+/\\S+$)",
+    "scope": "API Groq et modèles hébergés"
   },
   {
     "id": "replicate",
@@ -115,7 +125,8 @@
     "source": {
       "kind": "statuspage",
       "url": "https://replicatestatus.com"
-    }
+    },
+    "scope": "API Replicate et matériel GPU"
   },
   {
     "id": "cohere",
@@ -124,7 +135,9 @@
     "source": {
       "kind": "statuspage",
       "url": "https://status.cohere.com"
-    }
+    },
+    "modelPattern": "^(command|c4ai|embed-|rerank|tiny-aya)",
+    "scope": "API Cohere et modèles"
   },
   {
     "id": "fireworks",
@@ -133,6 +146,8 @@
     "source": {
       "kind": "statuspage",
       "url": "https://status.fireworks.ai"
-    }
+    },
+    "modelPattern": ".",
+    "scope": "Modèles servis par Fireworks"
   }
 ]
