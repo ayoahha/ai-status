@@ -5,7 +5,7 @@ Statut opérationnel des principaux fournisseurs de modèles IA, affiché de fa�
 ## Architecture
 
 ```
-providers.json          liste déclarative des fournisseurs (id, nom, périmètre, source, motif « modèle »)
+providers.json          liste déclarative des fournisseurs (id, nom, groupe, périmètre, source, motif « modèle »)
 collect.mjs             CLI : lit providers.json, lance la collecte, écrit le JSON
 lib/collect.mjs         assemblage du contrat v2 (pur, testé) : résumé, raisons, composants typés
 lib/normalize.mjs       enum des états, tables de correspondance, worstOf, classifyKind
@@ -21,7 +21,7 @@ test/                   tests sans réseau, fixtures réelles dans test/fixtures
 .github/workflows/      collect.yml : tests, collecte, publication GitHub Pages
 ```
 
-Ajouter un fournisseur Statuspage : une entrée dans `providers.json` (`kind: statuspage`, `url`, `scope`, éventuellement `modelPattern`) et une ligne dans la table ci-dessous. Toute autre famille de source demande un adaptateur avec sa fixture réelle et ses tests.
+Ajouter un fournisseur Statuspage : une entrée dans `providers.json` (`kind: statuspage`, `url`, `group` parmi `us`, `cn`, `cloud`, `scope`, éventuellement `modelPattern`) et une ligne dans la table ci-dessous. Toute autre famille de source demande un adaptateur avec sa fixture réelle et ses tests.
 
 Flux : GitHub Actions exécute `node collect.mjs` toutes les 30 minutes (et sur push `main` ou lancement manuel), vérifie le JSON produit, puis publie `public/` comme artefact GitHub Pages dans le même workflow. Rien n'est commité par la CI : la page et ses données partent ensemble, atomiquement. Le front ne lit que `data/status.json` ; aucune API propriétaire côté client.
 
@@ -69,6 +69,7 @@ Règle : un fournisseur n'est intégré que s'il existe une source publique, sta
   "providers": [{
     "id": "anthropic",
     "name": "Anthropic",
+    "group": "us",                     // us | cn | cloud : section d'affichage, libellés dans public/app.js
     "scope": "Claude API, claude.ai, Claude Code",   // ce que la carte mesure réellement
     "statusUrl": "https://status.claude.com",
     "status": "degradation",           // operationnel | degradation | incident_majeur | maintenance | indisponible | inconnu
@@ -108,11 +109,13 @@ Concurrence : un seul run à la fois par ref (`concurrency.group = collect-<ref>
 
 ## Page
 
-- Bandeau : pire état réel parmi les fournisseurs, nombre de sources non vérifiées, horodatage avec fuseau et âge relatif rafraîchi chaque minute. Les compteurs par état filtrent la grille.
-- « En cours » : fournisseurs non opérationnels, incidents actifs, maintenances en cours ; absent quand tout est vert.
-- Cartes triées par gravité puis par nom ; détail ouvert quand il y a un problème ; modèles et services listés avec leur état.
-- Chaque état a une forme d'icône distincte et un libellé : la couleur n'est jamais le seul signal. Thème sombre par défaut, clair si le système le demande ; contrastes ≥ 4,5:1 mesurés dans les deux thèmes.
-- Données de plus de deux heures : bandeau d'alerte et page atténuée.
+- Bandeau : pire état réel parmi les fournisseurs, nombre de sources non vérifiées, horodatage avec fuseau et âge relatif rafraîchi chaque minute. Les compteurs par état filtrent les cartes.
+- « En cours » : fournisseurs dans un état réel (dégradation, incident, indisponibilité, maintenance) avec leurs incidents et maintenances actives ; absent quand tout est vert. Une source non lue n'y figure pas : elle a son compteur et sa carte grise.
+- Trois sections fixes : grands fournisseurs US, fournisseurs chinois, clouds d'inférence et API. Sous-titre « N fournisseurs · M en alerte · K non vérifiés ». Section vide masquée après filtre ou recherche.
+- Carte fermée : icône d'état, nom, nombre de composants ; libellé d'état et raison seulement hors « opérationnel ». Aucune carte n'est ouverte d'office : « En cours » porte l'urgence. L'état est toujours annoncé aux lecteurs d'écran.
+- Bouton ⓘ (hors du `<summary>`, donc sans conflit avec le dépliage) : infobulle au survol et au focus avec périmètre, méthode de lecture, fraîcheur et erreur éventuelle ; Échap la ferme ; un clic ou un toucher déplie la carte. Carte dépliée : incidents, maintenances, modèles et services avec leur état, périmètre, méthode, fraîcheur et lien vers la page officielle. Rien n'est accessible uniquement au survol.
+- Chaque état a une forme d'icône distincte et un libellé : la couleur n'est jamais le seul signal. Thème sombre par défaut, clair si le système le demande ; contrastes ≥ 4,5:1 (texte) et ≥ 3:1 (contrôles) mesurés dans les deux thèmes.
+- Données de plus de deux heures : bandeau d'alerte.
 
 ## Limites
 

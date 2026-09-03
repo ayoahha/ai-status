@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a class="skip" href="#grid">Aller à la liste des fournisseurs</a>
+  <a class="skip" href="#providers">Aller à la liste des fournisseurs</a>
 
   <!-- Icônes d'état : une forme distincte par état, la couleur n'est jamais seule -->
   <svg hidden aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -48,10 +48,10 @@
     <p class="meta" id="result-count" aria-live="polite"></p>
   </section>
 
-  <main id="grid" class="grid"></main>
+  <main id="providers" class="providers"></main>
 
   <footer class="foot">
-    <p>Collecte automatique toutes les 30 minutes par GitHub Actions, publiée avec la page dans le même déploiement. Chaque carte lie sa source officielle et indique la méthode de lecture. « Non vérifié » signifie que la source n'a pas pu être lue : ce n'est jamais un « opérationnel » par défaut.</p>
+    <p>Collecte automatique toutes les 30 minutes par GitHub Actions, publiée avec la page dans le même déploiement. Le bouton ⓘ de chaque carte donne le périmètre mesuré, la méthode de lecture et la fraîcheur ; la carte dépliée liste incidents, composants et la page officielle. « Non vérifié » signifie que la source n'a pas pu être lue : ce n'est jamais un « opérationnel » par défaut.</p>
     <p><a href="https://github.com/ayoahha/ai-status">Code source et méthode par fournisseur</a></p>
   </footer>
 
