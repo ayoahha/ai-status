@@ -10,6 +10,24 @@ const STATUS_LABELS = {
   inconnu: 'Non vérifié',
 };
 const STALE_MS = 24 * 60 * 60 * 1000;
+const COLLAPSE_LIMIT = 3;
+
+// Liste trop longue : on limite l'affichage par défaut et on ajoute
+// un bouton « voir les N autres » pour rétablir la lisibilité des cartes.
+function collapseToggle(listEl, count, parent) {
+  if (count <= COLLAPSE_LIMIT) return;
+  listEl.classList.add('is-collapsed');
+  const hidden = count - COLLAPSE_LIMIT;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'more';
+  btn.textContent = `Voir les ${hidden} autres`;
+  parent.appendChild(btn);
+  btn.addEventListener('click', () => {
+    const collapsed = listEl.classList.toggle('is-collapsed');
+    btn.textContent = collapsed ? `Voir les ${hidden} autres` : 'Réduire';
+  });
+}
 
 let providers = [];
 let activeStatus = 'all';
@@ -68,12 +86,15 @@ function makeCard(p) {
     }
     comps.appendChild(ul);
     card.appendChild(comps);
+    collapseToggle(ul, p.components.length, comps);
   }
 
   const active = (p.incidents ?? []).filter((i) => i.state !== 'resolved' && i.state !== 'récupéré');
   if (active.length) {
     const box = document.createElement('div');
     box.className = 'incidents';
+    const list = document.createElement('div');
+    list.className = 'incidentlist';
     for (const inc of active) {
       const div = document.createElement('div');
       div.className = 'incident';
@@ -82,9 +103,11 @@ function makeCard(p) {
       st.className = 'state';
       st.textContent = ` — ${inc.state ?? ''}`;
       div.appendChild(st);
-      box.appendChild(div);
+      list.appendChild(div);
     }
+    box.appendChild(list);
     card.appendChild(box);
+    collapseToggle(list, active.length, box);
   }
 
   const meta = document.createElement('p');

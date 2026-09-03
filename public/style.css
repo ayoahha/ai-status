@@ -23,14 +23,18 @@ body {
   line-height: 1.5;
 }
 
-.top { max-width: 1100px; margin: 0 auto; padding: 24px 20px 8px; }
+.top {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px 40px 8px;
+}
 .top h1 { margin: 0 0 4px; font-size: 1.5rem; }
 .meta { margin: 0; color: var(--muted); font-size: .85rem; }
 
 .controls {
-  max-width: 1100px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 12px 20px;
+  padding: 12px 40px;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -65,12 +69,20 @@ input, button {
 }
 
 .grid {
-  max-width: 1100px;
+  max-width: 1600px;
   margin: 8px auto 24px;
-  padding: 0 20px;
+  padding: 0 40px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 14px;
+}
+
+/* Écran large : 3 colonnes au ratio 1/4 + 1/2 + 1/4 (colonne centrale plus large).
+   Le contenu remplit la largeur réelle de l'écran au lieu d'être resserré au centre. */
+@media (min-width: 1100px) {
+  .grid {
+    grid-template-columns: 1fr 2fr 1fr;
+  }
 }
 
 .card {
@@ -100,6 +112,27 @@ input, button {
 .card .comps strong, .card .incidents strong { color: var(--text); }
 .complist { margin: 2px 0 0; padding-left: 18px; font-size: .82rem; color: var(--muted); }
 .complist li { margin: 2px 0; }
+.complist.is-collapsed {
+  max-height: 96px;
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, #000 60%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
+}
+.incidentlist.is-collapsed {
+  max-height: 110px;
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, #000 70%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent);
+}
+.more {
+  background: none;
+  border: none;
+  color: var(--focus);
+  font-size: .75rem;
+  padding: 2px 0;
+  cursor: pointer;
+}
+.more:hover { text-decoration: underline; }
 .incident { margin: 2px 0; font-size: .82rem; }
 .incident .state { color: var(--muted); font-size: .75rem; }
 
@@ -119,7 +152,7 @@ input, button {
 }
 .card.is-stale .stale { display: inline-block; }
 
-.foot { max-width: 1100px; margin: 0 auto; padding: 0 20px 32px; }
+.foot { max-width: 1600px; margin: 0 auto; padding: 0 40px 32px; }
 .foot p { color: var(--muted); font-size: .8rem; }
 
 .noresults { color: var(--muted); grid-column: 1/-1; text-align: center; padding: 40px 0; }
