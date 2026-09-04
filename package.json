@@ -9,7 +9,7 @@
   },
   "scripts": {
     "collect": "node collect.mjs",
-    "test": "node test/test.mjs",
+    "test": "node test/test.mjs && node test/frontend.mjs",
     "serve": "python3 -m http.server 8080 -d public"
   },
   "devDependencies": {

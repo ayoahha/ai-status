@@ -61,7 +61,7 @@ body {
 }
 .skip:focus { left: 16px; outline: 2px solid var(--focus); }
 
-.top, .controls, .providers, .foot, .ongoing, .stale {
+.top, .controls, .providers, .foot, .ongoing, .stale, .refresh-error {
   max-width: 1600px;
   margin: 0 auto;
   padding-left: 40px;
@@ -90,6 +90,9 @@ body {
 .overall-unknown { color: var(--unknown); font-weight: 500; font-size: 1rem; }
 .meta { margin: 0; color: var(--muted); font-size: .85rem; }
 .summary .meta { margin-top: 4px; }
+.refresh-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+#refresh { padding: 3px 9px; font-size: .82rem; cursor: pointer; }
+#refresh:disabled { cursor: wait; opacity: .65; }
 
 .counts { display: flex; flex-wrap: wrap; gap: 6px; }
 
@@ -126,7 +129,7 @@ input, button, select {
 }
 
 /* Données obsolètes : le bandeau porte seul l'alerte */
-.stale {
+.stale, .refresh-error {
   margin-top: 8px;
   padding: 10px 14px;
   border: 1px solid var(--warn);
@@ -135,6 +138,7 @@ input, button, select {
   font-size: .9rem;
 }
 .stale[hidden] { display: none; }
+.refresh-error[hidden] { display: none; }
 
 /* En cours */
 .ongoing { padding-top: 12px; }
@@ -284,7 +288,7 @@ a:hover { text-decoration: underline; }
 .foot p { color: var(--muted); font-size: .8rem; }
 
 @media (max-width: 480px) {
-  .top, .controls, .providers, .foot, .ongoing, .stale { padding-left: 16px; padding-right: 16px; }
+  .top, .controls, .providers, .foot, .ongoing, .stale, .refresh-error { padding-left: 16px; padding-right: 16px; }
   .overall { font-size: 1.15rem; }
   #search { max-width: none; flex-basis: 100%; }
 }

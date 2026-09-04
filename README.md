@@ -1,3 +1,7 @@
+---
+style_gate: pass
+---
+
 # ai-status
 
 Statut opérationnel des principaux fournisseurs de modèles IA, affiché de façon lisible et honnête sur une page statique GitHub Pages.
@@ -23,7 +27,7 @@ test/                   tests sans réseau, fixtures réelles dans test/fixtures
 
 Ajouter un fournisseur Statuspage : une entrée dans `providers.json` (`kind: statuspage`, `url`, `group` parmi `us`, `cn`, `cloud`, `scope`, éventuellement `modelPattern`) et une ligne dans la table ci-dessous. Toute autre famille de source demande un adaptateur avec sa fixture réelle et ses tests.
 
-Flux : GitHub Actions exécute `node collect.mjs` toutes les 30 minutes (et sur push `main` ou lancement manuel), vérifie le JSON produit, puis publie `public/` comme artefact GitHub Pages dans le même workflow. Rien n'est commité par la CI : la page et ses données partent ensemble, atomiquement. Le front ne lit que `data/status.json` ; aucune API propriétaire côté client.
+Flux : GitHub Actions exécute `node collect.mjs` à `:07` et `:37` de chaque heure (et sur push `main` ou lancement manuel), vérifie le JSON produit, puis publie `public/` comme artefact GitHub Pages dans le même workflow. Ce décalage réduit le risque de retard des tâches GitHub planifiées sans garantir leur ponctualité. Rien n'est commité par la CI : la page et ses données partent ensemble, atomiquement. Le front ne lit que `data/status.json` ; aucune API propriétaire côté client.
 
 ## Fournisseurs et méthode de collecte
 
@@ -105,11 +109,11 @@ Réglage requis dans Settings → Pages : « Build and deployment → Source : G
 
 Permissions : `contents: read` pour les tests et la collecte (aucun jeton n'est conservé dans le checkout pendant que Chromium charge des pages tierces), `pages: write` et `id-token: write` pour le seul job de déploiement. Les actions sont épinglées par SHA.
 
-Concurrence : un seul run à la fois par ref (`concurrency.group = collect-<ref>`), mis en file d'attente et jamais annulé, pour ne pas interrompre un déploiement Pages en cours. Un run dure moins d'une minute ; le cron toutes les 30 minutes ne crée pas de file. Le cron GitHub peut partir avec plusieurs minutes de retard et le CDN Pages garde la page en cache une dizaine de minutes : la fraîcheur affichée tolère ces délais, l'alerte « données obsolètes » ne se déclenche qu'après deux heures.
+Concurrence : un seul run à la fois par ref (`concurrency.group = collect-<ref>`), mis en file d'attente et jamais annulé, pour ne pas interrompre un déploiement Pages en cours. Un run dure moins d'une minute ; les lancements à `:07` et `:37` ne créent pas de file. Le cron GitHub peut tout de même partir avec plusieurs minutes de retard ou être abandonné, et le CDN Pages peut brièvement conserver une ancienne publication : la fraîcheur affichée tolère ces délais, l'alerte « données obsolètes » ne se déclenche qu'après deux heures.
 
 ## Page
 
-- Bandeau : pire état réel parmi les fournisseurs, nombre de sources non vérifiées, horodatage avec fuseau et âge relatif rafraîchi chaque minute. Les compteurs par état filtrent les cartes.
+- Bandeau : pire état réel parmi les fournisseurs, nombre de sources non vérifiées, horodatage avec fuseau et âge relatif rafraîchi chaque minute. Les données sont rechargées toutes les 30 minutes, au retour dans un onglet ancien, au retour en ligne ou avec le bouton « Rafraîchir ». Un échec conserve les dernières données valides et affiche une alerte. Les compteurs par état filtrent les cartes.
 - « En cours » : fournisseurs dans un état réel (dégradation, incident, indisponibilité, maintenance) avec leurs incidents et maintenances actives ; absent quand tout est vert. Une source non lue n'y figure pas : elle a son compteur et sa carte grise.
 - Trois sections fixes : grands fournisseurs US, fournisseurs chinois, clouds d'inférence et API. Sous-titre « N fournisseurs · M en alerte · K non vérifiés ». Section vide masquée après filtre ou recherche.
 - Carte fermée : icône d'état, nom, nombre de composants ; libellé d'état et raison seulement hors « opérationnel ». Aucune carte n'est ouverte d'office : « En cours » porte l'urgence. L'état est toujours annoncé aux lecteurs d'écran.

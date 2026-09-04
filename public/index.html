@@ -25,11 +25,16 @@
   <header class="top">
     <div class="summary">
       <h1 id="overall" class="overall">Chargement…</h1>
-      <p class="meta" id="collected-at"></p>
+      <div class="refresh-row">
+        <p class="meta" id="collected-at"></p>
+        <button id="refresh" type="button" aria-busy="false">Rafraîchir</button>
+        <p class="sr" id="refresh-status" role="status"></p>
+      </div>
     </div>
     <div class="counts" id="counts" role="group" aria-label="Filtrer par état"></div>
   </header>
 
+  <p class="refresh-error" id="refresh-error" role="alert" hidden></p>
   <p class="stale" id="stale" role="status" hidden></p>
 
   <section class="ongoing" id="ongoing" aria-labelledby="ongoing-title" hidden>
@@ -51,7 +56,7 @@
   <main id="providers" class="providers"></main>
 
   <footer class="foot">
-    <p>Collecte automatique toutes les 30 minutes par GitHub Actions, publiée avec la page dans le même déploiement. Le bouton ⓘ de chaque carte donne le périmètre mesuré, la méthode de lecture et la fraîcheur ; la carte dépliée liste incidents, composants et la page officielle. « Non vérifié » signifie que la source n'a pas pu être lue : ce n'est jamais un « opérationnel » par défaut.</p>
+    <p>Collecte automatique toutes les 30 minutes par GitHub Actions, publiée avec la page dans le même déploiement. La page actualise les données toutes les 30 minutes, au retour dans un ancien onglet ou avec le bouton « Rafraîchir ». Le bouton ⓘ de chaque carte donne le périmètre mesuré, la méthode de lecture et la fraîcheur ; la carte dépliée liste incidents, composants et la page officielle. « Non vérifié » signifie que la source n'a pas pu être lue : ce n'est jamais un « opérationnel » par défaut.</p>
     <p><a href="https://github.com/ayoahha/ai-status">Code source et méthode par fournisseur</a></p>
   </footer>
 

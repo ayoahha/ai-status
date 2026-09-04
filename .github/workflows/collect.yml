@@ -2,7 +2,7 @@ name: collect
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '7,37 * * * *'
   workflow_dispatch:
   push:
     branches: [main]
@@ -31,6 +31,15 @@ jobs:
         with:
           node-version: 24
       - run: npm ci
+      - name: Mettre en cache les navigateurs Playwright
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-chromium-
+      - name: Installer Chromium (Playwright)
+        run: npx playwright install chromium
       - run: npm test
 
   collect:
