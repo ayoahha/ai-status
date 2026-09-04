@@ -225,6 +225,18 @@ try {
     assert.equal(await page.locator('.card details').getAttribute('open'), '');
   });
 
+  const unchanged = statusDoc(new Date(NOW).toISOString(), 'Données inchangées');
+  await scenario([{ body: unchanged }, { body: unchanged }], async (page) => {
+    await page.getByText('Données inchangées', { exact: true }).waitFor();
+    await page.clock.runFor(11 * MINUTE);
+    assert.match(await page.locator('#collected-at').textContent(), /il y a 11 min/);
+    await page.getByRole('button', { name: 'Rafraîchir' }).click();
+    await page.locator('#refresh[aria-busy="false"]').waitFor();
+    const freshness = await page.locator('#collected-at').textContent();
+    assert.match(freshness, /Actualisé .+ \(à l’instant\)/);
+    assert.match(freshness, /collecte .+ \(il y a 11 min\)/);
+  });
+
   for (const width of [390, 1440]) {
     await scenario([{ body: fresh }], async (page) => {
       await page.getByText('Nouveau fournisseur', { exact: true }).waitFor();
