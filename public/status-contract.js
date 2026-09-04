@@ -3,7 +3,7 @@ export const STATUS_VALUES = Object.freeze(['operationnel', 'maintenance', 'degr
 export const MAX_STATUS_BYTES = 10 * 1024 * 1024;
 
 // ponytail: bornes de publication généreuses ; ne les relever qu'après une mesure légitime
-export const STATUS_LIMITS = Object.freeze({ providers: 100, components: 5_000, events: 1_000, eventComponents: 5_000, string: 65_536 });
+export const STATUS_LIMITS = Object.freeze({ providers: 100, providerBytes: 96 * 1024, components: 5_000, events: 1_000, eventComponents: 5_000, string: 65_536 });
 
 const REAL_SEVERITY = STATUS_VALUES.filter((status) => status !== 'inconnu');
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -35,6 +35,11 @@ export function safeExternalUrl(value, statusUrl, method) {
 }
 
 function validProvider(provider) {
+  try {
+    if (new TextEncoder().encode(JSON.stringify(provider)).byteLength > STATUS_LIMITS.providerBytes) return false;
+  } catch {
+    return false;
+  }
   if (!isObject(provider) || !['id', 'name', 'status', 'reason', 'collectedAt'].every((key) => isString(provider[key], { empty: false }))) return false;
   if (!basicHttpsUrl(provider.statusUrl) || !STATUS_VALUES.includes(provider.status) || !isDate(provider.collectedAt)) return false;
   if (![provider.group, provider.scope, provider.sourceText].every(isStringOrNull)) return false;

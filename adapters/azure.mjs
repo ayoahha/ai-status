@@ -1,5 +1,6 @@
 import { worstOf } from '../lib/normalize.mjs';
 import { fail } from '../lib/errors.mjs';
+import { elements } from '../lib/markup.mjs';
 
 // Azure status (azure.status.microsoft, ex status.azure.com) : page rendue côté serveur,
 // sans JSON ; le flux RSS documenté ne couvre que les incidents publiés, sans état par
@@ -16,11 +17,13 @@ export function azureLabel(label) {
 
 export function parseAzureRows(html) {
   const rows = new Map();
-  for (const m of html.matchAll(/<tr[^>]*>\s*<td>\s*([^<]+?)\s*<\/td>([\s\S]*?)<\/tr>/g)) {
-    const labels = [...m[2].matchAll(/data-label="([^"]+)"/g)].map((x) => x[1]).filter((l) => l !== 'Not available');
-    const list = rows.get(m[1]) ?? [];
+  for (const row of elements(html, 'tr', { tolerant: true }) ?? []) {
+    const name = elements(row.body, 'td', { tolerant: true })?.[0]?.body.trim();
+    if (!name || name.includes('<')) continue;
+    const labels = [...row.body.matchAll(/data-label="([^"]+)"/g)].map((x) => x[1]).filter((l) => l !== 'Not available');
+    const list = rows.get(name) ?? [];
     list.push(...labels);
-    rows.set(m[1], list);
+    rows.set(name, list);
   }
   return rows;
 }

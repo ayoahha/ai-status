@@ -1,41 +1,33 @@
 import { fail } from '../lib/errors.mjs';
+import { elements, elementText, wholeElement } from '../lib/markup.mjs';
 
-const ITEM = /<item>([\s\S]*?)<\/item>/g;
-const tag = (xml, name) => {
-  const matches = [...xml.matchAll(new RegExp(`<${name}(?:\\s[^>]*)?>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`, 'g'))];
-  return matches.length === 1 ? matches[0][1].trim() : null;
-};
 const attr = (attributes, name) => attributes.match(new RegExp(`\\b${name}=["']([^"']+)["']`))?.[1] ?? null;
 const schema = (detail) => { throw fail('schema', `flux RSS xAI (${detail})`, `xAI RSS feed (${detail})`); };
 
 export function parseXaiRss(xml, expectedComponents) {
   if (typeof xml !== 'string' || /<!DOCTYPE|<!ENTITY/i.test(xml)) schema('XML refusé');
-  const root = xml.match(/^\s*(?:<\?xml\b[^?]*\?>\s*)?<rss\b([^>]*)>([\s\S]*)<\/rss>\s*$/i);
-  if (!root || attr(root[1], 'version') !== '2.0' || attr(root[1], 'xmlns:atom') !== 'http://www.w3.org/2005/Atom') schema('rss 2.0');
-  const channelMatch = root[2].match(/^\s*<channel>([\s\S]*)<\/channel>\s*$/i);
-  if (!channelMatch) schema('channel');
+  const root = wholeElement(xml, 'rss', { declaration: true });
+  if (!root || attr(root.attributes, 'version') !== '2.0' || attr(root.attributes, 'xmlns:atom') !== 'http://www.w3.org/2005/Atom') schema('rss 2.0');
+  const channel = wholeElement(root.body, 'channel');
+  if (!channel) schema('channel');
 
-  const channel = channelMatch[1];
-  const firstItem = channel.indexOf('<item>');
-  if (firstItem < 0) schema('aucun item');
-  const header = channel.slice(0, firstItem);
-  if (tag(header, 'title') !== 'SpaceXAI System Status' || tag(header, 'link') !== 'https://status.x.ai') schema('identité du canal');
-  const builtAt = tag(header, 'lastBuildDate');
+  const items = elements(channel.body, 'item');
+  if (!items || items.length === 0) schema('aucun item');
+  const header = channel.body.slice(0, items[0].start);
+  if (elementText(header, 'title') !== 'SpaceXAI System Status' || elementText(header, 'link') !== 'https://status.x.ai') schema('identité du canal');
+  const builtAt = elementText(header, 'lastBuildDate');
   if (!builtAt || !Number.isFinite(Date.parse(builtAt))) schema('lastBuildDate');
-  const atomLinks = [...header.matchAll(/<atom:link\b([^>]*)\/?\s*>/gi)];
-  if (atomLinks.length !== 1 || attr(atomLinks[0][1], 'href') !== 'https://status.x.ai/feed.xml' || attr(atomLinks[0][1], 'rel') !== 'self' || attr(atomLinks[0][1], 'type') !== 'application/rss+xml') schema('lien autonome');
+  const atomLinks = elements(header, 'atom:link');
+  if (!atomLinks || atomLinks.length !== 1 || attr(atomLinks[0].attributes, 'href') !== 'https://status.x.ai/feed.xml' || attr(atomLinks[0].attributes, 'rel') !== 'self' || attr(atomLinks[0].attributes, 'type') !== 'application/rss+xml') schema('lien autonome');
 
   const components = new Set(expectedComponents);
-  const itemCount = (channel.match(/<item>/g) ?? []).length;
-  if (itemCount !== (channel.match(/<\/item>/g) ?? []).length) schema('item incomplet');
   const seen = new Set();
-  const items = [...channel.matchAll(ITEM)].map((match) => {
-    const body = match[1];
-    const title = tag(body, 'title');
-    const link = tag(body, 'link');
-    const guid = tag(body, 'guid');
-    const description = tag(body, 'description');
-    const pubDate = tag(body, 'pubDate');
+  return items.map(({ body }) => {
+    const title = elementText(body, 'title');
+    const link = elementText(body, 'link');
+    const guid = elementText(body, 'guid');
+    const description = elementText(body, 'description');
+    const pubDate = elementText(body, 'pubDate');
     const titleParts = title?.match(/^\[([^\]]+)]\s+(.+)$/);
     if (!titleParts || !components.has(titleParts[1])) schema('composant inconnu');
     if (!guid || !/^INC[0-9a-z]+$/i.test(guid) || seen.has(guid)) schema('guid');
@@ -52,12 +44,12 @@ export function parseXaiRss(xml, expectedComponents) {
 
     const status = description?.match(/<h3>Status:\s*([^<]+)<\/h3>/i)?.[1]?.trim().toLowerCase();
     const severity = description?.match(/<p>Severity:\s*([^<]+)<\/p>/i)?.[1]?.trim().toLowerCase();
-    const categories = [...body.matchAll(/<category>([^<]+)<\/category>/g)].map((category) => category[1].trim().toLowerCase());
+    const categoryElements = elements(body, 'category');
+    if (!categoryElements) schema('category');
+    const categories = categoryElements.map((category) => category.body.trim().toLowerCase());
     if (status !== 'resolved' || severity !== 'available' || categories.length !== 2 || categories[0] !== 'available' || categories[1] !== 'resolved') schema('état non reconnu');
     return { component: titleParts[1], title: titleParts[2], guid, pubDate: new Date(pubDate).toISOString(), url: url.href };
   });
-  if (items.length !== itemCount) schema('item illisible');
-  return items;
 }
 
 export const METHOD = { fr: 'flux RSS officiel xAI', en: 'official xAI RSS feed' };
