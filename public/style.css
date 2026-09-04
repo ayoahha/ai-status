@@ -124,7 +124,12 @@ body {
 /* Bandeau : filet supérieur, surtitre, phrase d'état en serif, fraîcheur en mono */
 .top { padding-top: 24px; padding-bottom: 16px; }
 .summary { border-top: 2px solid var(--text); padding-top: 12px; }
-.brand { margin-bottom: 10px; }
+.brand-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+.brand { margin-bottom: 0; }
+/* Sélecteur FR / EN : même inversion encre / papier que les chips quand pressé */
+.lang { display: inline-flex; gap: 4px; }
+.lang-btn { padding: 2px 8px; font-family: var(--font-mono); font-size: .75rem; letter-spacing: .05em; cursor: pointer; }
+.lang-btn[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .overall {
   margin: 0;
   font-family: var(--font-display);

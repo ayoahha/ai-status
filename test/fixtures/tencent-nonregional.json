@@ -1,0 +1,69 @@
+{
+ "Response": {
+  "RequestId": "15a35d9e-e434-47b5-bbfb-d8a873bd6ddf",
+  "Data": {
+   "Summary": {
+    "NormalCount": 87,
+    "NotifyCount": 0,
+    "AbnormalCount": 0
+   },
+   "CategoryList": [
+    {
+     "CategoryName": "腾讯大模型",
+     "ProductList": [
+      {
+       "ProductId": "ai3d",
+       "ProductName": "腾讯混元生3D",
+       "EventListGroupByZoneAndDate": [],
+       "ProductEventTitle": "",
+       "CurrentStatus": "NORMAL",
+       "CurrentEvent": null,
+       "Rss": "https://status.cloud.tencent.com/rss/zh/non-regional/ai3d",
+       "TimeRegion": ""
+      },
+      {
+       "ProductId": "lke",
+       "ProductName": "腾讯云智能体开发平台",
+       "EventListGroupByZoneAndDate": [],
+       "ProductEventTitle": "",
+       "CurrentStatus": "NORMAL",
+       "CurrentEvent": null,
+       "Rss": "https://status.cloud.tencent.com/rss/zh/non-regional/lke",
+       "TimeRegion": ""
+      },
+      {
+       "ProductId": "hunyuan",
+       "ProductName": "腾讯混元大模型",
+       "EventListGroupByZoneAndDate": [],
+       "ProductEventTitle": "",
+       "CurrentStatus": "NORMAL",
+       "CurrentEvent": null,
+       "Rss": "https://status.cloud.tencent.com/rss/zh/non-regional/hunyuan",
+       "TimeRegion": ""
+      },
+      {
+       "ProductId": "vclm",
+       "ProductName": "腾讯混元生视频",
+       "EventListGroupByZoneAndDate": [],
+       "ProductEventTitle": "",
+       "CurrentStatus": "NORMAL",
+       "CurrentEvent": null,
+       "Rss": "https://status.cloud.tencent.com/rss/zh/non-regional/vclm",
+       "TimeRegion": ""
+      },
+      {
+       "ProductId": "aiart",
+       "ProductName": "腾讯混元生图",
+       "EventListGroupByZoneAndDate": [],
+       "ProductEventTitle": "",
+       "CurrentStatus": "NORMAL",
+       "CurrentEvent": null,
+       "Rss": "https://status.cloud.tencent.com/rss/zh/non-regional/aiart",
+       "TimeRegion": ""
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

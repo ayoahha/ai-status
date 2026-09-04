@@ -1,0 +1,897 @@
+{
+ "data": {
+  "id": "197766",
+  "type": "status_page",
+  "attributes": {
+   "company_name": "Together AI",
+   "company_url": "https://www.together.ai/",
+   "contact_url": "https://www.together.ai/contact",
+   "logo_url": "https://d1lppblt9t2x15.cloudfront.net/logos/88f97476a7a036f53d24f512ae21e5e4.png",
+   "timezone": "Pacific Time (US & Canada)",
+   "subdomain": "together-public",
+   "custom_domain": "status.together.ai",
+   "announcement": null,
+   "logo_remote_url": "https://drive.google.com/uc?export=download&id=1sAoG9BSd_eVyX0mD0CiIx9UbL7VJK3Us",
+   "aggregate_state": "operational",
+   "created_at": "2024-10-04T20:48:22.509Z",
+   "updated_at": "2026-09-04T10:17:22.958Z"
+  },
+  "relationships": {
+   "sections": {
+    "data": [
+     {
+      "id": "231960",
+      "type": "status_page_section"
+     },
+     {
+      "id": "231964",
+      "type": "status_page_section"
+     },
+     {
+      "id": "231963",
+      "type": "status_page_section"
+     },
+     {
+      "id": "231961",
+      "type": "status_page_section"
+     },
+     {
+      "id": "250859",
+      "type": "status_page_section"
+     },
+     {
+      "id": "300754",
+      "type": "status_page_section"
+     }
+    ]
+   },
+   "resources": {
+    "data": [
+     {
+      "id": "8475065",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8475068",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8604811",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8604812",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8568824",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8802608",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8752981",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8911095",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8918569",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8966703",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8978884",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8980894",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8982920",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8987968",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8989814",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8991404",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8997896",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8998776",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8691673",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8692046",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8670586",
+      "type": "status_page_resource"
+     },
+     {
+      "id": "8670585",
+      "type": "status_page_resource"
+     }
+    ]
+   },
+   "status_reports": {
+    "data": [
+     {
+      "id": "941865",
+      "type": "status_report"
+     }
+    ]
+   }
+  }
+ },
+ "included": [
+  {
+   "id": "231960",
+   "type": "status_page_section",
+   "attributes": {
+    "name": "Website",
+    "position": 1
+   }
+  },
+  {
+   "id": "231964",
+   "type": "status_page_section",
+   "attributes": {
+    "name": "Inference - Vision",
+    "position": 2
+   }
+  },
+  {
+   "id": "231963",
+   "type": "status_page_section",
+   "attributes": {
+    "name": "Inference - Chat",
+    "position": 3
+   }
+  },
+  {
+   "id": "231961",
+   "type": "status_page_section",
+   "attributes": {
+    "name": "Inference - Images",
+    "position": 6
+   }
+  },
+  {
+   "id": "250859",
+   "type": "status_page_section",
+   "attributes": {
+    "name": "Inference - Embeddings",
+    "position": 7
+   }
+  },
+  {
+   "id": "300754",
+   "type": "status_page_section",
+   "attributes": {
+    "name": "Inference - Voice",
+    "position": 9
+   }
+  },
+  {
+   "id": "8475065",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231960,
+    "resource_id": 2675828,
+    "resource_type": "Monitor",
+    "public_name": "Website",
+    "explanation": "",
+    "position": 1,
+    "availability": 1.0,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8475068",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231960,
+    "resource_id": 2675829,
+    "resource_type": "Monitor",
+    "public_name": "Playground",
+    "explanation": "",
+    "position": 2,
+    "availability": 1.0,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8604811",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 3495308,
+    "resource_type": "Monitor",
+    "public_name": "OpenAI GPT OSS 120B",
+    "explanation": null,
+    "position": 1,
+    "availability": 0.996842,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8604812",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 3495309,
+    "resource_type": "Monitor",
+    "public_name": "OpenAI GPT OSS 20B",
+    "explanation": null,
+    "position": 2,
+    "availability": 0.997853,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8568824",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 3249990,
+    "resource_type": "Monitor",
+    "public_name": "Meta Llama 3.3 70B Instruct Turbo",
+    "explanation": "",
+    "position": 3,
+    "availability": 1.0,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8802608",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4261348,
+    "resource_type": "Monitor",
+    "public_name": "Google Gemma 4 31B IT",
+    "explanation": null,
+    "position": 11,
+    "availability": 0.98468,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8752981",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4145128,
+    "resource_type": "Monitor",
+    "public_name": "Qwen3.5 9B",
+    "explanation": null,
+    "position": 41,
+    "availability": 0.997038,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8911095",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4525055,
+    "resource_type": "Monitor",
+    "public_name": "MiniMax M3",
+    "explanation": null,
+    "position": 53,
+    "availability": 0.998658,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8918569",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4551409,
+    "resource_type": "Monitor",
+    "public_name": "GLM 5.2",
+    "explanation": null,
+    "position": 55,
+    "availability": 0.997704,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8966703",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4682546,
+    "resource_type": "Monitor",
+    "public_name": "Inkling",
+    "explanation": null,
+    "position": 56,
+    "availability": 0.989711,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "downtime",
+      "downtime_duration": 1062.034675,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8978884",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4732671,
+    "resource_type": "Monitor",
+    "public_name": "Kimi K3",
+    "explanation": null,
+    "position": 57,
+    "availability": 0.985741,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "downtime",
+      "downtime_duration": 3593.103233,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8980894",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4754984,
+    "resource_type": "Monitor",
+    "public_name": "Inkling Small",
+    "explanation": null,
+    "position": 58,
+    "availability": 0.969547,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "downtime",
+      "downtime_duration": 1508.924154,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8982920",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4768255,
+    "resource_type": "Monitor",
+    "public_name": "DeepSeek V4 Flash 0731",
+    "explanation": null,
+    "position": 59,
+    "availability": 0.999577,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "downtime",
+      "downtime_duration": 1149.999203,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8987968",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4794292,
+    "resource_type": "Monitor",
+    "public_name": "Muse Glimmer 30B",
+    "explanation": null,
+    "position": 60,
+    "availability": 0.999577,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8989814",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4804801,
+    "resource_type": "Monitor",
+    "public_name": "Qwen3.8-2.4T-A95B",
+    "explanation": null,
+    "position": 61,
+    "availability": 0.983213,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8991404",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4817770,
+    "resource_type": "Monitor",
+    "public_name": "DeepSeek V4 Pro 0813",
+    "explanation": null,
+    "position": 62,
+    "availability": 0.993875,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "downtime",
+      "downtime_duration": 1214.572607,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8997896",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4864471,
+    "resource_type": "Monitor",
+    "public_name": "GLM 5.3 Flash",
+    "explanation": null,
+    "position": 63,
+    "availability": 0.995631,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "recovered",
+      "downtime_duration": 2309.454088,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8998776",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 231963,
+    "resource_id": 4871100,
+    "resource_type": "Monitor",
+    "public_name": "GLM 5.3",
+    "explanation": null,
+    "position": 64,
+    "availability": 0.993939,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "downtime",
+      "downtime_duration": 1292.871799,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8691673",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 250859,
+    "resource_id": 4002818,
+    "resource_type": "Monitor",
+    "public_name": "Multilingual E5 Large Instruct",
+    "explanation": null,
+    "position": 7,
+    "availability": 1.0,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8692046",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 300754,
+    "resource_id": 4003790,
+    "resource_type": "Monitor",
+    "public_name": "Whisper Large V3",
+    "explanation": null,
+    "position": 1,
+    "availability": 0.999883,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8670586",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 300754,
+    "resource_id": 3957342,
+    "resource_type": "Monitor",
+    "public_name": "Orpheus TTS",
+    "explanation": null,
+    "position": 2,
+    "availability": 0.998698,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "8670585",
+   "type": "status_page_resource",
+   "attributes": {
+    "status_page_section_id": 300754,
+    "resource_id": 3957341,
+    "resource_type": "Monitor",
+    "public_name": "Kokoro-82M",
+    "explanation": null,
+    "position": 3,
+    "availability": 0.999643,
+    "status": "operational",
+    "status_history": [
+     {
+      "day": "2026-09-03",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     },
+     {
+      "day": "2026-09-04",
+      "status": "operational",
+      "downtime_duration": 0,
+      "maintenance_duration": 0
+     }
+    ]
+   }
+  },
+  {
+   "id": "5326570",
+   "type": "status_update",
+   "attributes": {
+    "message": "Maintenance ended",
+    "published_at": "2026-07-03T06:59:00.000Z",
+    "published_at_timezone": null,
+    "notify_subscribers": true,
+    "affected_resources": []
+   }
+  },
+  {
+   "id": "5324213",
+   "type": "status_update",
+   "attributes": {
+    "message": "We will be performing scheduled network maintenance on July 2nd, 9 PM – midnight.\n\nDuring this window, some serverless models may experience degraded performance or be temporary unavailability. \nCheck status.together.ai for per-model updates.\n\nWe appreciate your patience as we work through this. The goal remains the same — meaningfully more stable and performant models on the other side of this work.",
+    "published_at": "2026-07-03T04:00:59.000Z",
+    "published_at_timezone": null,
+    "notify_subscribers": true,
+    "affected_resources": []
+   }
+  },
+  {
+   "id": "941865",
+   "type": "status_report",
+   "attributes": {
+    "title": "Scheduled network maintenance",
+    "report_type": "maintenance",
+    "starts_at": "2026-07-03T04:00:59.000Z",
+    "ends_at": "2026-07-03T06:59:00.000Z",
+    "affected_resources": [
+     {
+      "status_page_resource_id": "8802370",
+      "status": "maintenance"
+     },
+     {
+      "status_page_resource_id": "8806939",
+      "status": "maintenance"
+     },
+     {
+      "status_page_resource_id": "8824641",
+      "status": "maintenance"
+     },
+     {
+      "status_page_resource_id": "8827857",
+      "status": "maintenance"
+     },
+     {
+      "status_page_resource_id": "8898048",
+      "status": "maintenance"
+     },
+     {
+      "status_page_resource_id": "8911095",
+      "status": "maintenance"
+     },
+     {
+      "status_page_resource_id": "8912359",
+      "status": "maintenance"
+     },
+     {
+      "status_page_resource_id": "8918569",
+      "status": "maintenance"
+     }
+    ],
+    "aggregate_state": "resolved"
+   },
+   "relationships": {
+    "status_updates": {
+     "data": [
+      {
+       "id": "5326570",
+       "type": "status_update"
+      },
+      {
+       "id": "5324213",
+       "type": "status_update"
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

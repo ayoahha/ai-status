@@ -1,0 +1,675 @@
+[
+ {
+  "service": "bedrock-ap-southeast-6",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-6",
+  "region_name": "New Zealand",
+  "launch_date": 1770595200
+ },
+ {
+  "service": "bedrock-eu-north-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-north-1",
+  "region_name": "Stockholm",
+  "launch_date": 1740614400
+ },
+ {
+  "service": "bedrock-me-south-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "ME"
+  ],
+  "region_id": "me-south-1",
+  "region_name": "Bahrain",
+  "launch_date": 1763424000
+ },
+ {
+  "service": "bedrock-ap-southeast-7",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-7",
+  "region_name": "Thailand",
+  "launch_date": 1758585600
+ },
+ {
+  "service": "bedrock-ap-south-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-south-1",
+  "region_name": "Mumbai",
+  "launch_date": 1714521600
+ },
+ {
+  "service": "bedrock-eu-west-3",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-west-3",
+  "region_name": "Paris",
+  "launch_date": 1712102400
+ },
+ {
+  "service": "bedrock-ap-southeast-3",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-3",
+  "region_name": "Jakarta",
+  "launch_date": 1755734400
+ },
+ {
+  "service": "bedrock-us-east-2",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "us-east-2",
+  "region_name": "Ohio",
+  "launch_date": 1727827200
+ },
+ {
+  "service": "bedrock-af-south-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AF"
+  ],
+  "region_id": "af-south-1",
+  "region_name": "Cape Town",
+  "launch_date": 1763424000
+ },
+ {
+  "service": "bedrock-eu-west-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-west-1",
+  "region_name": "Ireland",
+  "launch_date": 1714521600
+ },
+ {
+  "service": "bedrock-me-central-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "ME"
+  ],
+  "region_id": "me-central-1",
+  "region_name": "UAE",
+  "launch_date": 1758585600
+ },
+ {
+  "service": "bedrock-eu-central-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-central-1",
+  "region_name": "Frankfurt",
+  "launch_date": 1697673600
+ },
+ {
+  "service": "bedrock-sa-east-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "SA"
+  ],
+  "region_id": "sa-east-1",
+  "region_name": "Sao Paulo",
+  "launch_date": 1717718400
+ },
+ {
+  "service": "bedrock-ap-south-2",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-south-2",
+  "region_name": "Hyderabad",
+  "launch_date": 1739923200
+ },
+ {
+  "service": "bedrock-us-east-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "us-east-1",
+  "region_name": "N. Virginia",
+  "launch_date": 1696291200
+ },
+ {
+  "service": "bedrock-ap-northeast-2",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-northeast-2",
+  "region_name": "Seoul",
+  "launch_date": 1727827200
+ },
+ {
+  "service": "bedrock-ap-northeast-3",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-northeast-3",
+  "region_name": "Osaka",
+  "launch_date": 1739923200
+ },
+ {
+  "service": "bedrock-ap-southeast-5",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-5",
+  "region_name": "Malaysia",
+  "launch_date": 1758585600
+ },
+ {
+  "service": "bedrock-eu-west-2",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-west-2",
+  "region_name": "London",
+  "launch_date": 1717718400
+ },
+ {
+  "service": "bedrock-ap-southeast-4",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-4",
+  "region_name": "Melbourne",
+  "launch_date": 1753920000
+ },
+ {
+  "service": "bedrock-eu-south-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-south-1",
+  "region_name": "Milan",
+  "launch_date": 1741910400
+ },
+ {
+  "service": "bedrock-ap-northeast-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-northeast-1",
+  "region_name": "Tokyo",
+  "launch_date": 1696291200
+ },
+ {
+  "service": "bedrock-us-west-2",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "us-west-2",
+  "region_name": "Oregon",
+  "launch_date": 1696291200
+ },
+ {
+  "service": "bedrock-mx-central-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "mx-central-1",
+  "region_name": "Mexico-Central",
+  "launch_date": 1763424000
+ },
+ {
+  "service": "bedrock-us-west-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "us-west-1",
+  "region_name": "N. California",
+  "launch_date": 1753401600
+ },
+ {
+  "service": "bedrock-ap-southeast-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-1",
+  "region_name": "Singapore",
+  "launch_date": 1696291200
+ },
+ {
+  "service": "bedrock-ap-southeast-2",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-2",
+  "region_name": "Sydney",
+  "launch_date": 1712620800
+ },
+ {
+  "service": "bedrock-il-central-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "ME"
+  ],
+  "region_id": "il-central-1",
+  "region_name": "Tel Aviv",
+  "launch_date": 1758585600
+ },
+ {
+  "service": "bedrock-ap-east-2",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-east-2",
+  "region_name": "Taipei",
+  "launch_date": 1758585600
+ },
+ {
+  "service": "bedrock-ca-central-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "ca-central-1",
+  "region_name": "Canada-Central",
+  "launch_date": 1717718400
+ },
+ {
+  "service": "bedrock-ca-west-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "ca-west-1",
+  "region_name": "Calgary",
+  "launch_date": 1763424000
+ },
+ {
+  "service": "bedrock-eu-south-2",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-south-2",
+  "region_name": "Spain",
+  "launch_date": 1741910400
+ },
+ {
+  "service": "bedrock-eu-central-2",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-central-2",
+  "region_name": "Zurich",
+  "launch_date": 1730937600
+ },
+ {
+  "service": "bedrock-us-gov-east-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "GC"
+  ],
+  "region_id": "us-gov-east-1",
+  "region_name": "US-East",
+  "launch_date": 1731369600
+ },
+ {
+  "service": "bedrock-us-gov-west-1",
+  "service_name": "Amazon Bedrock",
+  "event_type_code": "AWS_BEDROCK_OPERATIONAL_ISSUE",
+  "locale": [
+   "GC"
+  ],
+  "region_id": "us-gov-west-1",
+  "region_name": "US-West",
+  "launch_date": 1703116800
+ },
+ {
+  "service": "bedrock-agentcore-eu-north-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-north-1",
+  "region_name": "Stockholm",
+  "launch_date": 1769385600,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-ap-southeast-7",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-7",
+  "region_name": "Thailand",
+  "launch_date": 1782864000,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-ap-south-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-south-1",
+  "region_name": "Mumbai",
+  "launch_date": 1760918400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-eu-west-3",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-west-3",
+  "region_name": "Paris",
+  "launch_date": 1769385600,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-us-east-2",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "us-east-2",
+  "region_name": "Ohio",
+  "launch_date": 1760918400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-eu-west-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-west-1",
+  "region_name": "Ireland",
+  "launch_date": 1760918400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-eu-central-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-central-1",
+  "region_name": "Frankfurt",
+  "launch_date": 1760918400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-sa-east-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "SA"
+  ],
+  "region_id": "sa-east-1",
+  "region_name": "Sao Paulo",
+  "launch_date": 1775606400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-ap-south-2",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-south-2",
+  "region_name": "Hyderabad",
+  "launch_date": 1787702400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-us-east-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "us-east-1",
+  "region_name": "N. Virginia",
+  "launch_date": 1760918400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-ap-northeast-2",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-northeast-2",
+  "region_name": "Seoul",
+  "launch_date": 1769385600,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-ap-southeast-5",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-5",
+  "region_name": "Malaysia",
+  "launch_date": 1782864000,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-eu-west-2",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-west-2",
+  "region_name": "London",
+  "launch_date": 1769385600,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-eu-south-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-south-1",
+  "region_name": "Milan",
+  "launch_date": 1782864000,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-ap-northeast-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-northeast-1",
+  "region_name": "Tokyo",
+  "launch_date": 1760918400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-us-west-2",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "us-west-2",
+  "region_name": "Oregon",
+  "launch_date": 1760918400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-us-west-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "us-west-1",
+  "region_name": "N. California",
+  "launch_date": 1787702400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-ap-southeast-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-1",
+  "region_name": "Singapore",
+  "launch_date": 1760918400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-ap-southeast-2",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "AP"
+  ],
+  "region_id": "ap-southeast-2",
+  "region_name": "Sydney",
+  "launch_date": 1760918400,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-ca-central-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "ca-central-1",
+  "region_name": "Canada-Central",
+  "launch_date": 1769385600,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-eu-south-2",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "EU"
+  ],
+  "region_id": "eu-south-2",
+  "region_name": "Spain",
+  "launch_date": 1782864000,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "bedrock-agentcore-us-gov-west-1",
+  "service_name": "Bedrock AgentCore",
+  "event_type_code": "AWS_BEDROCK_AGENTCORE_OPERATIONAL_ISSUE",
+  "locale": [
+   "GC"
+  ],
+  "region_id": "us-gov-west-1",
+  "region_name": "US-West",
+  "launch_date": 1778716800,
+  "short_name": "Bedrock AgentCore"
+ },
+ {
+  "service": "ec2-us-east-1",
+  "service_name": "Amazon Elastic Compute Cloud",
+  "event_type_code": "AWS_EC2_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "us-east-1",
+  "region_name": "N. Virginia",
+  "launch_date": 1208044800,
+  "short_name": "EC2"
+ },
+ {
+  "service": "sts-us-west-2",
+  "service_name": "AWS Security Token Service",
+  "event_type_code": "AWS_STS_OPERATIONAL_ISSUE",
+  "locale": [
+   "NA"
+  ],
+  "region_id": "us-west-2",
+  "region_name": "Oregon",
+  "launch_date": 1729468800,
+  "short_name": "STS"
+ }
+]
