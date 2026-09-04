@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a class="skip" href="#providers">Aller à la liste des fournisseurs</a>
+  <a class="skip" href="#providers" data-i18n="skip">Aller à la liste des fournisseurs</a>
 
   <!-- Icônes d'état : une forme distincte par état, la couleur n'est jamais seule -->
   <svg hidden aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -30,31 +30,38 @@
 
   <header class="top">
     <div class="summary">
-      <p class="brand">État des fournisseurs IA</p>
+      <div class="brand-row">
+        <p class="brand" data-i18n="brand">État des fournisseurs IA</p>
+        <!-- Sélecteur de langue : boutons à état pressé, utilisables au clavier, aucun rechargement -->
+        <div class="lang" role="group" aria-label="Langue de la page" data-i18n-aria="langGroup">
+          <button type="button" class="lang-btn" data-lang="fr" lang="fr" aria-pressed="true" aria-label="Français">FR</button>
+          <button type="button" class="lang-btn" data-lang="en" lang="en" aria-pressed="false" aria-label="Anglais">EN</button>
+        </div>
+      </div>
       <h1 id="overall" class="overall">Chargement…</h1>
       <div class="refresh-row">
         <p class="meta" id="collected-at"></p>
-        <button id="refresh" type="button" aria-busy="false">Rafraîchir</button>
+        <button id="refresh" type="button" aria-busy="false" data-i18n="refresh">Rafraîchir</button>
         <p class="sr" id="refresh-status" role="status"></p>
       </div>
     </div>
-    <div class="counts" id="counts" role="group" aria-label="Filtrer par état"></div>
+    <div class="counts" id="counts" role="group" aria-label="Filtrer par état" data-i18n-aria="filterByState"></div>
   </header>
 
   <p class="refresh-error" id="refresh-error" role="alert" hidden></p>
   <p class="stale" id="stale" role="status" hidden></p>
 
   <section class="ongoing" id="ongoing" aria-labelledby="ongoing-title" hidden>
-    <h2 id="ongoing-title">En cours</h2>
+    <h2 id="ongoing-title" data-i18n="ongoing">En cours</h2>
     <ul id="ongoing-list" class="ongoing-list"></ul>
   </section>
 
-  <section class="controls" aria-label="Recherche et tri">
-    <input id="search" type="search" placeholder="Fournisseur, modèle ou service…" aria-label="Rechercher un fournisseur, un modèle ou un service">
-    <label class="sort">Tri
+  <section class="controls" aria-label="Recherche et tri" data-i18n-aria="controls">
+    <input id="search" type="search" placeholder="Fournisseur, modèle ou service…" aria-label="Rechercher un fournisseur, un modèle ou un service" data-i18n-placeholder="searchPlaceholder" data-i18n-aria="searchLabel">
+    <label class="sort"><span data-i18n="sort">Tri</span>
       <select id="sort">
-        <option value="severity">par gravité</option>
-        <option value="name">par nom</option>
+        <option value="severity" data-i18n="sortSeverity">par gravité</option>
+        <option value="name" data-i18n="sortName">par nom</option>
       </select>
     </label>
     <p class="meta" id="result-count" aria-live="polite"></p>
@@ -62,26 +69,26 @@
 
   <main id="providers" class="providers"></main>
 
-  <footer class="foot" aria-label="À propos de cette page">
+  <footer class="foot" aria-label="À propos de cette page" data-i18n-aria="footAbout">
     <div class="foot-grid">
       <div>
-        <h2 class="foot-title">Collecte</h2>
-        <p>Toutes les 30 minutes par GitHub Actions. Les données sont publiées avec la page, dans le même déploiement.</p>
+        <h2 class="foot-title" data-i18n="footCollect">Collecte</h2>
+        <p data-i18n="footCollectText">Toutes les 30 minutes par GitHub Actions. Les données sont publiées avec la page, dans le même déploiement.</p>
       </div>
       <div>
-        <h2 class="foot-title">Actualisation</h2>
-        <p>La page recharge les données toutes les 30 minutes, au retour dans un onglet ancien, ou avec le bouton « Rafraîchir ».</p>
+        <h2 class="foot-title" data-i18n="footRefresh">Actualisation</h2>
+        <p data-i18n="footRefreshText">La page recharge les données toutes les 30 minutes, au retour dans un onglet ancien, ou avec le bouton « Rafraîchir ».</p>
       </div>
       <div>
-        <h2 class="foot-title">Lecture</h2>
-        <p>Chaque ligne dépliée donne le périmètre mesuré, la méthode de lecture, la fraîcheur, les incidents, les composants et la page officielle.</p>
+        <h2 class="foot-title" data-i18n="footRead">Lecture</h2>
+        <p data-i18n="footReadText">Chaque ligne dépliée donne le périmètre mesuré, la méthode de lecture, la fraîcheur, les incidents, les composants et la page officielle.</p>
       </div>
       <div>
-        <h2 class="foot-title">Non vérifié</h2>
-        <p>La source n'a pas pu être lue. Ce n'est jamais un « opérationnel » par défaut.</p>
+        <h2 class="foot-title" data-i18n="footUnknown">Non vérifié</h2>
+        <p data-i18n="footUnknownText">La source n’a pas pu être lue. Ce n’est jamais un « opérationnel » par défaut.</p>
       </div>
     </div>
-    <p class="foot-links"><a href="https://github.com/ayoahha/ai-status">Code source et méthode par fournisseur</a></p>
+    <p class="foot-links"><a href="https://github.com/ayoahha/ai-status" data-i18n="footSource">Code source et méthode par fournisseur</a></p>
   </footer>
 
   <script src="app.js"></script>

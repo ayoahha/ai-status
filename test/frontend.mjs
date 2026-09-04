@@ -18,6 +18,10 @@ const statusDoc = (generatedAt, name = 'Fournisseur test') => ({
     operationnel: 'Opérationnel', degradation: 'Dégradation', incident_majeur: 'Incident majeur',
     maintenance: 'Maintenance', indisponible: 'Indisponible', inconnu: 'Non vérifié',
   },
+  labelsEn: {
+    operationnel: 'Operational', degradation: 'Degraded', incident_majeur: 'Major incident',
+    maintenance: 'Maintenance', indisponible: 'Unavailable', inconnu: 'Unverified',
+  },
   summary: {
     worst: 'operationnel',
     counts: { operationnel: 1, degradation: 0, incident_majeur: 0, maintenance: 0, indisponible: 0, inconnu: 0 },
@@ -25,10 +29,10 @@ const statusDoc = (generatedAt, name = 'Fournisseur test') => ({
     activeMaintenances: 0,
   },
   providers: [{
-    id: 'test', name, group: 'us', scope: 'API de test', statusUrl: 'https://example.com/status',
-    status: 'operationnel', reason: 'aucun incident déclaré', sourceText: null,
+    id: 'test', name, group: 'us', scope: 'API de test', scopeEn: 'Test API', statusUrl: 'https://example.com/status',
+    status: 'operationnel', reason: 'aucun incident déclaré', reasonEn: 'no incident reported', sourceText: null,
     collectedAt: generatedAt,
-    collect: { state: 'ok', method: 'statuspage', error: null },
+    collect: { state: 'ok', method: 'statuspage', error: null, errorEn: null },
     components: [{ name: 'API', kind: 'service', status: 'operationnel' }],
     incidents: [], maintenances: [],
   }],
@@ -245,6 +249,101 @@ try {
   }
 
   console.log('OK — actualisation navigateur fiable');
+
+  // Bilingue : FR → EN → FR sans rechargement ni requête ; textes visibles et accessibles ;
+  // « Statut global » pour une carte sans composant ; filtres, recherche et cartes ouvertes conservés
+  const bilingual = statusDoc(new Date(NOW).toISOString(), 'Fournisseur test');
+  bilingual.providers.push({
+    id: 'global', name: 'Alibaba Cloud', group: 'cn', scope: 'Statut global du cloud', scopeEn: 'Global cloud status', statusUrl: 'https://example.com/global',
+    status: 'degradation', reason: '1 incident en cours', reasonEn: '1 incident in progress', sourceText: null, collectedAt: bilingual.generatedAt,
+    collect: { state: 'ok', method: 'alibaba', error: null, errorEn: null }, components: [],
+    incidents: [{ title: 'Network issue', status: 'en cours', impact: null, startedAt: bilingual.generatedAt, updatedAt: null, url: null, components: [] }], maintenances: [],
+  });
+  bilingual.summary = { worst: 'degradation', counts: { operationnel: 1, degradation: 1, incident_majeur: 0, maintenance: 0, indisponible: 0, inconnu: 0 }, activeIncidents: 1, activeMaintenances: 0 };
+  await scenario([{ body: bilingual }], async (page) => {
+    await page.getByText('Fournisseur test', { exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.lang), 'fr');
+    assert.equal(await page.title(), 'État des fournisseurs IA');
+    assert.equal(await page.locator('#global .card-count').textContent(), 'Statut global');
+    assert.equal(await page.locator('#global .card-reason').textContent(), '1 incident en cours');
+    assert.equal(await page.locator('#g-cn').textContent(), 'Fournisseurs · Chine');
+    // État à conserver : recherche vide, filtre « dégradation », tri par nom, carte ouverte
+    await page.locator('#sort').selectOption('name');
+    await page.locator('.chip[data-status="degradation"]').click();
+    await page.locator('#global details').evaluate((details) => { details.open = true; });
+    assert.equal(await page.locator('.card').count(), 1);
+
+    const en = page.getByRole('button', { name: 'Anglais' });
+    await en.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(requests, 1, 'le changement de langue ne fait aucune requête');
+    assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
+    assert.equal(await page.title(), 'AI provider status');
+    assert.equal(await page.getByRole('button', { name: 'English' }).getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.getByRole('button', { name: 'French' }).getAttribute('aria-pressed'), 'false');
+    assert.equal(await page.getByRole('link', { name: 'Skip to the provider list' }).count(), 1);
+    assert.equal(await page.getByRole('button', { name: 'Refresh' }).count(), 1);
+    assert.equal(await page.getByRole('searchbox', { name: 'Search a provider, a model or a service' }).count(), 1);
+    assert.equal(await page.getByRole('group', { name: 'Filter by state' }).count(), 1);
+    assert.equal(await page.locator('#ongoing-title').textContent(), 'Ongoing');
+    assert.match(await page.locator('#overall').textContent(), /Degraded at 1 provider/);
+    assert.equal(await page.locator('#global .card-count').textContent(), 'Global status');
+    assert.equal(await page.locator('#global .card-reason').textContent(), '1 incident in progress');
+    assert.equal(await page.locator('#global .card-scope').textContent(), 'Global cloud status');
+    assert.equal(await page.locator('#global .card-state').textContent(), 'Degraded');
+    assert.equal(await page.locator('#g-cn').textContent(), 'Providers · China');
+    assert.match(await page.locator('#collected-at').textContent(), /^Refreshed .* · collected /);
+    assert.equal(await page.locator('.foot-title').first().textContent(), 'Collection');
+    assert.match(await page.locator('#global .meta').textContent(), /Read via Alibaba Cloud API/);
+    assert.equal(await page.locator('#global .incident-title').getAttribute('lang'), 'en', 'titre brut de la source : langue détectée, jamais traduit');
+    // État conservé : filtre, tri, carte ouverte
+    assert.equal(await page.locator('.card').count(), 1, 'filtre conservé');
+    assert.equal(await page.locator('.chip[data-status="degradation"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('#sort').inputValue(), 'name');
+    assert.equal(await page.locator('#global details').getAttribute('open'), '', 'carte ouverte conservée');
+    assert.equal(await page.evaluate(() => localStorage.getItem('lang')), 'en');
+
+    await page.locator('.chip[data-status="degradation"]').click();
+    await page.getByRole('searchbox').fill('test');
+    assert.equal(await page.locator('.card').count(), 1);
+    await page.getByRole('button', { name: 'French' }).click();
+    assert.equal(requests, 1);
+    assert.equal(await page.evaluate(() => document.documentElement.lang), 'fr');
+    assert.equal(await page.getByRole('button', { name: 'Français' }).getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('#global').count(), 0, 'recherche conservée');
+    assert.equal(await page.getByRole('searchbox').inputValue(), 'test');
+    assert.equal(await page.locator('#test .card-count').textContent(), '1 composant');
+    assert.equal(await page.locator('#result-count').textContent(), '1 fournisseur sur 2');
+    assert.equal(await page.evaluate(() => localStorage.getItem('lang')), 'fr');
+  });
+
+  // Choix mémorisé : une page rouverte en anglais reste en anglais, y compris en échec de chargement
+  await scenario([{ status: 500 }, { body: bilingual }], async (page) => {
+    await page.getByText('Data unavailable', { exact: true }).waitFor();
+    assert.match(await page.locator('#refresh-error').textContent(), /Refresh failed/);
+    await page.getByRole('button', { name: 'French' }).click();
+    await page.getByText('Données indisponibles', { exact: true }).waitFor();
+    assert.match(await page.locator('#refresh-error').textContent(), /Actualisation impossible/);
+    await page.getByRole('button', { name: 'Anglais' }).click();
+    await page.getByRole('button', { name: 'Refresh' }).click();
+    await page.getByText('Fournisseur test', { exact: true }).waitFor();
+    assert.equal(await page.locator('#test .card-scope').textContent(), 'Test API');
+  }, { storageState: { cookies: [], origins: [{ origin: `http://127.0.0.1:${port}`, localStorage: [{ name: 'lang', value: 'en' }] }] } });
+
+  for (const width of [390, 1440]) {
+    for (const language of ['fr', 'en']) {
+      await scenario([{ body: bilingual }], async (page) => {
+        await page.getByText('Fournisseur test', { exact: true }).waitFor();
+        if (language === 'en') await page.getByRole('button', { name: 'Anglais' }).click();
+        await page.locator('#global details').evaluate((details) => { details.open = true; });
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), true, `${width}px ${language}`);
+        assert.equal(await page.getByRole('button', { name: language === 'en' ? 'English' : 'Français' }).isVisible(), true);
+      }, { viewport: { width, height: 900 } });
+    }
+  }
+
+  console.log('OK — sélecteur FR / EN sans rechargement');
+
 } finally {
   if (browser) await browser.close();
   await new Promise((resolve) => server.close(resolve));

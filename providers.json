@@ -8,7 +8,8 @@
       "kind": "statuspage",
       "url": "https://status.claude.com"
     },
-    "scope": "Claude API, claude.ai, Claude Code"
+    "scope": "Claude API, claude.ai, Claude Code",
+    "scopeEn": "Claude API, claude.ai, Claude Code"
   },
   {
     "id": "openai",
@@ -19,7 +20,8 @@
       "kind": "statuspage",
       "url": "https://status.openai.com"
     },
-    "scope": "API OpenAI, ChatGPT, Codex"
+    "scope": "API OpenAI, ChatGPT, Codex",
+    "scopeEn": "OpenAI API, ChatGPT, Codex"
   },
   {
     "id": "xai",
@@ -30,7 +32,8 @@
       "kind": "browser",
       "url": "https://status.x.ai"
     },
-    "scope": "Services xAI listés sur status.x.ai (API, Grok, apps)"
+    "scope": "Services xAI listés sur status.x.ai (API, Grok, apps)",
+    "scopeEn": "xAI services listed on status.x.ai (API, Grok, apps)"
   },
   {
     "id": "google",
@@ -45,7 +48,8 @@
         "Gemini"
       ]
     },
-    "scope": "Produits Vertex AI et Gemini de Google Cloud, toutes régions"
+    "scope": "Produits Vertex AI et Gemini de Google Cloud, toutes régions",
+    "scopeEn": "Vertex AI and Gemini products on Google Cloud, all regions"
   },
   {
     "id": "cursor",
@@ -56,18 +60,46 @@
       "kind": "statuspage",
       "url": "https://status.cursor.com"
     },
-    "scope": "Client Cursor et ses modèles hébergés"
+    "scope": "Client Cursor et ses modèles hébergés",
+    "scopeEn": "Cursor client and its hosted models"
+  },
+  {
+    "id": "perplexity",
+    "name": "Perplexity",
+    "group": "us",
+    "statusUrl": "https://status.perplexity.com",
+    "source": {
+      "kind": "instatus",
+      "url": "https://status.perplexity.com"
+    },
+    "scope": "Site Perplexity, API et Computer",
+    "scopeEn": "Perplexity website, API and Computer"
+  },
+  {
+    "id": "mistral",
+    "name": "Mistral AI",
+    "group": "eu",
+    "statusUrl": "https://status.mistral.ai",
+    "source": {
+      "kind": "checkly",
+      "url": "https://status.mistral.ai",
+      "slug": "mistral-ai"
+    },
+    "modelPattern": "API$",
+    "scope": "API Mistral (chat, embeddings, OCR, agents…), Le Chat, console et site",
+    "scopeEn": "Mistral API (chat, embeddings, OCR, agents…), Le Chat, console and website"
   },
   {
     "id": "alibaba",
-    "name": "Alibaba Cloud (statut global)",
+    "name": "Alibaba Cloud",
     "group": "cn",
     "statusUrl": "https://status.alibabacloud.com",
     "source": {
       "kind": "alibaba",
       "url": "https://status.alibabacloud.com"
     },
-    "scope": "Statut global du cloud Alibaba, pas Qwen ni Model Studio en particulier"
+    "scope": "Statut global du cloud Alibaba (toutes régions et produits), pas Qwen ni Model Studio en particulier",
+    "scopeEn": "Global Alibaba Cloud status (all regions and products), not Qwen or Model Studio specifically"
   },
   {
     "id": "deepseek",
@@ -80,7 +112,8 @@
       "pageId": "6410630422455"
     },
     "modelPattern": "^DeepSeek",
-    "scope": "API DeepSeek par modèle"
+    "scope": "API DeepSeek par modèle",
+    "scopeEn": "DeepSeek API, per model"
   },
   {
     "id": "moonshot",
@@ -92,7 +125,8 @@
       "url": "https://status.moonshot.cn"
     },
     "modelPattern": "Model$",
-    "scope": "Kimi, plateforme ouverte et modèles"
+    "scope": "Kimi, plateforme ouverte et modèles",
+    "scopeEn": "Kimi, open platform and models"
   },
   {
     "id": "zhipu",
@@ -102,9 +136,11 @@
     "source": {
       "kind": "unavailable",
       "url": "https://status.zhipuai.cn",
-      "note": "Page de statut inaccessible depuis l'extérieur de la Chine (connexion filtrée, vérifié depuis la CI). Aucune requête n'est tentée."
+      "note": "Page de statut inaccessible depuis l'extérieur de la Chine (connexion filtrée, vérifié depuis la CI). Aucune requête n'est tentée.",
+      "noteEn": "Status page unreachable from outside China (filtered connection, verified from CI). No request is attempted."
     },
-    "scope": "GLM / plateforme BigModel"
+    "scope": "GLM / plateforme BigModel",
+    "scopeEn": "GLM / BigModel platform"
   },
   {
     "id": "minimax",
@@ -115,7 +151,62 @@
       "kind": "statuspage",
       "url": "https://status.minimaxi.com"
     },
-    "scope": "API MiniMax (LLM, voix, vidéo)"
+    "scope": "API MiniMax (LLM, voix, vidéo)",
+    "scopeEn": "MiniMax API (LLM, voice, video)"
+  },
+  {
+    "id": "tencent-hunyuan",
+    "name": "Tencent Hunyuan",
+    "group": "cn",
+    "statusUrl": "https://status.cloud.tencent.com",
+    "source": {
+      "kind": "tencent",
+      "url": "https://status.cloud.tencent.com",
+      "regionId": "non-regional",
+      "productIds": [
+        "hunyuan",
+        "aiart",
+        "vclm",
+        "ai3d",
+        "lke"
+      ]
+    },
+    "scope": "Produits Hunyuan de Tencent Cloud (LLM, image, vidéo, 3D, agents), non régionaux",
+    "scopeEn": "Tencent Cloud Hunyuan products (LLM, image, video, 3D, agents), non-regional"
+  },
+  {
+    "id": "volcengine-ark",
+    "name": "ByteDance / Doubao (Volcengine Ark)",
+    "group": "cn",
+    "statusUrl": "https://status.volcengine.com",
+    "source": {
+      "kind": "volcengine",
+      "url": "https://status.volcengine.com",
+      "product": "ModelArk",
+      "productLabel": "火山方舟",
+      "regions": [
+        "cn-beijing",
+        "cn-shanghai",
+        "cn-guangzhou",
+        "ap-southeast-1"
+      ]
+    },
+    "scope": "Plateforme Volcengine Ark (火山方舟) qui sert les modèles Doubao, par région",
+    "scopeEn": "Volcengine Ark (火山方舟) platform serving Doubao models, per region"
+  },
+  {
+    "id": "baidu-ernie",
+    "name": "Baidu ERNIE",
+    "group": "cn",
+    "statusUrl": "https://cloud.baidu.com/product-s/qianfan_home",
+    "source": {
+      "kind": "unavailable",
+      "url": "https://cloud.baidu.com/product-s/qianfan_home",
+      "note": "Aucune page de statut publique trouvée pour Baidu AI Cloud ni Qianfan (recherche du 2026-09-04 : cloud.baidu.com, intl.cloud.baidu.com, sous-domaines status.*). Aucune requête n'est tentée.",
+      "noteEn": "No public status page found for Baidu AI Cloud or Qianfan (searched 2026-09-04: cloud.baidu.com, intl.cloud.baidu.com, status.* subdomains). No request is attempted."
+    },
+    "scope": "Plateforme Qianfan / modèles ERNIE",
+    "scopeEn": "Qianfan platform / ERNIE models"
   },
   {
     "id": "groq",
@@ -127,7 +218,8 @@
       "url": "https://groqstatus.com"
     },
     "modelPattern": "^(llama|whisper|\\S+/\\S+$)",
-    "scope": "API Groq et modèles hébergés"
+    "scope": "API Groq et modèles hébergés",
+    "scopeEn": "Groq API and hosted models"
   },
   {
     "id": "replicate",
@@ -138,7 +230,8 @@
       "kind": "statuspage",
       "url": "https://replicatestatus.com"
     },
-    "scope": "API Replicate et matériel GPU"
+    "scope": "API Replicate et matériel GPU",
+    "scopeEn": "Replicate API and GPU hardware"
   },
   {
     "id": "cohere",
@@ -150,7 +243,8 @@
       "url": "https://status.cohere.com"
     },
     "modelPattern": "^(command|c4ai|embed-|rerank|tiny-aya)",
-    "scope": "API Cohere et modèles"
+    "scope": "API Cohere et modèles",
+    "scopeEn": "Cohere API and models"
   },
   {
     "id": "fireworks",
@@ -162,6 +256,72 @@
       "url": "https://status.fireworks.ai"
     },
     "modelPattern": ".",
-    "scope": "Modèles servis par Fireworks"
+    "scope": "Modèles servis par Fireworks",
+    "scopeEn": "Models served by Fireworks"
+  },
+  {
+    "id": "together",
+    "name": "Together AI",
+    "group": "cloud",
+    "statusUrl": "https://status.together.ai",
+    "source": {
+      "kind": "betterstack",
+      "url": "https://status.together.ai"
+    },
+    "modelPattern": "^(?!(Website|Playground)$)",
+    "scope": "Site, Playground et modèles servis par Together AI",
+    "scopeEn": "Website, Playground and models served by Together AI"
+  },
+  {
+    "id": "openrouter",
+    "name": "OpenRouter",
+    "group": "cloud",
+    "statusUrl": "https://status.openrouter.ai",
+    "source": {
+      "kind": "onlineornot",
+      "url": "https://status.openrouter.ai"
+    },
+    "scope": "Passerelle OpenRouter : site, API chat/models/generation, authentification ; pas les fournisseurs amont",
+    "scopeEn": "OpenRouter gateway: website, chat/models/generation API, authentication; not upstream providers"
+  },
+  {
+    "id": "aws-bedrock",
+    "name": "AWS Bedrock",
+    "group": "cloud",
+    "statusUrl": "https://health.aws.amazon.com/health/status",
+    "source": {
+      "kind": "aws",
+      "url": "https://health.aws.amazon.com/health/status",
+      "eventsUrl": "https://health.aws.amazon.com/public/currentevents",
+      "servicesUrl": "https://servicedata-eu-west-1-prod.s3.amazonaws.com/services.json",
+      "serviceName": "Amazon Bedrock"
+    },
+    "scope": "Amazon Bedrock, une entrée par région AWS ; pas les autres services AWS",
+    "scopeEn": "Amazon Bedrock, one entry per AWS region; not other AWS services"
+  },
+  {
+    "id": "azure-ai",
+    "name": "Microsoft Azure AI",
+    "group": "cloud",
+    "statusUrl": "https://azure.status.microsoft/en-us/status",
+    "source": {
+      "kind": "azure",
+      "url": "https://azure.status.microsoft/en-us/status",
+      "services": [
+        "Azure OpenAI Service",
+        "Foundry Models",
+        "Foundry Agent Service",
+        "Azure AI Search",
+        "Azure AI Speech",
+        "Azure AI Language",
+        "Azure AI Vision",
+        "Azure AI Document Intelligence",
+        "Azure AI Content Safety",
+        "Azure AI Translator",
+        "Machine Learning Service"
+      ]
+    },
+    "scope": "Services IA Azure (Azure OpenAI, Foundry, AI Search, Speech…) sur le tableau public, toutes régions ; incidents à large impact seulement",
+    "scopeEn": "Azure AI services (Azure OpenAI, Foundry, AI Search, Speech…) on the public table, all regions; broad-impact incidents only"
   }
 ]

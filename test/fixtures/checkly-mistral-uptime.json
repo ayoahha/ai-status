@@ -1,0 +1,510 @@
+{
+ "metadata": [
+  {
+   "id": "7f8b1452-5a3d-4a38-a497-fdd11f624a3f",
+   "name": "API",
+   "order": 0,
+   "services": [
+    {
+     "id": "c4869a5a-054c-4c1b-88d1-3d195ba58511",
+     "name": "Chat Completions API",
+     "createdAt": "2025-06-01T18:12:11.236Z",
+     "order": 0
+    },
+    {
+     "id": "6d1417e5-81f5-44f4-bfd4-d2eb44d95988",
+     "name": "Embeddings API",
+     "createdAt": "2025-06-01T18:12:11.236Z",
+     "order": 1
+    },
+    {
+     "id": "09f74bbf-a6e6-4751-a057-70da6c502c06",
+     "name": "OCR API",
+     "createdAt": "2025-06-01T18:12:11.236Z",
+     "order": 2
+    },
+    {
+     "id": "d7e0541d-b743-4cad-96cb-dd1395422904",
+     "name": "Agents API",
+     "createdAt": "2025-11-03T15:00:40.188Z",
+     "order": 3
+    },
+    {
+     "id": "9f01cfda-c067-426b-b1aa-081541169174",
+     "name": "Conversations API",
+     "createdAt": "2026-03-20T16:41:26.945Z",
+     "order": 4
+    },
+    {
+     "id": "d8e1e02e-48a4-4d97-8168-a8aabc1c51fb",
+     "name": "Audio API",
+     "createdAt": "2025-06-01T18:12:11.236Z",
+     "order": 5
+    },
+    {
+     "id": "033ab409-a16e-4574-aef5-f2f0afc1f6cd",
+     "name": "Integrations API",
+     "createdAt": "2025-06-01T18:12:11.236Z",
+     "order": 6
+    },
+    {
+     "id": "4051fbf9-fea4-434a-90c1-b347c16e02ba",
+     "name": "Files API",
+     "createdAt": "2026-03-09T13:17:45.882Z",
+     "order": 7
+    },
+    {
+     "id": "78e74758-aa8f-4067-9147-d7f1ab90849a",
+     "name": "Batch API",
+     "createdAt": "2026-03-09T13:20:33.775Z",
+     "order": 8
+    },
+    {
+     "id": "02a249ad-72d5-432a-8937-a5ab69a0b7f8",
+     "name": "Workflows API",
+     "createdAt": "2026-04-29T09:15:28.442Z",
+     "order": 9
+    },
+    {
+     "id": "0267b904-a20b-4c0a-b6b6-cc51037d0497",
+     "name": "Prompts API",
+     "createdAt": "2026-08-19T14:51:18.494Z",
+     "order": 10
+    },
+    {
+     "id": "79082ade-c29e-47e6-a85e-52c34f21ec35",
+     "name": "Skills API",
+     "createdAt": "2026-08-19T14:51:18.601Z",
+     "order": 11
+    }
+   ]
+  },
+  {
+   "id": "9bdbdb2d-2afe-4907-82e4-4b01ff40b8ad",
+   "name": "Services",
+   "order": 1,
+   "services": [
+    {
+     "id": "69c33753-b109-4a61-a281-0b52e7b41db4",
+     "name": "Le Console (developer tools)",
+     "createdAt": "2025-06-01T18:12:11.236Z",
+     "order": 0
+    },
+    {
+     "id": "c3a1efcb-24a2-4b8e-99da-bb28a4cd5af8",
+     "name": "Documentation",
+     "createdAt": "2025-06-01T18:12:11.236Z",
+     "order": 1
+    },
+    {
+     "id": "edb2d9fb-f852-4b73-8fd4-e0465b90f4a1",
+     "name": "Vibe",
+     "createdAt": "2025-06-01T18:12:11.236Z",
+     "order": 2
+    },
+    {
+     "id": "0180149f-f9e6-4cfd-9819-26e2f7f53258",
+     "name": "Document Library",
+     "createdAt": "2026-06-29T08:10:41.618Z",
+     "order": 3
+    },
+    {
+     "id": "24adc35f-5fc7-4ed8-89e3-abb57a11ba74",
+     "name": "Mistral.ai Website",
+     "createdAt": "2025-06-01T18:12:11.236Z",
+     "order": 4
+    }
+   ]
+  }
+ ],
+ "uptime": [
+  {
+   "id": "7f8b1452-5a3d-4a38-a497-fdd11f624a3f",
+   "name": "API",
+   "services": [
+    {
+     "id": "c4869a5a-054c-4c1b-88d1-3d195ba58511",
+     "name": "Chat Completions API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": [
+        {
+         "id": "0ef54c57-d861-4f60-81cd-b27cebabf7b4",
+         "name": "Completion API Degraded - glm-5-2",
+         "duration": 393,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-03T01:38:48.827Z"
+        },
+        {
+         "id": "d9d6b441-5cfd-4da6-8cb5-e781e02f5ce5",
+         "name": "Completion API Degraded - glm-5-2",
+         "duration": 38,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-03T03:19:55.270Z"
+        },
+        {
+         "id": "4224a6a6-4a22-4a3e-86b8-33583c65a942",
+         "name": "Completion API Degraded - glm-5-2",
+         "duration": 415,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-03T06:02:52.968Z"
+        },
+        {
+         "id": "581ab454-42e9-476f-b5aa-67a28377dcc3",
+         "name": "Completion API Degraded - glm-5-2",
+         "duration": 170,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-03T07:05:52.773Z"
+        },
+        {
+         "id": "1874121f-9929-41a6-a6a5-44af41115d42",
+         "name": "Completion API Degraded - glm-5-2",
+         "duration": 534,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-03T07:13:55.223Z"
+        },
+        {
+         "id": "f0151c87-169e-4bbc-bf18-9020b1ceb07e",
+         "name": "Completion API Degraded - glm-5-2",
+         "duration": 953,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-03T14:25:55.086Z"
+        }
+       ]
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 99.481
+    },
+    {
+     "id": "6d1417e5-81f5-44f4-bfd4-d2eb44d95988",
+     "name": "Embeddings API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 94.337
+    },
+    {
+     "id": "09f74bbf-a6e6-4751-a057-70da6c502c06",
+     "name": "OCR API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 99.835
+    },
+    {
+     "id": "d7e0541d-b743-4cad-96cb-dd1395422904",
+     "name": "Agents API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 99.931
+    },
+    {
+     "id": "9f01cfda-c067-426b-b1aa-081541169174",
+     "name": "Conversations API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": [
+        {
+         "id": "bac9427a-c64a-447d-8fae-de4b53bc1283",
+         "name": "Conversations API Degraded",
+         "duration": 288,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-03T07:15:14.921Z"
+        },
+        {
+         "id": "b822d6a1-968f-45b3-9686-5e5f3fc8646b",
+         "name": "Conversations API Degraded",
+         "duration": 575,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-03T14:35:17.701Z"
+        },
+        {
+         "id": "42d40d86-1afb-43ab-a24b-09658eae5953",
+         "name": "Conversations API Degraded",
+         "duration": 538,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-03T14:54:38.291Z"
+        }
+       ]
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 99.451
+    },
+    {
+     "id": "d8e1e02e-48a4-4d97-8168-a8aabc1c51fb",
+     "name": "Audio API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": [
+        {
+         "id": "04dbc8d6-bbd3-44fc-b236-371e1edeb00e",
+         "name": "Audio API Text-to-Speech Degraded",
+         "duration": 509,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-04T10:26:24.415Z"
+        },
+        {
+         "id": "395324c5-09d0-4f54-b0b3-b90fcfd7b529",
+         "name": "Audio API Text-to-Speech Degraded",
+         "duration": 235,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-04T10:39:24.455Z"
+        }
+       ]
+      }
+     ],
+     "uptime": 99.947
+    },
+    {
+     "id": "033ab409-a16e-4574-aef5-f2f0afc1f6cd",
+     "name": "Integrations API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": [
+        {
+         "id": "d5954666-18d2-4e76-8737-caf1e28f023e",
+         "name": "Integrations API Degraded",
+         "duration": 55,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-04T01:13:21.050Z"
+        }
+       ]
+      }
+     ],
+     "uptime": 99.917
+    },
+    {
+     "id": "4051fbf9-fea4-434a-90c1-b347c16e02ba",
+     "name": "Files API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 99.972
+    },
+    {
+     "id": "78e74758-aa8f-4067-9147-d7f1ab90849a",
+     "name": "Batch API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 99.912
+    },
+    {
+     "id": "02a249ad-72d5-432a-8937-a5ab69a0b7f8",
+     "name": "Workflows API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 99.919
+    },
+    {
+     "id": "0267b904-a20b-4c0a-b6b6-cc51037d0497",
+     "name": "Prompts API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 99.998
+    },
+    {
+     "id": "79082ade-c29e-47e6-a85e-52c34f21ec35",
+     "name": "Skills API",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": [
+        {
+         "id": "f4a10a95-ae80-467f-bb10-ca9aa98652ae",
+         "name": "AI Registry Skills API Degraded",
+         "duration": 594,
+         "severity": "MEDIUM",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-04T01:11:12.861Z"
+        }
+       ]
+      }
+     ],
+     "uptime": 99.991
+    }
+   ],
+   "uptime": 99.391
+  },
+  {
+   "id": "9bdbdb2d-2afe-4907-82e4-4b01ff40b8ad",
+   "name": "Services",
+   "services": [
+    {
+     "id": "69c33753-b109-4a61-a281-0b52e7b41db4",
+     "name": "Le Console (developer tools)",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 99.965
+    },
+    {
+     "id": "c3a1efcb-24a2-4b8e-99da-bb28a4cd5af8",
+     "name": "Documentation",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 100
+    },
+    {
+     "id": "edb2d9fb-f852-4b73-8fd4-e0465b90f4a1",
+     "name": "Vibe",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": [
+        {
+         "id": "a5bcd88b-80bc-435f-aa4c-5bcd25b5e257",
+         "name": "Vibe Code Web is unable to provision a sandbox in new sessions",
+         "duration": 5324,
+         "severity": "MAJOR",
+         "lastUpdateStatus": "RESOLVED",
+         "created_at": "2026-09-03T12:55:31.371Z"
+        }
+       ]
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 99.022
+    },
+    {
+     "id": "0180149f-f9e6-4cfd-9819-26e2f7f53258",
+     "name": "Document Library",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 100
+    },
+    {
+     "id": "24adc35f-5fc7-4ed8-89e3-abb57a11ba74",
+     "name": "Mistral.ai Website",
+     "days": [
+      {
+       "date": "2026-09-03T00:00:00.000Z",
+       "events": []
+      },
+      {
+       "date": "2026-09-04T00:00:00.000Z",
+       "events": []
+      }
+     ],
+     "uptime": 100
+    }
+   ],
+   "uptime": 99.797
+  }
+ ],
+ "partialError": false
+}
