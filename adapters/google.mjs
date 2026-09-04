@@ -33,7 +33,7 @@ export async function collect(provider, get) {
       url: i.uri ? `${base}${i.uri.startsWith('/') ? '' : '/'}${i.uri}` : null,
     }))
     // SERVICE_INFORMATION (impact null) est informatif : ignoré
-    .filter((i) => i.products.length > 0 && i.impact);
+    .filter((i) => i.products.length > 0 && i.impact !== null);
 
   const impacted = [...new Set(ongoing.flatMap((i) => i.products))];
   // État d'un produit = pire impact des incidents ouverts qui le citent

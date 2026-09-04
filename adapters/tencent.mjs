@@ -20,12 +20,20 @@ export async function collect(provider, get) {
   const base = provider.source.url.replace(/\/+$/, '');
   const region = provider.source.regionId;
   const ids = provider.source.productIds ?? [];
+  if (!Array.isArray(ids) || ids.length === 0 || new Set(ids).size !== ids.length) throw fail('schema', 'productIds Tencent');
   const today = new Date().toISOString().slice(0, 10);
   const url = `${base}/v1/api/status/DescribeProductEventForRegionInPeriod?RegionId=${encodeURIComponent(region)}&EndDate=${today}&NumOfDay=1`;
   const categories = (await get(url))?.Response?.Data?.CategoryList;
   if (!Array.isArray(categories)) throw fail('schema', 'DescribeProductEventForRegionInPeriod (CategoryList)');
-  const products = categories.flatMap((c) => c.ProductList ?? []).filter((p) => ids.includes(p.ProductId));
-  if (products.length === 0) throw fail('scope', `${ids.join(', ')} @ ${region}`);
+  const selected = categories.flatMap((c) => Array.isArray(c?.ProductList) ? c.ProductList : []).filter((p) => ids.includes(p?.ProductId));
+  const productsById = new Map();
+  for (const product of selected) {
+    if (productsById.has(product.ProductId)) throw fail('scope', `produit dupliqué ${product.ProductId} @ ${region}`);
+    productsById.set(product.ProductId, product);
+  }
+  const missing = ids.filter((id) => !productsById.has(id));
+  if (missing.length) throw fail('scope', `${missing.join(', ')} @ ${region}`);
+  const products = ids.map((id) => productsById.get(id));
   const components = products.map((p) => ({ name: p.ProductName ?? p.ProductId, status: tencentStatus(p.CurrentStatus) }));
   const incidents = products
     .filter((p) => p.CurrentStatus !== 'NORMAL' && (p.CurrentEvent || p.ProductEventTitle))

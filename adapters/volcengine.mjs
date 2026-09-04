@@ -1,4 +1,5 @@
 import { fail } from '../lib/errors.mjs';
+import { elements, elementText, wholeElement } from '../lib/markup.mjs';
 
 // Volcengine status (status.volcengine.com, plateforme Ark qui sert les modèles Doubao) :
 // l'API BFF de la page (/api/v1/shd/prefetch-shd) répond 401 hors navigateur, contrôle
@@ -7,20 +8,34 @@ import { fail } from '../lib/errors.mjs';
 // Le flux liste l'historique complet ; un événement terminé porte « (已恢复) » dans son
 // titre, un événement en cours ne le porte pas. Titre de canal « …(<région>)服务状态 » :
 // une région inconnue renvoie des parenthèses vides et est traitée comme illisible
-const ITEM = /<item>([\s\S]*?)<\/item>/g;
-const tag = (xml, name) => {
-  const m = xml.match(new RegExp(`<${name}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`));
-  return m ? m[1].trim() : null;
+const REGION = {
+  'cn-beijing': '华北2（北京）',
+  'cn-shanghai': '华东2（上海）',
+  'cn-guangzhou': '华南1（广州）',
+  'ap-southeast-1': '亚太东南（柔佛）',
 };
+const schema = (detail) => { throw fail('schema', `flux RSS Volcengine (${detail})`); };
 
-export function parseVolcengineRss(xml) {
-  const channel = xml.match(/<channel>[\s\S]*?<title>([^<]*)<\/title>/);
-  const region = channel?.[1]?.match(/\(([^)]*)\)服务状态$/)?.[1] ?? null;
-  const items = [...xml.matchAll(ITEM)].map((m) => ({
-    title: tag(m[1], 'title') ?? '',
-    description: tag(m[1], 'description') ?? '',
-    pubDate: tag(m[1], 'pubDate'),
-  }));
+export function parseVolcengineRss(xml, expectedRegion = null) {
+  if (typeof xml !== 'string' || /<!DOCTYPE|<!ENTITY/i.test(xml)) schema('XML refusé');
+  const root = wholeElement(xml, 'rss', { declaration: true });
+  if (!root || root.attributes.match(/\bversion=["']([^"']+)["']/)?.[1] !== '2.0') schema('rss 2.0');
+  const channel = wholeElement(root.body, 'channel');
+  if (!channel) schema('channel');
+  const blocks = elements(channel.body, 'item');
+  if (!blocks) schema('item incomplet');
+  const header = channel.body.slice(0, blocks[0]?.start ?? channel.body.length);
+  if (elementText(header, 'link') !== 'https://status.volcengine.com/') schema('channel');
+  const title = elementText(header, 'title');
+  const region = title?.match(/^火山引擎火山方舟大模型服务平台\((.+)\)服务状态$/)?.[1] ?? null;
+  if (!region || (expectedRegion && REGION[expectedRegion] !== region)) schema('région');
+  const items = blocks.map(({ body }) => {
+    const title = elementText(body, 'title');
+    const description = elementText(body, 'description');
+    const pubDate = elementText(body, 'pubDate');
+    if (!title || description === null || !pubDate || !Number.isFinite(Date.parse(pubDate)) || elementText(body, 'link') !== 'https://status.volcengine.com/') schema('item');
+    return { title, description, pubDate };
+  });
   return { region, items };
 }
 
@@ -33,8 +48,8 @@ export async function collect(provider, get) {
   // Échec par région capturé ici : une région illisible ne fait pas échouer les autres
   const results = await Promise.all(regions.map(async (r) => {
     try {
-      const parsed = parseVolcengineRss(await get(`${base}/rss/zh/${r}/${product}`, { as: 'text', accept: 'application/rss+xml,text/xml' }));
-      return { id: r, parsed, why: parsed.region ? null : 'canal sans région' };
+      const parsed = parseVolcengineRss(await get(`${base}/rss/zh/${r}/${product}`, { as: 'text', accept: 'application/rss+xml,text/xml' }), r);
+      return { id: r, parsed, why: null };
     } catch (err) {
       return { id: r, parsed: null, why: err.message, err };
     }

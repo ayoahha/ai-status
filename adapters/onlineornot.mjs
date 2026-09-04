@@ -1,4 +1,5 @@
 import { fail } from '../lib/errors.mjs';
+import { STATUS_LIMITS } from '../public/status-contract.js';
 
 // Pages OnlineOrNot (OpenRouter) : aucun endpoint JSON public sans jeton (l'API
 // developers.onlineornot.com exige une clé), mais la page est rendue côté serveur par
@@ -58,10 +59,24 @@ export async function collect(provider, get) {
   const url = provider.source.url;
   const doc = parseOnlineornotHtml(await get(url, { as: 'text' }));
   const rawComponents = doc?.loaderData?.root?.result?.components;
-  if (!Array.isArray(rawComponents) || rawComponents.length === 0) throw fail('schema', 'SSR (loaderData.root.result.components)');
+  if (!Array.isArray(rawComponents) || rawComponents.length === 0 || rawComponents.length > STATUS_LIMITS.components) throw fail('schema', 'SSR (loaderData.root.result.components)');
   const components = rawComponents.filter((c) => c?.name).map((c) => ({ name: c.name, status: onlineornotStatus(c.status) }));
   const byDay = doc?.loaderData?.['routes/_index']?.result?.incidents ?? {};
-  const open = Object.values(byDay).flat().filter((i) => i && i.ended == null);
+  if (!byDay || typeof byDay !== 'object' || Array.isArray(byDay)) throw fail('schema', 'SSR (incidents)');
+  const groups = new Set();
+  const incidents = new Set();
+  const open = [];
+  let visited = 0;
+  for (const group of Object.values(byDay)) {
+    if (!Array.isArray(group) || groups.has(group)) throw fail('schema', 'SSR (incidents aliasés)');
+    groups.add(group);
+    for (const incident of group) {
+      if (++visited > STATUS_LIMITS.events) throw fail('limit', 'incidents SSR');
+      if (!incident || typeof incident !== 'object' || incidents.has(incident)) throw fail('schema', 'SSR (incident)');
+      incidents.add(incident);
+      if (incident.ended == null) open.push(incident);
+    }
+  }
   return {
     indicator: null,
     rawStatus: `${components.length} components : ${summarize(rawComponents)}`,
