@@ -46,6 +46,7 @@ let query = '';
 let sortMode = 'severity';
 let refreshing = false;
 let lastAttemptAt = 0;
+let lastRefreshAt = null;
 let refreshTimer;
 
 const $ = (id) => document.getElementById(id);
@@ -158,13 +159,15 @@ function countButton(status, text, n) {
 function renderFreshness() {
   if (!data) return;
   const at = $('collected-at');
-  const age = ageLabel(data.generatedAt);
-  at.textContent = `Mis à jour ${fmtDate(data.generatedAt)}${age ? ` (${age})` : ''}`;
+  const refreshedAt = lastRefreshAt ?? data.generatedAt;
+  const refreshAge = ageLabel(refreshedAt);
+  const collectionAge = ageLabel(data.generatedAt);
+  at.textContent = `Actualisé ${fmtDate(refreshedAt)}${refreshAge ? ` (${refreshAge})` : ''} · collecte ${fmtDate(data.generatedAt)}${collectionAge ? ` (${collectionAge})` : ''}`;
   const stale = Date.now() - new Date(data.generatedAt).getTime() > STALE_MS;
   const banner = $('stale');
   banner.hidden = !stale;
   banner.textContent = stale
-    ? `Données obsolètes : dernière collecte ${age}. Les états affichés ne reflètent peut-être plus la situation actuelle.`
+    ? `Données obsolètes : dernière collecte ${collectionAge}. Les états affichés ne reflètent peut-être plus la situation actuelle.`
     : '';
   document.querySelectorAll('[data-age]').forEach((e) => {
     e.textContent = ageLabel(e.dataset.age) ?? '';
@@ -486,10 +489,10 @@ async function refreshData(source) {
         }
         throw renderError;
       }
-    } else {
-      renderFreshness();
     }
 
+    lastRefreshAt = new Date().toISOString();
+    renderFreshness();
     error.hidden = true;
     error.textContent = '';
     if (source === 'manual') status.textContent = 'Données actualisées.';
