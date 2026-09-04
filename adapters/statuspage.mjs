@@ -16,14 +16,16 @@ export async function collect(provider, get) {
   const base = provider.source.url.replace(/\/+$/, '');
   const data = await get(`${base}/api/v2/summary.json`);
   const indicator = data?.status?.indicator;
-  if (typeof indicator !== 'string' || !Array.isArray(data.components) || !Array.isArray(data.incidents) || !Array.isArray(data.scheduled_maintenances)) throw fail('schema', 'summary.json (status.indicator / components / incidents / scheduled_maintenances)');
+  if (typeof indicator !== 'string' || !Array.isArray(data.components) || (data.incidents !== undefined && !Array.isArray(data.incidents)) || (data.scheduled_maintenances !== undefined && !Array.isArray(data.scheduled_maintenances))) throw fail('schema', 'summary.json (status.indicator / components / incidents / scheduled_maintenances)');
+  const incidents = data.incidents ?? [];
+  const scheduledMaintenances = data.scheduled_maintenances ?? [];
 
   // Les groupes agrègent leurs enfants : ignorés pour ne pas compter deux fois
   const components = data.components
     .filter((c) => !c.group)
     .map((c) => ({ name: c.name, status: normalizeComponentStatus(c.status) }));
-  if (data.incidents.some((incident) => !INCIDENT_STATES.has(incident?.status)) || data.scheduled_maintenances.some((maintenance) => !MAINTENANCE_STATES.has(maintenance?.status))) throw fail('schema', 'summary.json (incident / maintenance status)');
-  const maintenances = data.scheduled_maintenances
+  if (incidents.some((incident) => !INCIDENT_STATES.has(incident?.status)) || scheduledMaintenances.some((maintenance) => !MAINTENANCE_STATES.has(maintenance?.status))) throw fail('schema', 'summary.json (incident / maintenance status)');
+  const maintenances = scheduledMaintenances
     .filter((m) => m.status !== 'completed')
     .map((m) => ({
       title: m.name,
@@ -38,7 +40,7 @@ export async function collect(provider, get) {
     rawStatus: data.status?.description ?? null,
     rawIndicator: indicator,
     components,
-    incidents: data.incidents.filter((i) => i.status !== 'resolved').map((i) => ({
+    incidents: incidents.filter((i) => i.status !== 'resolved').map((i) => ({
       title: i.name,
       state: i.status, // investigating | identified | monitoring
       impact: i.impact ?? null,

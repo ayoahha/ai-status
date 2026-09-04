@@ -185,6 +185,8 @@ assert.strictEqual(s7.status, 'maintenance');
 assert.deepStrictEqual(impacted(s7.components), ['API']);
 assert.strictEqual((await read(statuspage, provider, okJson({ status: { indicator: 'none' }, components: [{ name: 'API', status: 'operational' }], incidents: [{ name: 'X', status: 'invented' }], scheduled_maintenances: [] }))).status, 'inconnu');
 assert.strictEqual((await read(statuspage, provider, okJson({ status: { indicator: 'none' }, components: [{ name: 'API', status: 'operational' }], incidents: [], scheduled_maintenances: [{ name: 'X', status: 'invented' }] }))).status, 'inconnu');
+assert.strictEqual((await read(statuspage, provider, okJson({ status: { indicator: 'none' }, components: [{ name: 'API', status: 'operational' }] }))).status, 'operationnel', 'Statuspage omet actuellement les tableaux vides');
+assert.strictEqual((await read(statuspage, provider, okJson({ status: { indicator: 'none' }, components: [{ name: 'API', status: 'operational' }], incidents: {} }))).status, 'inconnu', 'un tableau présent mais mal formé reste rejeté');
 
 // 4. Google : flux officiels, périmètre par préfixe.
 const gProvider = { ...provider, statusUrl: 'https://status.cloud.google.com', source: { kind: 'google', url: 'https://status.cloud.google.com', productPrefixes: ['Vertex', 'Gemini'] } };
@@ -495,6 +497,9 @@ const unknownImpact = { ...activeOnlineIncident, id: 'bad-impact', impact: 'INVE
 assert.strictEqual((await read(onlineornot, oProvider, okText(onlineHtml([{ name: 'Models', status: 'OPERATIONAL' }], { today: [unknownImpact] }, [unknownImpact])))).status, 'inconnu', 'un impact actif inconnu ne peut jamais rester vert');
 const genericUpdate = { ...activeOnlineIncident, id: 'generic-update', impact: 'NO_IMPACT', updates: [{ status: 'UPDATE', createdAt: '2026-09-04T10:01:00Z' }] };
 assert.strictEqual((await read(onlineornot, oProvider, okText(onlineHtml([{ name: 'Models', status: 'OPERATIONAL' }], { today: [genericUpdate] }, [genericUpdate])))).status, 'degradation', 'une mise à jour active documentée ne peut pas rester verte');
+const noImpactField = { ...activeOnlineIncident, id: 'no-impact-field' };
+delete noImpactField.impact;
+assert.strictEqual((await read(onlineornot, oProvider, okText(onlineHtml([{ name: 'Models', status: 'OPERATIONAL' }], { today: [noImpactField] }, [noImpactField])))).status, 'degradation', 'le SSR public sans impact conserve le plancher incident');
 
 // 7f. AWS (Bedrock) : codes ; fixture réelle en UTF-16 (deux régions ME disrupted) ; tout calme ; cassé.
 assert.strictEqual(awsCode('0'), 'operationnel');
@@ -526,6 +531,7 @@ assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16
 assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16(Array(STATUS_LIMITS.events + 1).fill({ status: '0', end_time: '1' })), 'services.json': utf8bom(awsServices) }))).status, 'inconnu', 'les événements sont bornés avant rattachement');
 assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([{ status: '2', service: 'bedrock-new-region', service_name: 'Amazon Bedrock' }]), 'services.json': utf8bom(awsServices) }))).status, 'inconnu', 'un événement Bedrock sans région joignable ne peut pas être ignoré');
 assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([{ status: '3', service: 'multipleservices-us-east-1', service_name: 'Multiple services', impacted_services: { 'ec2-us-east-1': { service_name: 'Amazon EC2', current: '3' } } }]), 'services.json': utf8bom(awsServices) }))).status, 'operationnel', 'un événement explicitement hors périmètre reste ignoré');
+assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([]), 'services.json': utf8bom([bedrockService, ...Array(10_000).fill({ service: 'ec2-us-east-1', service_name: 'Amazon EC2' })]) }))).status, 'inconnu', 'le catalogue source reste borné au-dessus du volume réel mesuré');
 
 // 7g. Azure : fixture réelle expurgée (Good partout) ; Warning ; label inconnu ; service absent ; page vide.
 const zProvider = { ...provider, statusUrl: 'https://azure.status.microsoft/en-us/status', source: { kind: 'azure', url: 'https://azure.status.microsoft/en-us/status', services: ['Azure OpenAI Service', 'Foundry Models', 'Azure AI Search'] } };

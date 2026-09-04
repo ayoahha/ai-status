@@ -10,6 +10,8 @@ import { STATUS_LIMITS } from '../public/status-contract.js';
 // Code d'état AWS (bundle de la page) : 0 resolved, 1 impacted (info), 2 degraded, 3 disrupted.
 // Le périmètre est restreint aux services dont service_name vaut source.serviceName
 const CODE = { 1: 'degradation', 2: 'degradation', 3: 'incident_majeur' };
+// 5 848 lignes observées le 2026-09-04 ; marge bornée sous la limite HTTP de 2 Mio
+const CATALOG_LIMIT = 10_000;
 
 export function awsCode(code) {
   const n = Number(code);
@@ -34,7 +36,7 @@ export async function collect(provider, get) {
   const [ebytes, sbytes] = await Promise.all([get(eventsUrl, { as: 'bytes' }), get(servicesUrl, { as: 'bytes' })]);
   const events = decodeAwsBody(ebytes);
   const catalog = decodeAwsBody(sbytes);
-  if (!Array.isArray(events) || events.length > STATUS_LIMITS.events || !Array.isArray(catalog) || catalog.length > STATUS_LIMITS.components) throw fail('schema', 'currentevents / services.json');
+  if (!Array.isArray(events) || events.length > STATUS_LIMITS.events || !Array.isArray(catalog) || catalog.length > CATALOG_LIMIT) throw fail('schema', 'currentevents / services.json');
   const scoped = [];
   const byId = new Map();
   const regions = new Set();
