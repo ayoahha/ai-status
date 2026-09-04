@@ -107,7 +107,7 @@ export async function collect(provider, get) {
     incidents: active.map((i) => ({
       title: i.title,
       state: UPDATE_STATE[i.updates[0].status],
-      impact: onlineornotStatus(i.impact),
+      impact: i.impact == null ? null : onlineornotStatus(i.impact),
       createdAt: i.started ?? null,
       updatedAt: i.updates?.[0]?.createdAt ?? null,
       url: i.id ? `${url.replace(/\/+$/, '')}/incidents/${i.id}` : null,
