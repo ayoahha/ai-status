@@ -15,13 +15,13 @@ lib/collect.mjs         runner (exécute chaque adaptateur, isole et classe les 
                         du contrat v2 (pur, testé) : statut, résumé, raisons et erreurs FR / EN
 lib/normalize.mjs       tables de correspondance, worstOf, classifyKind
 lib/errors.mjs          erreurs typées (code http | timeout | network | schema | scope | browser…)
-lib/http.mjs            client `get(url, {as, accept, timeoutMs})` : timeout, UA navigateur, HttpError hors 2xx
+lib/http.mjs            client `get` : délai total, corps borné, redirections HTTPS contrôlées, HttpError hors 2xx
 adapters/unavailable.mjs source connue mais injoignable ou inexistante : aucune requête, jamais vert
 adapters/statuspage.mjs Atlassian Statuspage (summary.json)
 adapters/google.mjs     Google Cloud (products.json + incidents.json)
 adapters/flashcat.mjs   pages Flashcat (DeepSeek)
 adapters/alibaba.mjs    Alibaba Cloud (listHistoryEvent)
-adapters/browser.mjs    Playwright + Chromium, xAI seulement
+adapters/xai.mjs        flux RSS officiel xAI, liste déclarée des 13 services
 adapters/instatus.mjs   Instatus (Perplexity) : summary.json + v2/components.json
 adapters/betterstack.mjs Better Stack (Together AI) : index.json
 adapters/checkly.mjs    Checkly (Mistral) : endpoints JSON appelés par la page
@@ -48,7 +48,7 @@ Flux : GitHub Actions exécute `node collect.mjs` à `:07` et `:37` de chaque he
 |---|---|---|
 | Anthropic | https://status.claude.com | API publique Statuspage v2 (`/api/v2/summary.json` : indicateur, composants, incidents non résolus, maintenances) |
 | OpenAI | https://status.openai.com | API publique Statuspage v2 |
-| xAI | https://status.x.ai | Navigateur headless (Playwright + Chromium) : la page répond 403 à tout client non navigateur, y compris `/api/v2/*`, `/feed` et `/rss` ; le défi Cloudflare automatique est attendu et `navigator.webdriver` est masqué. Un CAPTCHA interactif n'est jamais contourné. Une pilule d'état inconnue rend le fournisseur « Non vérifié » |
+| xAI | https://status.x.ai | Flux RSS officiel `https://status.x.ai/feed.xml`, lu par le client HTTP borné sans navigateur. Le flux contient l'historique des incidents, pas le registre des services : les 13 services affichés sont donc déclarés dans `providers.json`. La structure résolue observée le 2026-09-04 est validée strictement ; tout état ou service inconnu rend xAI « Non vérifié » |
 | Google Cloud (Vertex AI / Gemini) | https://status.cloud.google.com | Flux JSON officiels `products.json` + `incidents.json`, restreints aux produits dont le titre commence par « Vertex » ou « Gemini », toutes régions. « Opérationnel » signifie « aucun incident déclaré sur ce périmètre » |
 | Cursor | https://status.cursor.com | API publique Statuspage v2 |
 | Alibaba Cloud | https://status.alibabacloud.com | API JSON publique `/api/status/listHistoryEvent` : statut cloud global (toutes régions et produits), pas Qwen ni Model Studio en particulier ; seuls les événements en cours sont exposés. Aucun composant : la carte affiche « Statut global » |
@@ -116,8 +116,9 @@ Règles : un `collect.state = error` force `status = inconnu` ; un composant à 
 ## Lancer localement
 
 ```sh
-npm ci && npx playwright install chromium   # une fois (Chromium ne sert qu'à xAI)
-node test/test.mjs                          # tests sans réseau
+npm ci                                      # dépendances de développement
+npx playwright install chromium             # uniquement pour les tests d'interface
+npm test                                    # tests Node et interface, sans source fournisseur
 node collect.mjs                            # génère public/data/status.json
 npm run serve                               # puis http://localhost:8080
 ```
@@ -130,7 +131,7 @@ npm run serve                               # puis http://localhost:8080
 
 Réglage requis dans Settings → Pages : « Build and deployment → Source : GitHub Actions ». Le mode « Deploy from branch » servirait un site sans données, puisque `status.json` n'est pas versionné.
 
-Permissions : `contents: read` pour les tests et la collecte (aucun jeton n'est conservé dans le checkout pendant que Chromium charge des pages tierces), `pages: write` et `id-token: write` pour le seul job de déploiement. Les actions sont épinglées par SHA.
+Permissions : `contents: read` pour les tests et la collecte, sans jeton conservé dans le checkout ; `pages: write` et `id-token: write` pour le seul job de déploiement. Les actions sont épinglées par SHA.
 
 Concurrence : un seul run à la fois par ref (`concurrency.group = collect-<ref>`), mis en file d'attente et jamais annulé, pour ne pas interrompre un déploiement Pages en cours. Un run dure moins d'une minute ; les lancements à `:07` et `:37` ne créent pas de file. Le cron GitHub peut tout de même partir avec plusieurs minutes de retard ou être abandonné, et le CDN Pages peut brièvement conserver une ancienne publication : la fraîcheur affichée tolère ces délais, l'alerte « données obsolètes » ne se déclenche qu'après deux heures.
 
@@ -151,7 +152,7 @@ Concurrence : un seul run à la fois par ref (`concurrency.group = collect-<ref>
 - Les sources externes sont non fiables : contenu jamais exécuté, aucun secret ni jeton stocké ; tout texte affiché est inséré via `textContent`, pas `innerHTML`.
 - Les résultats d'adaptateur et le document final ont des bornes finies de taille et de cardinalité. Les URL de détail sont limitées à HTTPS sur l'origine officielle du fournisseur ; les liens courts `stspg.io` sont admis uniquement pour Statuspage. Une URL refusée est omise et le navigateur réapplique cette garde avant tout lien externe.
 - Un échec de collecte produit toujours le statut `inconnu` (« Non vérifié »), jamais `operationnel` : la distinction « aucun incident déclaré » et « information inconnue » est préservée.
-- Un CAPTCHA ou défi Cloudflare interactif n'est jamais contourné ; seul le défi automatique (JavaScript) est attendu, pour xAI.
+- Le flux RSS xAI n'a été observé qu'avec des incidents résolus (`RESOLVED`, `available`). Jusqu'à l'observation d'un état actif officiel, toute autre combinaison échoue fermée et affiche xAI « Non vérifié » plutôt qu'un faux état opérationnel.
 - L'état par composant reflète ce que la source publie. Statuspage masque les composants « only_show_if_degraded » tant qu'ils sont sains ; Google, Alibaba et Volcengine n'exposent pas d'état par produit hors incident (« opérationnel » = aucun incident déclaré) ; DeepSeek, Mistral, Tencent et Volcengine n'ont jamais été observés en incident, le mapping de leurs événements reste à confirmer sur un cas réel.
 - Les endpoints JSON non documentés (Checkly, Tencent, AWS) et les données embarquées (OnlineOrNot, tableau Azure) peuvent changer sans préavis : toute structure inattendue rend le fournisseur « Non vérifié », jamais « Opérationnel ». Les fixtures de `test/fixtures/` figent la structure observée le 2026-09-04.
 - Le tableau Azure fait environ 7 Mo par collecte ; Microsoft n'y publie que les incidents à large impact.

@@ -8,7 +8,7 @@ import * as statuspage from './adapters/statuspage.mjs';
 import * as alibaba from './adapters/alibaba.mjs';
 import * as google from './adapters/google.mjs';
 import * as flashcat from './adapters/flashcat.mjs';
-import * as browser from './adapters/browser.mjs';
+import * as xai from './adapters/xai.mjs';
 import * as instatus from './adapters/instatus.mjs';
 import * as betterstack from './adapters/betterstack.mjs';
 import * as checkly from './adapters/checkly.mjs';
@@ -26,7 +26,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const providers = JSON.parse(readFileSync(path.join(root, 'providers.json'), 'utf8'));
 
 // Famille de source (providers.json, source.kind) → module adaptateur
-const ADAPTERS = { statuspage, alibaba, google, flashcat, browser, instatus, betterstack, checkly, onlineornot, aws, azure, tencent, volcengine, unavailable };
+const ADAPTERS = { statuspage, alibaba, google, flashcat, xai, instatus, betterstack, checkly, onlineornot, aws, azure, tencent, volcengine, unavailable };
 
 const now = new Date().toISOString();
 const settled = await collectAll(providers, ADAPTERS, get);
