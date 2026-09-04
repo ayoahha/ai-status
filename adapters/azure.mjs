@@ -1,4 +1,5 @@
 import { worstOf } from '../lib/normalize.mjs';
+import { fail } from '../lib/errors.mjs';
 
 // Azure status (azure.status.microsoft, ex status.azure.com) : page rendue côté serveur,
 // sans JSON ; le flux RSS documenté ne couvre que les incidents publiés, sans état par
@@ -24,33 +25,22 @@ export function parseAzureRows(html) {
   return rows;
 }
 
-export async function collectAzure(provider, get) {
-  const url = provider.source.url;
+export async function collect(provider, get) {
   const wanted = provider.source.services ?? [];
-  try {
-    const res = await get(url);
-    if (!res.ok) return { status: 'inconnu', collect: { state: 'error', error: `HTTP ${res.status} sur ${url}` } };
-    const rows = parseAzureRows(await res.text());
-    const found = wanted.filter((name) => rows.has(name));
-    if (found.length === 0) {
-      return { status: 'inconnu', collect: { state: 'error', error: `aucune ligne du périmètre (${wanted.join(', ')}) dans le tableau Azure` } };
-    }
-    // Service listé mais sans aucune cellule lisible : état illisible, jamais vert
-    const components = found.map((name) => ({ name, status: rows.get(name).length ? worstOf(rows.get(name).map(azureLabel)) : 'inconnu' }));
-    const alerted = components.filter((c) => c.status !== 'operationnel');
-    const missing = wanted.filter((name) => !rows.has(name));
-    return {
-      status: worstOf(components.map((c) => c.status)),
-      rawStatus: alerted.length ? `${alerted.length} service(s) with a non-Good cell` : `All cells Good (${found.length} services)`,
-      rawIndicator: alerted.length ? 'alert' : 'good',
-      components,
-      incidents: [],
-      collect: { state: 'ok', error: missing.length ? `services absents du tableau : ${missing.join(', ')}` : null },
-    };
-  } catch (err) {
-    return {
-      status: 'inconnu',
-      collect: { state: 'error', error: err.name === 'AbortError' ? 'timeout' : `erreur réseau : ${err.message}` },
-    };
-  }
+  const rows = parseAzureRows(await get(provider.source.url, { as: 'text' }));
+  const found = wanted.filter((name) => rows.has(name));
+  if (found.length === 0) throw fail('scope', `${wanted.join(', ')} (tableau Azure)`);
+  // Service listé mais sans aucune cellule lisible : état illisible, jamais vert
+  const components = found.map((name) => ({ name, status: rows.get(name).length ? worstOf(rows.get(name).map(azureLabel)) : 'inconnu' }));
+  const alerted = components.filter((c) => c.status !== 'operationnel');
+  const missing = wanted.filter((name) => !rows.has(name));
+  return {
+    status: worstOf(components.map((c) => c.status)),
+    rawStatus: alerted.length ? `${alerted.length} service(s) with a non-Good cell` : `All cells Good (${found.length} services)`,
+    rawIndicator: alerted.length ? 'alert' : 'good',
+    components,
+    incidents: [],
+    note: missing.length ? `services absents du tableau : ${missing.join(', ')}` : null,
+    noteEn: missing.length ? `services missing from the table: ${missing.join(', ')}` : null,
+  };
 }

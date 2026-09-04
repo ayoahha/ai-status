@@ -10,10 +10,13 @@ Statut opérationnel des principaux fournisseurs de modèles IA, affiché de fa�
 
 ```
 providers.json          liste déclarative des fournisseurs (id, nom, groupe, périmètre, source, motif « modèle »)
-collect.mjs             CLI : lit providers.json, lance la collecte, écrit le JSON
-lib/collect.mjs         assemblage du contrat v2 (pur, testé) : résumé, raisons, composants typés
+collect.mjs             CLI : lit providers.json, table famille de source → adaptateur, écrit le JSON
+lib/collect.mjs         runner (exécute chaque adaptateur, isole et classe les échecs) et assemblage
+                        du contrat v2 (pur, testé) : statut, résumé, raisons et erreurs FR / EN
 lib/normalize.mjs       enum des états, tables de correspondance, worstOf, classifyKind
-lib/http.mjs            fetch avec timeout + UA navigateur
+lib/errors.mjs          erreurs typées (code http | timeout | network | schema | scope | browser…)
+lib/http.mjs            client `get(url, {as, accept, timeoutMs})` : timeout, UA navigateur, HttpError hors 2xx
+adapters/unavailable.mjs source connue mais injoignable ou inexistante : aucune requête, jamais vert
 adapters/statuspage.mjs Atlassian Statuspage (summary.json)
 adapters/google.mjs     Google Cloud (products.json + incidents.json)
 adapters/flashcat.mjs   pages Flashcat (DeepSeek)
@@ -34,6 +37,8 @@ test/                   tests sans réseau, fixtures réelles dans test/fixtures
 ```
 
 Ajouter un fournisseur Statuspage : une entrée dans `providers.json` (`kind: statuspage`, `url`, `group` parmi `us`, `eu`, `cn`, `cloud`, `scope` et `scopeEn`, éventuellement `modelPattern`) et une ligne dans la table ci-dessous. Toute autre famille de source demande un adaptateur avec sa fixture réelle et ses tests.
+
+Forme d'un adaptateur (`adapters/<famille>.mjs`) : une fonction `collect(provider, get)` qui lit la source avec le client `get` (`as: json | text | bytes`) et rend un résultat de lecture `{ status, rawStatus, components, incidents, maintenances, note, noteEn }`. Elle lève `fail('schema', détail)` sur structure inattendue et `fail('scope', détail)` quand le périmètre demandé est absent ; réseau, HTTP et timeout remontent d'eux-mêmes. Le runner (`lib/collect.mjs`) capture tout échec, le classe et rend le fournisseur « Non vérifié » avec un texte FR / EN : un adaptateur ne fabrique jamais d'état « inconnu » lui-même. Une `note` non fatale (services absents, région illisible) accompagne une lecture réussie. Enregistrer le module dans la table `ADAPTERS` de `collect.mjs`. Vocabulaire : `CONTEXT.md`.
 
 Flux : GitHub Actions exécute `node collect.mjs` à `:07` et `:37` de chaque heure (et sur push `main` ou lancement manuel), vérifie le JSON produit, puis publie `public/` comme artefact GitHub Pages dans le même workflow. Ce décalage réduit le risque de retard des tâches GitHub planifiées sans garantir leur ponctualité. Rien n'est commité par la CI : la page et ses données partent ensemble, atomiquement. Le front ne lit que `data/status.json` ; aucune API propriétaire côté client.
 
