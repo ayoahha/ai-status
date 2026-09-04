@@ -62,25 +62,26 @@ body {
 .skip:focus { left: 16px; outline: 2px solid var(--focus); }
 
 .top, .controls, .providers, .foot, .ongoing, .stale, .refresh-error {
-  max-width: 1600px;
+  max-width: 1040px;
   margin: 0 auto;
-  padding-left: 40px;
-  padding-right: 40px;
+  padding-left: 32px;
+  padding-right: 32px;
 }
 
-/* Bandeau */
+/* Bandeau : titre discret, phrase d'état en vedette, compteurs-filtres à droite */
 .top {
-  padding-top: 20px;
-  padding-bottom: 8px;
+  padding-top: 28px;
+  padding-bottom: 12px;
   display: flex;
   flex-wrap: wrap;
   gap: 12px 24px;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
 }
+.brand { margin: 0 0 6px; font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 .overall {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -89,7 +90,7 @@ body {
 .overall .ic { width: 1.4em; height: 1.4em; flex: none; }
 .overall-unknown { color: var(--unknown); font-weight: 500; font-size: 1rem; }
 .meta { margin: 0; color: var(--muted); font-size: .85rem; }
-.summary .meta { margin-top: 4px; }
+.summary .meta { margin-top: 6px; }
 .refresh-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 #refresh { padding: 3px 9px; font-size: .82rem; cursor: pointer; }
 #refresh:disabled { cursor: wait; opacity: .65; }
@@ -174,43 +175,43 @@ input, button, select {
 #search { flex: 1 1 260px; max-width: 420px; }
 .sort { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: .9rem; }
 
-/* Sections par groupe, puis grille de cartes compactes */
-.providers { margin-bottom: 24px; }
-.group { margin-top: 18px; }
-.group-title { margin: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-.group-meta { margin: 0 0 8px; font-size: .82rem; color: var(--muted); }
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-  gap: 12px;
-  align-items: start;
-}
+/* Sections par groupe, puis liste de rangées pleine largeur : lecture verticale,
+   pas de rangée orpheline, l'état se lit dans une colonne alignée */
+.providers { margin-bottom: 32px; }
+.group { margin-top: 28px; }
+.group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.group-title { margin: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.group-meta { margin: 0; font-size: .82rem; color: var(--muted); }
+.group-empty { margin: 0; padding: 14px; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); font-size: .9rem; }
+.grid { display: grid; gap: 8px; }
 
 .card {
   position: relative;
   background: var(--card);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--c);
-  border-radius: 12px;
+  border-radius: 10px;
   scroll-margin-top: 16px;
 }
+/* Liseré coloré seulement quand il y a quelque chose à signaler */
+.card:not(.s-operationnel) { box-shadow: inset 4px 0 0 var(--c); }
 .card:target { outline: 2px solid var(--focus); }
 .card:hover, .card:focus-within { z-index: 2; }
 .card details { margin: 0; border: 0; padding: 0; }
 
-/* Ligne compacte : chevron, icône, nom, état hors opérationnel, nombre ; ⓘ réservé à droite */
+/* Rangée : chevron, icône, nom + périmètre, nombre de composants, état */
 .card-line {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 8px;
-  min-height: 44px;
-  padding: 8px 48px 8px 12px;
+  gap: 4px 12px;
+  min-height: 52px;
+  padding: 8px 14px;
   color: var(--text);
   font-size: 1rem;
   list-style: none;
   cursor: pointer;
 }
+.card-line:hover { background: var(--card-hover); border-radius: 10px; }
 .card-line::-webkit-details-marker { display: none; }
 .card-line::before {
   content: "";
@@ -223,45 +224,15 @@ input, button, select {
 }
 details[open] > .card-line::before { transform: rotate(90deg); }
 .card-line .ic { width: 1.15em; height: 1.15em; }
-/* Le nom se replie dans sa propre boîte : icône et compteur restent sur la première ligne */
-.card-name { margin: 0; font-size: 1rem; font-weight: 600; flex: 1 1 0; min-width: 6ch; overflow-wrap: anywhere; }
-.card-state { color: var(--c); font-weight: 500; font-size: .85rem; white-space: nowrap; }
-.card-count { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; margin-left: auto; }
-.card-reason { flex-basis: 100%; margin: 0 0 0 24px; font-size: .88rem; color: var(--text); }
-.card-body { padding: 0 12px 12px 12px; border-top: 1px solid var(--border); }
-
-/* Infobulle ⓘ : bouton hors du summary, conteneur survolable, fermée par Échap (.off) */
-.info-wrap { position: absolute; top: 6px; right: 6px; }
-.info {
-  width: 32px; height: 32px;
-  padding: 0;
-  border-radius: 50%;
-  border: 1px solid var(--muted);
-  color: var(--muted);
-  background: var(--card);
-  font: 600 .85rem/1 Georgia, "Times New Roman", serif;
-  font-style: italic;
-  cursor: pointer;
-}
-.info:hover { color: var(--text); border-color: var(--text); }
-.tip {
-  display: none;
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  width: max-content;
-  max-width: min(340px, calc(100vw - 32px));
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--text);
-  font-size: .82rem;
-  line-height: 1.4;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
-}
-.info-wrap:not(.off):hover .tip, .info-wrap:not(.off):focus-within .tip { display: block; }
-.tip-err { color: var(--warn); }
+/* Nom et périmètre occupent l'espace ; compteur et état restent alignés à droite */
+.card-head { flex: 1 1 0; min-width: 0; }
+.card-name { margin: 0; font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
+.card-scope { margin: 0; font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+.card-count { color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.card-state { color: var(--c); font-weight: 500; font-size: .85rem; white-space: nowrap; min-width: 7.5rem; text-align: right; }
+.card.s-operationnel .card-state { font-weight: 400; }
+.card-reason { flex-basis: 100%; margin: 0 0 0 28px; font-size: .88rem; color: var(--text); }
+.card-body { padding: 0 14px 14px 42px; border-top: 1px solid var(--border); }
 
 /* Texte pour lecteurs d'écran seulement */
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -284,11 +255,20 @@ a:hover { text-decoration: underline; }
 
 .noresults { color: var(--muted); text-align: center; padding: 40px 0; }
 
-.foot { padding-top: 8px; padding-bottom: 32px; }
-.foot p { color: var(--muted); font-size: .8rem; }
+/* Pied de page : quatre blocs courts plutôt qu'un paragraphe */
+.foot { padding-top: 24px; padding-bottom: 40px; border-top: 1px solid var(--border); }
+.foot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px 24px; }
+.foot-title { margin: 0 0 4px; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.foot p { margin: 0; color: var(--muted); font-size: .82rem; }
+.foot-links { margin-top: 20px; }
 
 @media (max-width: 480px) {
   .top, .controls, .providers, .foot, .ongoing, .stale, .refresh-error { padding-left: 16px; padding-right: 16px; }
-  .overall { font-size: 1.15rem; }
+  .overall { font-size: 1.2rem; }
+  .card-line { padding: 10px 12px; }
+  .card-body { padding-left: 12px; }
+  .card-state { min-width: 0; }
+  .card-count { display: none; }
+  .card-reason { margin-left: 0; }
   #search { max-width: none; flex-basis: 100%; }
 }

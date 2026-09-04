@@ -6,10 +6,12 @@ const REFRESH_MS = 30 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 15 * 1000;
 const STALE_MS = 2 * 60 * 60 * 1000; // 4 cadences de collecte ratées
 const SEVERITY_ORDER = ['indisponible', 'incident_majeur', 'degradation', 'maintenance', 'inconnu', 'operationnel'];
-// Groupes d'affichage : ordre et libellés ; un groupe absent du contrat tombe dans « Autres »
+// Groupes d'affichage : ordre et libellés ; un groupe absent du contrat tombe dans « Autres ».
+// Un groupe avec `empty` est affiché même sans fournisseur, avec ce texte
 const GROUPS = [
-  { id: 'us', label: 'Grands fournisseurs US' },
-  { id: 'cn', label: 'Fournisseurs chinois' },
+  { id: 'us', label: 'Fournisseurs USA' },
+  { id: 'eu', label: 'Fournisseurs Europe', empty: 'Aucune source suivie pour l’instant.' },
+  { id: 'cn', label: 'Fournisseurs Chine' },
   { id: 'cloud', label: 'Clouds d’inférence et API' },
   { id: 'other', label: 'Autres' },
 ];
@@ -265,14 +267,12 @@ function componentList(title, comps) {
 function cardSummary(p) {
   const summary = el('summary', 'card-line');
   summary.appendChild(icon(p.status));
-  const h = el('h3', 'card-name', p.name);
-  summary.appendChild(h);
-  summary.appendChild(el('span', p.status === 'operationnel' ? 'sr' : 'card-state', label(p.status)));
-  if (p.components.length) {
-    const n = el('span', 'card-count', String(p.components.length));
-    n.appendChild(el('span', 'sr', ` composant${p.components.length > 1 ? 's' : ''} suivi${p.components.length > 1 ? 's' : ''}`));
-    summary.appendChild(n);
-  }
+  const head = el('div', 'card-head');
+  head.appendChild(el('h3', 'card-name', p.name));
+  if (p.scope) head.appendChild(el('p', 'card-scope', p.scope));
+  summary.appendChild(head);
+  if (p.components.length) summary.appendChild(el('span', 'card-count', countWord(p.components.length, 'composant')));
+  summary.appendChild(el('span', 'card-state', label(p.status)));
   if (p.status !== 'operationnel') summary.appendChild(el('p', 'card-reason', p.reason));
   return summary;
 }
@@ -293,7 +293,6 @@ function cardBody(p) {
   const services = p.components.filter((c) => c.kind !== 'model');
   if (models.length) body.appendChild(componentList('Modèles', models));
   if (services.length) body.appendChild(componentList(models.length ? 'Services' : 'Composants', services));
-  if (p.scope) body.appendChild(el('p', 'meta', `Périmètre : ${p.scope}`));
   const meta = el('p', 'meta');
   meta.appendChild(document.createTextNode(`Lu via ${METHOD_LABELS[p.collect.method] ?? p.collect.method} · `));
   meta.appendChild(ageSpan(p.collectedAt));
@@ -301,33 +300,6 @@ function cardBody(p) {
   meta.appendChild(externalLink(p.statusUrl, 'page officielle'));
   body.appendChild(meta);
   return body;
-}
-
-// Infobulle ⓘ : périmètre, méthode, fraîcheur, erreur. Visible au survol du conteneur
-// (survolable) et au focus ; Échap la ferme ; clic ou toucher déplie la carte
-function infoBubble(p, details) {
-  const wrap = el('span', 'info-wrap');
-  const btn = el('button', 'info', 'i');
-  btn.type = 'button';
-  btn.setAttribute('aria-label', `Informations sur ${p.name}`);
-  btn.setAttribute('aria-describedby', `tip-${p.id}`);
-  const tip = el('span', 'tip');
-  tip.id = `tip-${p.id}`;
-  tip.setAttribute('role', 'tooltip');
-  if (p.scope) tip.appendChild(el('span', null, `Périmètre : ${p.scope}. `));
-  tip.appendChild(document.createTextNode(`Lu via ${METHOD_LABELS[p.collect.method] ?? p.collect.method}, `));
-  tip.appendChild(ageSpan(p.collectedAt));
-  tip.appendChild(document.createTextNode('.'));
-  if (p.collect.state === 'error') tip.appendChild(el('span', 'tip-err', ` ${p.collect.error}`));
-  btn.addEventListener('click', () => { details.open = !details.open; });
-  btn.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { wrap.classList.add('off'); btn.blur(); }
-  });
-  wrap.addEventListener('mouseleave', () => wrap.classList.remove('off'));
-  btn.addEventListener('blur', () => wrap.classList.remove('off'));
-  wrap.appendChild(btn);
-  wrap.appendChild(tip);
-  return wrap;
 }
 
 function makeCard(p) {
@@ -338,7 +310,6 @@ function makeCard(p) {
   details.appendChild(cardSummary(p));
   details.appendChild(cardBody(p));
   card.appendChild(details);
-  card.appendChild(infoBubble(p, details));
   return card;
 }
 
@@ -372,18 +343,25 @@ function renderSections() {
     return;
   }
   const known = new Set(GROUPS.map((g) => g.id));
+  const unfiltered = filter === 'all' && !q;
   for (const g of GROUPS) {
     const list = visible.filter((p) => (known.has(p.group) ? p.group : 'other') === g.id);
-    if (!list.length) continue;
+    if (!list.length && !(g.empty && unfiltered)) continue;
     const section = el('section', 'group');
     section.setAttribute('aria-labelledby', `g-${g.id}`);
+    const head = el('div', 'group-head');
     const h = el('h2', 'group-title', g.label);
     h.id = `g-${g.id}`;
-    section.appendChild(h);
-    section.appendChild(el('p', 'group-meta', groupMeta(list)));
-    const grid = el('div', 'grid');
-    for (const p of list) grid.appendChild(makeCard(p));
-    section.appendChild(grid);
+    head.appendChild(h);
+    if (list.length) head.appendChild(el('p', 'group-meta', groupMeta(list)));
+    section.appendChild(head);
+    if (list.length) {
+      const grid = el('div', 'grid');
+      for (const p of list) grid.appendChild(makeCard(p));
+      section.appendChild(grid);
+    } else {
+      section.appendChild(el('p', 'group-empty', g.empty));
+    }
     main.appendChild(section);
   }
 }
