@@ -1,5 +1,5 @@
 import { fail } from '../lib/errors.mjs';
-import { elements, elementText, wholeElement } from '../lib/markup.mjs';
+import { attribute, elements, elementText, wholeElement } from '../lib/markup.mjs';
 
 // Volcengine status (status.volcengine.com, plateforme Ark qui sert les modèles Doubao) :
 // l'API BFF de la page (/api/v1/shd/prefetch-shd) répond 401 hors navigateur, contrôle
@@ -19,7 +19,7 @@ const schema = (detail) => { throw fail('schema', `flux RSS Volcengine (${detail
 export function parseVolcengineRss(xml, expectedRegion = null) {
   if (typeof xml !== 'string' || /<!DOCTYPE|<!ENTITY/i.test(xml)) schema('XML refusé');
   const root = wholeElement(xml, 'rss', { declaration: true });
-  if (!root || root.attributes.match(/\bversion=["']([^"']+)["']/)?.[1] !== '2.0') schema('rss 2.0');
+  if (!root || attribute(root.attributes, 'version') !== '2.0') schema('rss 2.0');
   const channel = wholeElement(root.body, 'channel');
   if (!channel) schema('channel');
   const blocks = elements(channel.body, 'item');
@@ -63,7 +63,7 @@ export async function collect(provider, get) {
   }
   const components = results.map((r) => {
     if (r.why) return { name: `${productLabel} (${r.id})`, status: 'inconnu' };
-    const ongoing = r.parsed.items.filter((i) => !i.title.includes('已恢复'));
+    const ongoing = r.parsed.items.filter((i) => !i.title.trimEnd().endsWith('(已恢复)'));
     return { name: `${productLabel} (${r.parsed.region})`, status: ongoing.length ? 'degradation' : 'operationnel', ongoing };
   });
   const incidents = components.flatMap((c) => (c.ongoing ?? []).map((i) => ({

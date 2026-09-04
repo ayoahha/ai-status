@@ -7,6 +7,7 @@ import { normalizeIndicator, normalizeComponentStatus, normalizeGoogleImpact, wo
 import { collectAll, buildOutput, buildProvider, GROUPS } from '../lib/collect.mjs';
 import { HttpError, fail } from '../lib/errors.mjs';
 import { get as httpGet } from '../lib/http.mjs';
+import { attribute, elements } from '../lib/markup.mjs';
 import * as statuspage from '../adapters/statuspage.mjs';
 import * as alibaba from '../adapters/alibaba.mjs';
 import * as google from '../adapters/google.mjs';
@@ -80,6 +81,11 @@ assert.strictEqual(worstOf(['operationnel', 'maintenance', 'degradation']), 'deg
 assert.strictEqual(worstOf(['degradation', 'incident_majeur']), 'incident_majeur');
 assert.strictEqual(worstOf(['operationnel', 'inconnu']), 'inconnu');
 assert.strictEqual(worstOf(['degradation', 'inconnu']), 'degradation');
+assert.strictEqual(worstOf(['__proto__']), 'inconnu', 'une propriété héritée n’est jamais un statut');
+assert.strictEqual(attribute(' version = \'2.0\' ', 'version'), '2.0');
+assert.strictEqual(attribute(' data-version="2.0" ', 'version'), null, 'un attribut préfixé ne remplace pas la clé exacte');
+assert.strictEqual(attribute(' version="2.0" version="1.0" ', 'version'), null, 'un attribut dupliqué est ambigu');
+assert.strictEqual(elements(`${'<a>'.repeat(2_049)}${'</a>'.repeat(2_049)}`, 'item'), null, 'la profondeur XML est bornée');
 
 // 2b. classifyKind : espace de noms ou motif déclaré ; sinon service. Listes réelles.
 const groqPattern = '^(llama|whisper|\\S+/\\S+$)';
@@ -108,8 +114,8 @@ assert.strictEqual(s2.collect.error, 'réponse HTTP : 500 (https://ex.com/api/v2
 assert.strictEqual(s2.collect.errorEn, 'HTTP response: 500 (https://ex.com/api/v2/summary.json)');
 const s3 = await read(statuspage, provider, okJson({ foo: 1 }));
 assert.strictEqual(s3.status, 'inconnu');
-assert.strictEqual(s3.collect.error, 'schéma inattendu : summary.json (status.indicator / components)');
-assert.strictEqual(s3.collect.errorEn, 'unexpected schema: summary.json (status.indicator / components)');
+assert.strictEqual(s3.collect.error, 'schéma inattendu : summary.json (status.indicator / components / incidents / scheduled_maintenances)');
+assert.strictEqual(s3.collect.errorEn, 'unexpected schema: summary.json (status.indicator / components / incidents / scheduled_maintenances)');
 const s3b = await read(statuspage, provider, aborting);
 assert.strictEqual(s3b.collect.error, 'délai dépassé');
 assert.strictEqual(s3b.collect.errorEn, 'timed out');
@@ -147,7 +153,10 @@ const s5 = await read(statuspage, provider, okJson({
     { name: 'Modèles', status: 'degraded_performance', group: true },
     { name: 'Console', status: 'operational' },
   ],
-  incidents: [{ name: 'Elevated errors', status: 'monitoring', impact: 'minor', created_at: '2026-09-03T10:00:00Z', shortlink: 'https://stspg.io/x', components: [{ name: 'API' }] }],
+  incidents: [
+    { name: 'Elevated errors', status: 'monitoring', impact: 'minor', created_at: '2026-09-03T10:00:00Z', shortlink: 'https://stspg.io/x', components: [{ name: 'API' }] },
+    { name: 'Old incident', status: 'resolved' },
+  ],
   scheduled_maintenances: [
     { name: 'DB upgrade', status: 'in_progress', scheduled_for: '2026-09-03T09:00:00Z', scheduled_until: null },
     { name: 'Old', status: 'completed' },
@@ -164,14 +173,18 @@ assert.strictEqual(s5.maintenances.length, 1);
 // 3d. Statuspage : indicateur none mais maintenance en cours → maintenance, jamais vert.
 const s6 = await read(statuspage, provider, okJson({
   status: { indicator: 'none' }, components: [{ name: 'API', status: 'operational' }],
+  incidents: [],
   scheduled_maintenances: [{ name: 'M', status: 'in_progress' }],
 }));
 assert.strictEqual(s6.status, 'maintenance');
 const s7 = await read(statuspage, provider, okJson({
   status: { indicator: 'none' }, components: [{ name: 'API', status: 'under_maintenance' }],
+  incidents: [], scheduled_maintenances: [],
 }));
 assert.strictEqual(s7.status, 'maintenance');
 assert.deepStrictEqual(impacted(s7.components), ['API']);
+assert.strictEqual((await read(statuspage, provider, okJson({ status: { indicator: 'none' }, components: [{ name: 'API', status: 'operational' }], incidents: [{ name: 'X', status: 'invented' }], scheduled_maintenances: [] }))).status, 'inconnu');
+assert.strictEqual((await read(statuspage, provider, okJson({ status: { indicator: 'none' }, components: [{ name: 'API', status: 'operational' }], incidents: [], scheduled_maintenances: [{ name: 'X', status: 'invented' }] }))).status, 'inconnu');
 
 // 4. Google : flux officiels, périmètre par préfixe.
 const gProvider = { ...provider, statusUrl: 'https://status.cloud.google.com', source: { kind: 'google', url: 'https://status.cloud.google.com', productPrefixes: ['Vertex', 'Gemini'] } };
@@ -182,14 +195,19 @@ assert.strictEqual(g1.status, 'operationnel', 'fixture : incidents tous terminé
 assert.ok(g1.components.length >= 20 && g1.components.every((c) => /^(Vertex|Gemini)/.test(c.name)), 'composants = produits du périmètre');
 assert.deepStrictEqual(impacted(g1.components), []);
 assert.ok(/Aucun incident déclaré/.test(g1.sourceText));
-const openOn = (title, impact) => [{ external_desc: 'Test', begin: '2026-09-03T10:00:00+00:00', end: null, status_impact: impact, uri: 'incidents/abc', affected_products: [{ title }] }];
+const openOn = (title, impact, affectedTitle = title, catalogue = products) => {
+  const product = catalogue.products.find((item) => item.title === title);
+  assert.ok(product, `produit de test absent : ${title}`);
+  return [{ id: 'abc', external_desc: 'Test', begin: '2026-09-03T10:00:00+00:00', end: null, status_impact: impact, uri: 'incidents/abc', affected_products: [{ id: product.id, title: affectedTitle }] }];
+};
 const g2 = await read(google, gProvider, byUrl({ 'products.json': products, 'incidents.json': openOn('Vertex Gemini API', 'SERVICE_DISRUPTION') }));
 assert.strictEqual(g2.status, 'degradation');
 assert.deepStrictEqual(impacted(g2.components), ['Vertex Gemini API']);
 assert.strictEqual(g2.incidents[0].url, 'https://status.cloud.google.com/incidents/abc');
 const g3 = await read(google, gProvider, byUrl({ 'products.json': products, 'incidents.json': openOn('Vertex AI Training', 'SERVICE_OUTAGE') }));
 assert.strictEqual(g3.status, 'incident_majeur');
-const g4 = await read(google, gProvider, byUrl({ 'products.json': products, 'incidents.json': openOn('Cloud SQL', 'SERVICE_OUTAGE') }));
+const productsWithSql = { products: [...products.products, { id: 'cloud-sql', title: 'Cloud SQL' }] };
+const g4 = await read(google, gProvider, byUrl({ 'products.json': productsWithSql, 'incidents.json': openOn('Cloud SQL', 'SERVICE_OUTAGE', 'Cloud SQL', productsWithSql) }));
 assert.strictEqual(g4.status, 'operationnel', 'hors périmètre : ignoré');
 const g5 = await read(google, gProvider, byUrl({ 'products.json': products, 'incidents.json': openOn('Vertex Gemini API', 'SERVICE_INFORMATION') }));
 assert.strictEqual(g5.status, 'operationnel', 'informatif : ignoré');
@@ -200,6 +218,17 @@ assert.strictEqual(g7.status, 'inconnu', 'un des deux flux en échec → inconnu
 const g8 = await read(google, { ...gProvider, source: { ...gProvider.source, productPrefixes: ['Inexistant'] } }, byUrl({ 'products.json': products, 'incidents.json': [] }));
 assert.strictEqual(g8.status, 'inconnu');
 assert.ok(/Inexistant/.test(g8.collect.error));
+const g9 = await read(google, gProvider, byUrl({ 'products.json': products, 'incidents.json': openOn('Vertex Gemini API', 'SERVICE_DISRUPTION', 'Nom public renommé') }));
+assert.deepStrictEqual(impacted(g9.components), ['Vertex Gemini API'], 'le rattachement suit l’id stable, pas le libellé incident');
+for (const badIncident of [
+  { ...openOn('Vertex Gemini API', 'SERVICE_DISRUPTION')[0], end: 'jamais' },
+  { ...openOn('Vertex Gemini API', 'SERVICE_DISRUPTION')[0], affected_products: [{ title: 'Vertex Gemini API' }] },
+  { ...openOn('Vertex Gemini API', 'SERVICE_DISRUPTION')[0], affected_products: [{ id: 'inconnu', title: 'Vertex Gemini API' }] },
+  { ...openOn('Vertex Gemini API', 'SERVICE_DISRUPTION')[0], id: null },
+]) {
+  assert.strictEqual((await read(google, gProvider, byUrl({ 'products.json': products, 'incidents.json': [badIncident] }))).status, 'inconnu');
+}
+assert.strictEqual((await read(google, gProvider, byUrl({ 'products.json': products, 'incidents.json': Array(STATUS_LIMITS.events + 1).fill(openOn('Vertex Gemini API', 'SERVICE_DISRUPTION')[0]) }))).status, 'inconnu', 'les incidents sont bornés avant toute jointure');
 
 // 5. Flashcat (DeepSeek) : fixture réelle, aucun changement actif → operationnel.
 const fProvider = { ...provider, statusUrl: 'https://status.deepseek.com', source: { kind: 'flashcat', url: 'https://status.deepseek.com', pageId: '6410630422455' } };
@@ -224,12 +253,14 @@ assert.strictEqual(f3.components[0].status, 'inconnu');
 const a1 = await read(alibaba, provider, okJson(fixture('alibaba-events.json')));
 assert.strictEqual(a1.status, 'operationnel');
 assert.deepStrictEqual(a1.incidents, []);
-const a2 = await read(alibaba, provider, okJson({ data: [{ id: 2, title: '[Incident] Bar', startTime: Date.now() - 3600000, endTime: null }] }));
+const a2 = await read(alibaba, provider, okJson({ success: true, code: 200, httpCode: 200, data: [{ id: 2, title: '[Incident] Bar', startTime: Date.now() - 3600000, endTime: null }] }));
 assert.strictEqual(a2.status, 'degradation');
 assert.strictEqual(a2.incidents[0].status, 'en cours');
 assert.strictEqual(a2.incidents[0].title, 'Bar');
-const a3 = await read(alibaba, provider, okJson({ data: 'oops' }));
+const a3 = await read(alibaba, provider, okJson({ success: true, code: 200, httpCode: 200, data: 'oops' }));
 assert.strictEqual(a3.status, 'inconnu');
+assert.strictEqual((await read(alibaba, provider, okJson({ success: false, code: 200, httpCode: 200, data: [] }))).status, 'inconnu', 'une enveloppe d’échec ne prouve pas un état sain');
+assert.strictEqual((await read(alibaba, provider, okJson({ success: true, code: 200, httpCode: 200, data: [{ title: 'X', startTime: Date.now(), endTime: 'jamais' }] }))).status, 'inconnu', 'une fin invalide ne masque pas un événement');
 
 // 7. xAI : le RSS officiel confirme l'absence d'incident actif ; les 13 services
 // restent déclarés localement car Docs et xAI Website n'ont aucun incident historique
@@ -269,6 +300,11 @@ for (const invalidFeed of [
   xaiFeed.replace('[API Console]', '[Service inconnu]'),
   xaiFeed.replace('https://status.x.ai/api-console/INC702624e4', 'https://evil.test/INC702624e4'),
   xaiFeed.replace(' xmlns:atom="http://www.w3.org/2005/Atom"', ''),
+  xaiFeed.replace(' version="2.0"', ' data-version="2.0"'),
+  xaiFeed.replace(' version="2.0"', ' version="2.0" version="1.0"'),
+  xaiFeed.replace(' href="https://status.x.ai/feed.xml"', ' data-href="https://status.x.ai/feed.xml"'),
+  xaiFeed.replace('<h3>Status: RESOLVED</h3>', '<h3>Status: RESOLVED</h3><h3>Status: RESOLVED</h3>'),
+  xaiFeed.replace('<p>Severity: available</p>', '<p>Severity: available</p><p>Severity: available</p>'),
   `<racine-en-trop />${xaiFeed}`,
   xaiFeed.replace('</rss>', ''),
   xaiFeed.replace('<rss ', '<RSS ').replace('</rss>', '</RSS>'),
@@ -288,15 +324,20 @@ assert.strictEqual(i1.status, 'operationnel');
 assert.deepStrictEqual(names(i1.components), ['Website', 'API', 'Computer']);
 assert.strictEqual(i1.collect.state, 'ok');
 const i2 = await read(instatus, iProvider, byUrl({
-  'summary.json': { page: { status: 'HASISSUES' }, activeIncidents: [{ name: 'API errors', status: 'INVESTIGATING', impact: 'PARTIALOUTAGE', started: '2026-09-04T10:00:00Z', url: 'https://status.perplexity.com/incident/x' }] },
+  'summary.json': { page: { status: 'HASISSUES' }, activeIncidents: [{ name: 'API errors', status: 'INVESTIGATING', impact: 'PARTIALOUTAGE', started: '2026-09-04T10:00:00Z', url: 'https://status.perplexity.com/incident/x' }], activeMaintenances: [] },
   'components.json': { components: [{ name: 'API', status: 'PARTIALOUTAGE' }, { name: 'Website', status: 'OPERATIONAL' }] },
 }));
 assert.strictEqual(i2.status, 'degradation');
 assert.deepStrictEqual(impacted(i2.components), ['API']);
 assert.strictEqual(i2.incidents[0].status, 'investigating');
-const i3 = await read(instatus, iProvider, byUrl({ 'summary.json': { page: { status: 'UP' } }, 'components.json': { components: [{ name: 'API', status: 'WEIRD' }] } }));
+const i3 = await read(instatus, iProvider, byUrl({ 'summary.json': { page: { status: 'UP' }, activeIncidents: null, activeMaintenances: null }, 'components.json': { components: [{ name: 'API', status: 'WEIRD' }] } }));
 assert.strictEqual(i3.status, 'inconnu', 'vocabulaire inconnu → jamais vert');
 assert.strictEqual(instatusComponentStatus('MAJOROUTAGE'), 'incident_majeur');
+assert.strictEqual(instatusComponentStatus('__proto__'), 'inconnu');
+assert.strictEqual((await read(instatus, iProvider, byUrl({
+  'summary.json': { page: { status: 'UP' }, activeIncidents: [{ name: 'X', status: 'INVENTED' }], activeMaintenances: [] },
+  'components.json': { components: [{ name: 'API', status: 'OPERATIONAL' }] },
+}))).status, 'inconnu', 'un état actif inconnu est rejeté');
 for (const map of [{ 'summary.json': { page: { status: 'UP' } }, 'components.json': { components: [] } }, { 'summary.json': {}, 'components.json': { components: [{ name: 'API', status: 'OPERATIONAL' }] } }, { 'summary.json': { page: { status: 'UP' } } }]) {
   const i = await read(instatus, iProvider, byUrl(map));
   assert.strictEqual(i.status, 'inconnu', `payload ${JSON.stringify(map)}`);
@@ -312,25 +353,42 @@ assert.strictEqual(b1.status, 'operationnel');
 assert.ok(b1.components.length >= 20 && b1.components.some((c) => c.name === 'Website'));
 assert.deepStrictEqual(b1.incidents, [], 'les rapports terminés (ends_at non null) sont ignorés');
 assert.deepStrictEqual(b1.maintenances, []);
-const b2 = await read(betterstack, bProvider, okJson({
-  data: { attributes: { aggregate_state: 'degraded' } },
+const b2Body = {
+  data: {
+    attributes: { aggregate_state: 'degraded' },
+    relationships: {
+      resources: { data: [{ id: '1', type: 'status_page_resource' }, { id: '2', type: 'status_page_resource' }] },
+      status_reports: { data: [{ id: '9', type: 'status_report' }, { id: '10', type: 'status_report' }] },
+    },
+  },
   included: [
     { id: '1', type: 'status_page_resource', attributes: { public_name: 'API', status: 'degraded' } },
     { id: '2', type: 'status_page_resource', attributes: { public_name: 'Site', status: 'operational' } },
     { id: '9', type: 'status_report', attributes: { title: 'Slow API', report_type: 'manual', aggregate_state: 'degraded', starts_at: '2026-09-04T10:00:00Z', ends_at: null, affected_resources: [{ status_page_resource_id: '1', status: 'degraded' }] } },
     { id: '10', type: 'status_report', attributes: { title: 'Upgrade', report_type: 'maintenance', starts_at: '2026-09-04T09:00:00Z', ends_at: null, affected_resources: [] } },
   ],
-}));
+};
+const b2 = await read(betterstack, bProvider, okJson(b2Body));
 assert.strictEqual(b2.status, 'degradation');
 assert.deepStrictEqual(impacted(b2.components), ['API']);
 assert.deepStrictEqual(b2.incidents[0].components, ['API']);
 assert.strictEqual(b2.maintenances[0].state, 'in_progress');
-const b3 = await read(betterstack, bProvider, okJson({ data: { attributes: { aggregate_state: 'operational' } }, included: [{ id: '1', type: 'status_page_resource', attributes: { public_name: 'API', status: 'not_monitored' } }] }));
+const b3 = await read(betterstack, bProvider, okJson({
+  data: { attributes: { aggregate_state: 'operational' }, relationships: { resources: { data: [{ id: '1', type: 'status_page_resource' }] }, status_reports: { data: [] } } },
+  included: [{ id: '1', type: 'status_page_resource', attributes: { public_name: 'API', status: 'not_monitored' } }],
+}));
 assert.strictEqual(b3.status, 'inconnu', 'ressource non surveillée → jamais vert');
 for (const body of [{}, { data: {} }, { data: { attributes: { aggregate_state: 'operational' } }, included: [] }]) {
   assert.strictEqual((await read(betterstack, bProvider, okJson(body))).status, 'inconnu', `payload ${JSON.stringify(body)}`);
 }
 assert.strictEqual((await read(betterstack, bProvider, httpFail(503))).status, 'inconnu');
+const badReportEnd = structuredClone(b2Body);
+badReportEnd.included.find((item) => item.id === '9').attributes.ends_at = 'jamais';
+assert.strictEqual((await read(betterstack, bProvider, okJson(badReportEnd))).status, 'inconnu', 'une fin de rapport invalide est rejetée avant filtrage');
+assert.strictEqual((await read(betterstack, bProvider, okJson({
+  data: { attributes: { aggregate_state: 'operational' }, relationships: { resources: { data: [{ id: 'absent', type: 'status_page_resource' }] }, status_reports: { data: [] } } },
+  included: [],
+}))).status, 'inconnu', 'une relation sans objet inclus est incomplète');
 
 // 7d. Checkly (Mistral) : fixture réelle sans incident ; incident ouvert ciblé ; incident sans services ; cassé.
 const cProvider = { ...provider, statusUrl: 'https://status.mistral.ai', source: { kind: 'checkly', url: 'https://status.mistral.ai', slug: 'mistral-ai' } };
@@ -357,9 +415,18 @@ assert.strictEqual(c5.maintenances[0].state, 'in_progress');
 assert.strictEqual((await read(checkly, cProvider, byUrl({ '/uptime': uptime, 'unresolved-incidents': { incidents: [] } }))).status, 'inconnu', 'un endpoint en échec → inconnu');
 assert.strictEqual((await read(checkly, cProvider, byUrl({ '/uptime': { metadata: [] }, 'unresolved-incidents': { incidents: [] }, 'maintenance-windows': { active: [] } }))).status, 'inconnu');
 assert.strictEqual((await read(checkly, cProvider, byUrl({ '/uptime': uptime, 'unresolved-incidents': {}, 'maintenance-windows': { active: [] } }))).status, 'inconnu');
+assert.strictEqual((await read(checkly, cProvider, byUrl({ '/uptime': { metadata: [{ services: {} }] }, 'unresolved-incidents': { incidents: [] }, 'maintenance-windows': { active: [] } }))).status, 'inconnu', 'une collection de services imbriquée doit être un tableau');
+const duplicateUptime = structuredClone(uptime);
+duplicateUptime.metadata[0].services.push({ ...duplicateUptime.metadata[0].services[0] });
+assert.strictEqual((await read(checkly, cProvider, byUrl({ '/uptime': duplicateUptime, 'unresolved-incidents': { incidents: [] }, 'maintenance-windows': { active: [] } }))).status, 'inconnu', 'un service dupliqué est ambigu');
+assert.strictEqual((await read(checkly, cProvider, cMap([{ id: 'bad-ref', name: 'X', severity: 'MINOR', lastUpdateStatus: 'INVESTIGATING', services: [{ id: chatId, name: 'Documentation' }] }]))).status, 'inconnu', 'un id et un nom contradictoires sont rejetés');
+assert.strictEqual((await read(checkly, cProvider, cMap([{ id: 'bad-state', name: 'X', severity: 'MINOR', lastUpdateStatus: 'INVENTED', services: [] }]))).status, 'inconnu');
+assert.strictEqual((await read(checkly, cProvider, cMap([{ id: 'bad-severity', name: 'X', severity: '__proto__', lastUpdateStatus: 'INVESTIGATING', services: [{ id: chatId }] }]))).status, 'inconnu', 'une propriété héritée ne devient jamais opérationnelle');
+assert.strictEqual((await read(checkly, cProvider, cMap(Array(STATUS_LIMITS.events + 1).fill({ lastUpdateStatus: 'RESOLVED' })))).status, 'inconnu', 'les incidents sont bornés avant rattachement');
 
 // 7e. OnlineOrNot (OpenRouter) : décodage turbo-stream ; fixture HTML réelle ; composant dégradé ; page sans données.
 assert.deepStrictEqual(decodeTurboStream([{ _1: 2, _3: 4 }, 'a', 5, 'b', [6, -5], ['D', 7], '2026-09-04T00:00:00Z']), { a: 5, b: ['2026-09-04T00:00:00Z', null] });
+assert.throws(() => decodeTurboStream([{ _1: 2 }, '__proto__', 5]), (error) => error.code === 'schema', 'les clés de prototype sont refusées');
 const oProvider = { ...provider, statusUrl: 'https://status.openrouter.ai', source: { kind: 'onlineornot', url: 'https://status.openrouter.ai' } };
 const orHtml = fixtureText('onlineornot-openrouter.html');
 const orDoc = parseOnlineornotHtml(orHtml);
@@ -385,13 +452,15 @@ const turbo = (root) => {
   enc(root);
   return `<html><body><script>window.__reactRouterContext.streamController.enqueue(${JSON.stringify(JSON.stringify(flat))});</script></body></html>`;
 };
-const onlineHtml = (components, incidents = {}) => turbo({ loaderData: {
+const onlineHtml = (components, incidents = {}, activeIncidents = []) => turbo({ loaderData: {
   root: { result: { components } },
-  'routes/_index': { result: { incidents } },
+  'routes/_index': { result: { incidents, activeIncidents } },
 } });
+const activeOnlineIncident = { id: 'abc', title: 'Chat down', impact: 'MAJOR_OUTAGE', started: '2026-09-04T10:00:00Z', ended: null, updates: [{ status: 'INVESTIGATING', createdAt: '2026-09-04T10:01:00Z' }] };
 const degradedHtml = onlineHtml(
   [{ name: 'Chat (/api/v1/chat/completions)', status: 'MAJOR_OUTAGE' }, { name: 'Models', status: 'OPERATIONAL' }],
-  { '2026-09-04T00:00:00.000Z': [{ id: 'abc', title: 'Chat down', started: '2026-09-04T10:00:00Z', ended: null, updates: [{ status: 'INVESTIGATING', createdAt: '2026-09-04T10:01:00Z' }] }] },
+  { '2026-09-04T00:00:00.000Z': [activeOnlineIncident] },
+  [activeOnlineIncident],
 );
 const o2 = await read(onlineornot, oProvider, okText(degradedHtml));
 assert.strictEqual(o2.status, 'incident_majeur');
@@ -414,7 +483,18 @@ assert.strictEqual(o5.status, 'inconnu', 'un tableau d’incidents aliasé est r
 const sharedComponent = { name: 'x'.repeat(60_000), status: 'OPERATIONAL' };
 const o6 = await read(onlineornot, oProvider, okText(onlineHtml([sharedComponent, sharedComponent])));
 assert.strictEqual(o6.status, 'inconnu', 'des composants aliasés ne dépassent pas le budget fournisseur');
-assert.match(o6.collect.error, /^réponse trop volumineuse/);
+assert.match(o6.collect.error, /^schéma inattendu/);
+assert.strictEqual((await read(onlineornot, oProvider, okText(onlineHtml([{ name: 'Models', status: 'OPERATIONAL' }, { name: 'Models', status: 'OPERATIONAL' }])))).status, 'inconnu', 'deux composants de même identité sont rejetés');
+assert.strictEqual((await read(onlineornot, oProvider, okText(onlineHtml([null])))).status, 'inconnu', 'aucun composant mal formé n’est supprimé silencieusement');
+assert.strictEqual((await read(onlineornot, oProvider, okText(turbo({ loaderData: { root: { result: { components: [{ name: 'Models', status: 'OPERATIONAL' }] } }, 'routes/_index': { result: {} } } })))).status, 'inconnu', 'le dataset incidents doit être explicitement présent');
+assert.strictEqual((await read(onlineornot, oProvider, okText(turbo({ loaderData: { root: { result: { components: [{ name: 'Models', status: 'OPERATIONAL' }] } }, 'routes/_index': { result: { incidents: {} } } } })))).status, 'inconnu', 'le dataset activeIncidents doit être explicitement présent');
+assert.strictEqual((await read(onlineornot, oProvider, okText(onlineHtml([{ name: 'Models', status: 'OPERATIONAL' }], { today: [{ title: 'X', ended: 'jamais', updates: [] }] })))).status, 'inconnu', 'une fin invalide ne masque pas un incident');
+const invalidActive = { ...activeOnlineIncident, id: 'bad-state', updates: [{ status: 'INVENTED' }] };
+assert.strictEqual((await read(onlineornot, oProvider, okText(onlineHtml([{ name: 'Models', status: 'OPERATIONAL' }], { today: [invalidActive] }, [invalidActive])))).status, 'inconnu', 'un état actif inconnu est rejeté');
+const unknownImpact = { ...activeOnlineIncident, id: 'bad-impact', impact: 'INVENTED' };
+assert.strictEqual((await read(onlineornot, oProvider, okText(onlineHtml([{ name: 'Models', status: 'OPERATIONAL' }], { today: [unknownImpact] }, [unknownImpact])))).status, 'inconnu', 'un impact actif inconnu ne peut jamais rester vert');
+const genericUpdate = { ...activeOnlineIncident, id: 'generic-update', impact: 'NO_IMPACT', updates: [{ status: 'UPDATE', createdAt: '2026-09-04T10:01:00Z' }] };
+assert.strictEqual((await read(onlineornot, oProvider, okText(onlineHtml([{ name: 'Models', status: 'OPERATIONAL' }], { today: [genericUpdate] }, [genericUpdate])))).status, 'degradation', 'une mise à jour active documentée ne peut pas rester verte');
 
 // 7f. AWS (Bedrock) : codes ; fixture réelle en UTF-16 (deux régions ME disrupted) ; tout calme ; cassé.
 assert.strictEqual(awsCode('0'), 'operationnel');
@@ -439,6 +519,13 @@ assert.deepStrictEqual(impacted(w3.components), ['Amazon Bedrock (N. Virginia)']
 assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([]) }))).status, 'inconnu');
 assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16({}), 'services.json': utf8bom(awsServices) }))).status, 'inconnu');
 assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([]), 'services.json': utf8bom([{ service: 'ec2-us-east-1', service_name: 'Amazon EC2' }]) }))).status, 'inconnu', 'aucun service du périmètre → inconnu');
+const bedrockService = awsServices.find((service) => service.service_name === 'Amazon Bedrock');
+assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([]), 'services.json': utf8bom([{ ...bedrockService, service: null }]) }))).status, 'inconnu', 'l’identité du catalogue est obligatoire');
+assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([]), 'services.json': utf8bom([bedrockService, { ...bedrockService }]) }))).status, 'inconnu', 'un id de service dupliqué est rejeté');
+assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([{ status: '2', service: bedrockService.service, end_time: 'jamais' }]), 'services.json': utf8bom(awsServices) }))).status, 'inconnu', 'une fin d’événement invalide ne le masque pas');
+assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16(Array(STATUS_LIMITS.events + 1).fill({ status: '0', end_time: '1' })), 'services.json': utf8bom(awsServices) }))).status, 'inconnu', 'les événements sont bornés avant rattachement');
+assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([{ status: '2', service: 'bedrock-new-region', service_name: 'Amazon Bedrock' }]), 'services.json': utf8bom(awsServices) }))).status, 'inconnu', 'un événement Bedrock sans région joignable ne peut pas être ignoré');
+assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([{ status: '3', service: 'multipleservices-us-east-1', service_name: 'Multiple services', impacted_services: { 'ec2-us-east-1': { service_name: 'Amazon EC2', current: '3' } } }]), 'services.json': utf8bom(awsServices) }))).status, 'operationnel', 'un événement explicitement hors périmètre reste ignoré');
 
 // 7g. Azure : fixture réelle expurgée (Good partout) ; Warning ; label inconnu ; service absent ; page vide.
 const zProvider = { ...provider, statusUrl: 'https://azure.status.microsoft/en-us/status', source: { kind: 'azure', url: 'https://azure.status.microsoft/en-us/status', services: ['Azure OpenAI Service', 'Foundry Models', 'Azure AI Search'] } };
@@ -457,6 +544,11 @@ assert.strictEqual(z4.status, 'operationnel');
 assert.ok(/Inexistant/.test(z4.collect.error), 'service absent signalé sans casser la collecte');
 const z5 = await read(azure, zProvider, okText('<tr><td>Azure OpenAI Service</td><td data-label="Not available"></td></tr>'));
 assert.strictEqual(z5.status, 'inconnu', 'aucune cellule lisible → inconnu');
+assert.strictEqual((await read(azure, zProvider, okText("<tr><td>Azure OpenAI Service</td><td class='status-cell'><span class='status-icon' DATA-LABEL = 'Warning'></span></td></tr>"))).status, 'degradation', 'nom d’attribut HTML insensible à la casse et guillemets simples');
+assert.strictEqual((await read(azure, zProvider, okText('<tr><td>Azure OpenAI Service</td><td class="status-cell"><span class="status-icon" data-data-label="Warning"></span></td></tr>'))).status, 'inconnu', 'un attribut préfixé ne vaut pas data-label');
+assert.strictEqual((await read(azure, zProvider, okText('<tr><td>Azure OpenAI Service</td><td class="status-cell"><!-- <span class="status-icon" data-label="Warning"></span> --><span class="status-icon" data-label="Good"></span></td></tr>'))).status, 'operationnel', 'un faux attribut en commentaire est ignoré');
+assert.strictEqual((await read(azure, zProvider, okText('<tr><td>Azure OpenAI Service</td><td class="status-cell"><span class="status-icon" data-label="Good" data-label="Warning"></span></td></tr>'))).status, 'inconnu', 'un attribut exact dupliqué est ambigu');
+assert.strictEqual((await read(azure, zProvider, okText('<tr><td>Azure OpenAI Service</td><td class="status-cell"><em data-label="Warning"></em><span data-label="Good"></span></td></tr>'))).status, 'inconnu', 'un marqueur non qualifié ne peut pas rendre le service vert');
 assert.strictEqual((await read(azure, zProvider, okText('<tr>'.repeat(10_000)))).status, 'inconnu', 'lignes incomplètes : rejet borné');
 assert.strictEqual((await read(azure, zProvider, okText('<html></html>'))).status, 'inconnu');
 assert.strictEqual((await read(azure, zProvider, httpFail(500))).status, 'inconnu');
@@ -484,6 +576,8 @@ const rssBeijing = fixtureText('volcengine-modelark-cn-beijing.rss');
 assert.strictEqual(parseVolcengineRss(rssBeijing).region, '华北2（北京）');
 assert.strictEqual(parseVolcengineRss(rssBeijing).items.length, 2);
 assert.strictEqual(parseVolcengineRss(rssBeijing, 'cn-beijing').region, '华北2（北京）');
+assert.throws(() => parseVolcengineRss(rssBeijing.replace('version="2.0"', 'data-version="2.0"')), (error) => error.code === 'schema');
+assert.throws(() => parseVolcengineRss(rssBeijing.replace('version="2.0"', 'version="2.0" version="1.0"')), (error) => error.code === 'schema');
 const rssShanghai = fixtureText('volcengine-modelark-cn-shanghai.rss');
 assert.strictEqual(parseVolcengineRss(rssShanghai.replaceAll('华东2（上海）', '华南1（广州）'), 'cn-guangzhou').region, '华南1（广州）');
 assert.strictEqual(parseVolcengineRss(rssShanghai.replaceAll('华东2（上海）', '亚太东南（柔佛）'), 'ap-southeast-1').region, '亚太东南（柔佛）');
@@ -495,6 +589,8 @@ const v2 = await read(volcengine, vProvider, byUrlText({ 'cn-beijing': rssBeijin
 assert.strictEqual(v2.status, 'degradation');
 assert.deepStrictEqual(impacted(v2.components), ['火山方舟 (华北2（北京）)']);
 assert.strictEqual(v2.incidents.length, 1);
+const vSuffix = await read(volcengine, vProvider, byUrlText({ 'cn-beijing': rssBeijing.replace('方舟大模型服务平台异常(已恢复)', '方舟大模型服务平台异常(已恢复) 后续'), 'cn-shanghai': rssShanghai }));
+assert.strictEqual(vSuffix.status, 'degradation', '已恢复 doit être le suffixe terminal du titre');
 const v3 = await read(volcengine, vProvider, byUrlText({ 'cn-beijing': rssBeijing, 'cn-shanghai': '<rss version="2.0"><channel><title>火山引擎火山方舟大模型服务平台()服务状态</title></channel></rss>' }));
 assert.strictEqual(v3.status, 'inconnu', 'région sans nom (inexistante) → composant illisible, jamais vert');
 const vCross = await read(volcengine, vProvider, byUrlText({ 'cn-beijing': rssShanghai, 'cn-shanghai': rssShanghai }));
@@ -522,7 +618,7 @@ const decl = [
 ];
 const adapters = {
   sp: { METHOD: { fr: 'API SP', en: 'SP API' }, collect: async (p) => p.id === 'a'
-    ? { indicator: 'incident_majeur', rawStatus: 'Major outage', components: [{ name: 'm-1', status: 'incident_majeur' }, { name: 'API', status: 'operationnel' }], incidents: [{ title: 'Down', state: 'investigating', createdAt: '2026-09-03T10:00:00Z' }, { title: 'Old', state: 'resolved' }] }
+    ? { indicator: 'incident_majeur', rawStatus: 'Major outage', components: [{ name: 'm-1', status: 'incident_majeur' }, { name: 'API', status: 'operationnel' }], incidents: [{ title: 'Down', state: 'investigating', createdAt: '2026-09-03T10:00:00Z' }] }
     : { indicator: 'operationnel', components: [{ name: 'API', status: 'operationnel' }], maintenances: [{ title: 'M', state: 'scheduled' }] } },
   unavailable,
 };
@@ -533,7 +629,7 @@ assert.strictEqual(out.schemaVersion, 2);
 assert.deepStrictEqual(out.labels, STATUS_LABELS);
 assert.strictEqual(out.summary.worst, 'incident_majeur');
 assert.deepStrictEqual(out.summary.counts, { operationnel: 1, maintenance: 0, degradation: 0, incident_majeur: 1, indisponible: 0, inconnu: 2 });
-assert.strictEqual(out.summary.activeIncidents, 1, 'incident résolu exclu');
+assert.strictEqual(out.summary.activeIncidents, 1, 'seul l’incident actif est publié');
 assert.strictEqual(out.summary.activeMaintenances, 0, 'maintenance planifiée non comptée comme active');
 const [pa, pb, , pd] = out.providers;
 assert.strictEqual(pa.group, 'us');
@@ -568,6 +664,7 @@ assert.strictEqual(derive({ indicator: 'degradation', components: [{ name: 'A', 
 assert.strictEqual(derive({ indicator: 'operationnel', components: [{ name: 'A', status: 'incident_majeur' }] }), 'incident_majeur', 'composant pire que l’indicateur');
 assert.strictEqual(derive({ indicator: 'operationnel', components: [], maintenances: [{ title: 'M', state: 'in_progress' }] }), 'maintenance', 'maintenance en cours');
 assert.strictEqual(derive({ indicator: 'operationnel', components: [], maintenances: [{ title: 'M', state: 'scheduled' }] }), 'operationnel', 'maintenance planifiée : sans effet');
+assert.strictEqual(derive({ indicator: 'operationnel', components: [], incidents: [{ title: 'X', state: 'investigating' }] }), 'degradation', 'un incident actif ne peut jamais coexister avec un état vert');
 assert.strictEqual(derive({ indicator: 'bizarre', components: [] }), 'inconnu', 'indicateur hors enum : inconnu');
 // 8c. Un adaptateur rejeté est forcé à inconnu, quoi qu'il ait pu promettre
 const py = buildProvider(decl[2], { status: 'rejected', reason: new Error('x') });
@@ -589,6 +686,7 @@ const malformed = [
   { indicator: 'operationnel', components: 'oops' },
   { indicator: 'operationnel', components: [{ name: null, status: 'operationnel' }] },
   { indicator: 'operationnel', components: [], incidents: [{ title: 7, state: 'en cours' }] },
+  { indicator: 'operationnel', components: [], incidents: [{ title: 'X', state: 'resolved' }] },
   { indicator: 'operationnel', components: [], incidents: [{ title: 'X', state: 'en cours', createdAt: 'jamais' }] },
   { indicator: null, components: [] },
   { indicator: 'operationnel', components: Array(STATUS_LIMITS.components + 1).fill({ name: 'API', status: 'operationnel' }) },

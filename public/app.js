@@ -1,7 +1,7 @@
 // Lecture de data/status.json (contrat v2, généré par la collecte GitHub Actions).
 // Tout texte externe est inséré via textContent (pas d'innerHTML) → aucun contenu
 // externe exécuté ou interprété comme instructions
-import { MAX_STATUS_BYTES, safeExternalUrl, validateStatusDocument } from './status-contract.js';
+import { isActiveMaintenanceState, MAX_STATUS_BYTES, safeExternalUrl, validateStatusDocument } from './status-contract.js';
 
 const FRESHNESS_MS = 60 * 1000;
 const REFRESH_MS = 30 * 60 * 1000;
@@ -119,6 +119,16 @@ const severity = (status) => {
 const isAlert = (status) => status !== 'operationnel' && status !== 'inconnu';
 // Titres de sources en chinois ou en anglais : lang posé pour les lecteurs d'écran
 const langOf = (text) => (/[㐀-鿿]/.test(text) ? 'zh' : 'en');
+const bidi = (text, className = null) => {
+  const node = el('bdi', className, text);
+  node.dir = 'auto';
+  node.lang = langOf(text);
+  return node;
+};
+const appendNames = (parent, names) => names.forEach((name, index) => {
+  if (index) parent.appendChild(document.createTextNode(', '));
+  parent.appendChild(bidi(name));
+});
 
 function icon(status) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -243,9 +253,13 @@ function renderOngoing() {
     head.appendChild(el('span', 'ongoing-status', ` · ${label(p.status)} · ${localized(p.reason, p.reasonEn)}`));
     body.appendChild(head);
     const alerted = p.components.filter((c) => c.status !== 'operationnel');
-    if (alerted.length) body.appendChild(el('p', 'ongoing-comps', alerted.map((c) => c.name).join(', ')));
+    if (alerted.length) {
+      const names = el('p', 'ongoing-comps');
+      appendNames(names, alerted.map((c) => c.name));
+      body.appendChild(names);
+    }
     for (const inc of p.incidents) body.appendChild(incidentLine(inc, p));
-    for (const m of p.maintenances.filter((m) => m.state !== 'scheduled')) body.appendChild(maintenanceLine(m, p));
+    for (const m of p.maintenances.filter((m) => isActiveMaintenanceState(m.state))) body.appendChild(maintenanceLine(m, p));
     li.appendChild(body);
     items.push(li);
   }
@@ -265,13 +279,15 @@ function externalLink(href, text, className, provider) {
 
 function incidentLine(inc, provider) {
   const p = el('p', 'incident');
-  const title = el('span', 'incident-title', inc.title);
-  title.lang = langOf(inc.title);
-  p.appendChild(title);
+  p.appendChild(bidi(inc.title, 'incident-title'));
   const meta = [t('incidentStates')[inc.status] ?? inc.status];
   if (inc.startedAt) meta.push(`${t('since')} ${fmtDate(inc.startedAt)}`);
-  if (inc.components?.length) meta.push(inc.components.join(', '));
-  p.appendChild(el('span', 'incident-meta', ` · ${meta.join(' · ')}`));
+  const details = el('span', 'incident-meta', ` · ${meta.join(' · ')}`);
+  if (inc.components?.length) {
+    details.appendChild(document.createTextNode(' · '));
+    appendNames(details, inc.components);
+  }
+  p.appendChild(details);
   const link = inc.url && externalLink(inc.url, t('detail'), 'incident-link', provider);
   if (link) {
     p.appendChild(document.createTextNode(' · '));
@@ -282,9 +298,7 @@ function incidentLine(inc, provider) {
 
 function maintenanceLine(m, provider) {
   const p = el('p', 'incident maintenance');
-  const title = el('span', 'incident-title', m.title);
-  title.lang = langOf(m.title);
-  p.appendChild(title);
+  p.appendChild(bidi(m.title, 'incident-title'));
   const meta = [`${t('maintenanceWord')} ${t('incidentStates')[m.state] ?? m.state}`];
   if (m.scheduledFor) meta.push(`${m.state === 'scheduled' ? t('plannedFor') : t('since')} ${fmtDate(m.scheduledFor)}`);
   if (m.scheduledUntil) meta.push(`${t('until')} ${fmtDate(m.scheduledUntil)}`);
@@ -305,9 +319,7 @@ function componentList(title, comps) {
   for (const c of sorted) {
     const li = el('li', `comp s-${c.status}`);
     li.appendChild(icon(c.status));
-    const name = el('span', 'comp-name', c.name);
-    name.lang = langOf(c.name);
-    li.appendChild(name);
+    li.appendChild(bidi(c.name, 'comp-name'));
     li.appendChild(el('span', 'comp-status', label(c.status)));
     ul.appendChild(li);
   }

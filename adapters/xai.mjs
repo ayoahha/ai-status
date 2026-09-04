@@ -1,13 +1,12 @@
 import { fail } from '../lib/errors.mjs';
-import { elements, elementText, wholeElement } from '../lib/markup.mjs';
+import { attribute, elements, elementText, wholeElement } from '../lib/markup.mjs';
 
-const attr = (attributes, name) => attributes.match(new RegExp(`\\b${name}=["']([^"']+)["']`))?.[1] ?? null;
 const schema = (detail) => { throw fail('schema', `flux RSS xAI (${detail})`, `xAI RSS feed (${detail})`); };
 
 export function parseXaiRss(xml, expectedComponents) {
   if (typeof xml !== 'string' || /<!DOCTYPE|<!ENTITY/i.test(xml)) schema('XML refusé');
   const root = wholeElement(xml, 'rss', { declaration: true });
-  if (!root || attr(root.attributes, 'version') !== '2.0' || attr(root.attributes, 'xmlns:atom') !== 'http://www.w3.org/2005/Atom') schema('rss 2.0');
+  if (!root || attribute(root.attributes, 'version') !== '2.0' || attribute(root.attributes, 'xmlns:atom') !== 'http://www.w3.org/2005/Atom') schema('rss 2.0');
   const channel = wholeElement(root.body, 'channel');
   if (!channel) schema('channel');
 
@@ -18,7 +17,7 @@ export function parseXaiRss(xml, expectedComponents) {
   const builtAt = elementText(header, 'lastBuildDate');
   if (!builtAt || !Number.isFinite(Date.parse(builtAt))) schema('lastBuildDate');
   const atomLinks = elements(header, 'atom:link');
-  if (!atomLinks || atomLinks.length !== 1 || attr(atomLinks[0].attributes, 'href') !== 'https://status.x.ai/feed.xml' || attr(atomLinks[0].attributes, 'rel') !== 'self' || attr(atomLinks[0].attributes, 'type') !== 'application/rss+xml') schema('lien autonome');
+  if (!atomLinks || atomLinks.length !== 1 || attribute(atomLinks[0].attributes, 'href') !== 'https://status.x.ai/feed.xml' || attribute(atomLinks[0].attributes, 'rel') !== 'self' || attribute(atomLinks[0].attributes, 'type') !== 'application/rss+xml') schema('lien autonome');
 
   const components = new Set(expectedComponents);
   const seen = new Set();
@@ -42,8 +41,10 @@ export function parseXaiRss(xml, expectedComponents) {
     }
     if (url.origin !== 'https://status.x.ai' || url.username || url.password || !url.pathname.endsWith(`/${guid}`)) schema('lien incident');
 
-    const status = description?.match(/<h3>Status:\s*([^<]+)<\/h3>/i)?.[1]?.trim().toLowerCase();
-    const severity = description?.match(/<p>Severity:\s*([^<]+)<\/p>/i)?.[1]?.trim().toLowerCase();
+    const statuses = [...(description ?? '').matchAll(/<h3>Status:\s*([^<]+)<\/h3>/gi)];
+    const severities = [...(description ?? '').matchAll(/<p>Severity:\s*([^<]+)<\/p>/gi)];
+    const status = statuses.length === 1 ? statuses[0][1].trim().toLowerCase() : null;
+    const severity = severities.length === 1 ? severities[0][1].trim().toLowerCase() : null;
     const categoryElements = elements(body, 'category');
     if (!categoryElements) schema('category');
     const categories = categoryElements.map((category) => category.body.trim().toLowerCase());
