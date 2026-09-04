@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { normalizeIndicator, normalizeComponentStatus, normalizeGoogleImpact, worstOf, classifyKind, normalizeFailure, STATUSES, STATUS_LABELS, STATUS_LABELS_EN } from '../lib/normalize.mjs';
 import { collectAll, buildOutput, buildProvider, GROUPS } from '../lib/collect.mjs';
 import { HttpError, fail } from '../lib/errors.mjs';
+import { get as httpGet } from '../lib/http.mjs';
 import * as statuspage from '../adapters/statuspage.mjs';
 import * as alibaba from '../adapters/alibaba.mjs';
 import * as google from '../adapters/google.mjs';
@@ -538,6 +539,97 @@ assert.strictEqual(safeExternalUrl('https://ex.com/detail', provider.statusUrl, 
 assert.strictEqual(safeExternalUrl('https://stspg.io/x', provider.statusUrl, 'statuspage'), 'https://stspg.io/x');
 for (const url of ['http://ex.com/x', 'https://evil.test/x', 'https://user@ex.com/x', 'javascript:alert(1)', 'data:text/plain,x']) {
   assert.strictEqual(safeExternalUrl(url, provider.statusUrl, 'statuspage'), null, url);
+}
+
+// Le seam HTTP commun garde son délai jusqu'au dernier octet, borne le corps et
+// refuse toute destination non prévue avant le second fetch
+const originalFetch = globalThis.fetch;
+try {
+  globalThis.fetch = async (_url, { signal }) => new Response(new ReadableStream({
+    start(controller) {
+      const timer = setTimeout(() => {
+        controller.enqueue(new TextEncoder().encode('trop tard'));
+        controller.close();
+      }, 100);
+      signal.addEventListener('abort', () => {
+        clearTimeout(timer);
+        controller.error(signal.reason);
+      }, { once: true });
+    },
+  }));
+  await assert.rejects(
+    httpGet('https://source.test/data', { as: 'text', timeoutMs: 10 }),
+    (error) => error.name === 'AbortError',
+    'le délai couvre le corps',
+  );
+
+  globalThis.fetch = async () => new Response(new ReadableStream({
+    start(controller) {
+      controller.enqueue(new Uint8Array(6));
+      controller.enqueue(new Uint8Array(6));
+      controller.close();
+    },
+  }), { headers: { 'Content-Length': '1' } });
+  await assert.rejects(
+    httpGet('https://source.test/data', { as: 'bytes', maxBytes: 10 }),
+    (error) => error.code === 'limit',
+    'les octets réellement décodés font foi',
+  );
+
+  const requests = [];
+  globalThis.fetch = async (url, options) => {
+    requests.push({ url, redirect: options.redirect });
+    if (url.startsWith('https://replicatestatus.com/')) {
+      return new Response(null, { status: 301, headers: { Location: 'https://www.replicatestatus.com/api/v2/summary.json' } });
+    }
+    return new Response('{"ok":true}');
+  };
+  assert.deepStrictEqual(
+    await httpGet('https://replicatestatus.com/api/v2/summary.json', { redirectOrigins: ['https://www.replicatestatus.com'] }),
+    { ok: true },
+  );
+  assert.deepStrictEqual(requests.map((request) => request.redirect), ['manual', 'manual']);
+
+  const expectedBytes = new Uint8Array([0xff, 0xfe, 0x7b, 0x00]);
+  globalThis.fetch = async () => new Response(expectedBytes);
+  assert.deepStrictEqual(await httpGet('https://source.test/data', { as: 'bytes' }), expectedBytes);
+
+  requests.length = 0;
+  globalThis.fetch = async (url, options) => {
+    requests.push({ url, redirect: options.redirect });
+    return new Response(null, { status: 302, headers: { Location: 'https://127.0.0.1/metadata' } });
+  };
+  await assert.rejects(
+    httpGet('https://source.test/data'),
+    (error) => error.code === 'policy',
+    'une redirection hors origine est refusée',
+  );
+  assert.strictEqual(requests.length, 1, 'la cible refusée ne reçoit aucune requête');
+
+  const policyProvider = {
+    ...provider,
+    source: {
+      kind: 'policy-test',
+      url: 'https://source.test',
+      maxResponseBytes: 64,
+      redirectOrigins: ['https://redirect.test'],
+    },
+  };
+  let receivedOptions;
+  const policyResult = await collectAll([policyProvider], { 'policy-test': {
+    collect: async (_p, get) => {
+      await get('https://source.test/data', { maxBytes: 1, redirectOrigins: ['https://evil.test'] });
+      return { indicator: 'operationnel', components: [] };
+    },
+  } }, async (_url, options) => {
+    receivedOptions = options;
+    return {};
+  });
+  assert.strictEqual(policyResult[0].status, 'fulfilled');
+  assert.strictEqual(receivedOptions.maxBytes, 64);
+  assert.deepStrictEqual(receivedOptions.redirectOrigins, ['https://redirect.test']);
+} finally {
+  globalThis.fetch = originalFetch;
 }
 
 // Le même validateur couvre producteur, CI et navigateur, sans garde toujours vraie.
