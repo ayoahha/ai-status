@@ -256,7 +256,7 @@ try {
   bilingual.providers.push({
     id: 'global', name: 'Alibaba Cloud', group: 'cn', scope: 'Statut global du cloud', scopeEn: 'Global cloud status', statusUrl: 'https://example.com/global',
     status: 'degradation', reason: '1 incident en cours', reasonEn: '1 incident in progress', sourceText: null, collectedAt: bilingual.generatedAt,
-    collect: { state: 'ok', method: 'alibaba', error: null, errorEn: null }, components: [],
+    collect: { state: 'ok', method: 'alibaba', methodLabel: 'API Alibaba Cloud', methodLabelEn: 'Alibaba Cloud API', error: null, errorEn: null }, components: [],
     incidents: [{ title: 'Network issue', status: 'en cours', impact: null, startedAt: bilingual.generatedAt, updatedAt: null, url: null, components: [] }], maintenances: [],
   });
   bilingual.summary = { worst: 'degradation', counts: { operationnel: 1, degradation: 1, incident_majeur: 0, maintenance: 0, indisponible: 0, inconnu: 0 }, activeIncidents: 1, activeMaintenances: 0 };
@@ -266,6 +266,7 @@ try {
     assert.equal(await page.title(), 'État des fournisseurs IA');
     assert.equal(await page.locator('#global .card-count').textContent(), 'Statut global');
     assert.equal(await page.locator('#global .card-reason').textContent(), '1 incident en cours');
+    assert.match(await page.locator('#global .meta').textContent(), /Lu via API Alibaba Cloud/);
     assert.equal(await page.locator('#g-cn').textContent(), 'Fournisseurs · Chine');
     // État à conserver : recherche vide, filtre « dégradation », tri par nom, carte ouverte
     await page.locator('#sort').selectOption('name');
@@ -294,7 +295,7 @@ try {
     assert.equal(await page.locator('#g-cn').textContent(), 'Providers · China');
     assert.match(await page.locator('#collected-at').textContent(), /^Refreshed .* · collected /);
     assert.equal(await page.locator('.foot-title').first().textContent(), 'Collection');
-    assert.match(await page.locator('#global .meta').textContent(), /Read via Alibaba Cloud API/);
+    assert.match(await page.locator('#global .meta').textContent(), /Read via Alibaba Cloud API/, 'libellé de famille fourni par le collecteur');
     assert.equal(await page.locator('#global .incident-title').getAttribute('lang'), 'en', 'titre brut de la source : langue détectée, jamais traduit');
     // État conservé : filtre, tri, carte ouverte
     assert.equal(await page.locator('.card').count(), 1, 'filtre conservé');
@@ -313,6 +314,7 @@ try {
     assert.equal(await page.locator('#global').count(), 0, 'recherche conservée');
     assert.equal(await page.getByRole('searchbox').inputValue(), 'test');
     assert.equal(await page.locator('#test .card-count').textContent(), '1 composant');
+    assert.match(await page.locator('#test .meta').textContent(), /Lu via statuspage ·/, 'sans libellé : repli sur l’id machine');
     assert.equal(await page.locator('#result-count').textContent(), '1 fournisseur sur 2');
     assert.equal(await page.evaluate(() => localStorage.getItem('lang')), 'fr');
   });

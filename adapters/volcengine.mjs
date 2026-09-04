@@ -1,4 +1,4 @@
-import { worstOf } from '../lib/normalize.mjs';
+import { fail } from '../lib/errors.mjs';
 
 // Volcengine status (status.volcengine.com, plateforme Ark qui sert les modèles Doubao) :
 // l'API BFF de la page (/api/v1/shd/prefetch-shd) répond 401 hors navigateur, contrôle
@@ -24,43 +24,49 @@ export function parseVolcengineRss(xml) {
   return { region, items };
 }
 
-export async function collectVolcengine(provider, get) {
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'flux RSS Volcengine status', en: 'Volcengine status RSS feeds' };
+
+export async function collect(provider, get) {
   const base = provider.source.url.replace(/\/+$/, '');
   const { product, productLabel, regions = [] } = provider.source;
-  try {
-    const results = await Promise.all(regions.map(async (r) => {
-      const res = await get(`${base}/rss/zh/${r}/${product}`);
-      return { id: r, ok: res.ok, status: res.status, parsed: res.ok ? parseVolcengineRss(await res.text()) : null };
-    }));
-    const bad = results.filter((r) => !r.ok || !r.parsed.region);
-    if (bad.length === results.length) {
-      return { status: 'inconnu', collect: { state: 'error', error: `aucun flux RSS lisible (${bad.map((r) => `${r.id}: HTTP ${r.status}`).join(', ')})` } };
+  // Échec par région capturé ici : une région illisible ne fait pas échouer les autres
+  const results = await Promise.all(regions.map(async (r) => {
+    try {
+      const parsed = parseVolcengineRss(await get(`${base}/rss/zh/${r}/${product}`, { as: 'text', accept: 'application/rss+xml,text/xml' }));
+      return { id: r, parsed, why: parsed.region ? null : 'canal sans région' };
+    } catch (err) {
+      return { id: r, parsed: null, why: err.message, err };
     }
-    const components = results.map((r) => {
-      if (!r.ok || !r.parsed.region) return { name: `${productLabel} (${r.id})`, status: 'inconnu' };
-      const ongoing = r.parsed.items.filter((i) => !i.title.includes('已恢复'));
-      return { name: `${productLabel} (${r.parsed.region})`, status: ongoing.length ? 'degradation' : 'operationnel', ongoing };
-    });
-    const incidents = components.flatMap((c) => (c.ongoing ?? []).map((i) => ({
-      title: i.title,
-      state: 'en cours',
-      createdAt: i.pubDate && Number.isFinite(Date.parse(i.pubDate)) ? new Date(i.pubDate).toISOString() : null,
-      url: `${base}/`,
-      components: [c.name],
-    })));
-    const alerted = components.filter((c) => c.status !== 'operationnel').length;
-    return {
-      status: worstOf(components.map((c) => c.status)),
-      rawStatus: alerted ? `${alerted} region(s) with an unresolved event` : `No unresolved event (${components.length} regions)`,
-      rawIndicator: alerted ? 'unresolved' : 'none',
-      components: components.map(({ name, status }) => ({ name, status })),
-      incidents,
-      collect: { state: 'ok', error: bad.length ? `régions illisibles : ${bad.map((r) => r.id).join(', ')}` : null },
-    };
-  } catch (err) {
-    return {
-      status: 'inconnu',
-      collect: { state: 'error', error: err.name === 'AbortError' ? 'timeout' : `erreur réseau : ${err.message}` },
-    };
+  }));
+  const bad = results.filter((r) => r.why);
+  if (bad.length === results.length) {
+    // Réseau, HTTP ou timeout partout : l'erreur d'origine garde sa classification
+    const first = bad.find((r) => r.err);
+    if (first) throw first.err;
+    throw fail('schema', bad.map((r) => `${r.id}: rss/zh (channel title)`).join(', '));
   }
+  const components = results.map((r) => {
+    if (r.why) return { name: `${productLabel} (${r.id})`, status: 'inconnu' };
+    const ongoing = r.parsed.items.filter((i) => !i.title.includes('已恢复'));
+    return { name: `${productLabel} (${r.parsed.region})`, status: ongoing.length ? 'degradation' : 'operationnel', ongoing };
+  });
+  const incidents = components.flatMap((c) => (c.ongoing ?? []).map((i) => ({
+    title: i.title,
+    state: 'en cours',
+    createdAt: i.pubDate && Number.isFinite(Date.parse(i.pubDate)) ? new Date(i.pubDate).toISOString() : null,
+    url: `${base}/`,
+    components: [c.name],
+  })));
+  const alerted = components.filter((c) => c.status !== 'operationnel').length;
+  const badIds = bad.map((r) => r.id).join(', ');
+  return {
+    indicator: null,
+    rawStatus: alerted ? `${alerted} region(s) with an unresolved event` : `No unresolved event (${components.length} regions)`,
+    rawIndicator: alerted ? 'unresolved' : 'none',
+    components: components.map(({ name, status }) => ({ name, status })),
+    incidents,
+    note: bad.length ? `régions illisibles : ${badIds}` : null,
+    noteEn: bad.length ? `unreadable regions: ${badIds}` : null,
+  };
 }

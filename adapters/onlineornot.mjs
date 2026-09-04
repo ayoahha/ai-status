@@ -1,4 +1,4 @@
-import { worstOf } from '../lib/normalize.mjs';
+import { fail } from '../lib/errors.mjs';
 
 // Pages OnlineOrNot (OpenRouter) : aucun endpoint JSON public sans jeton (l'API
 // developers.onlineornot.com exige une clé), mais la page est rendue côté serveur par
@@ -51,39 +51,30 @@ export function parseOnlineornotHtml(html) {
   return decodeTurboStream(JSON.parse(chunks.join('')));
 }
 
-export async function collectOnlineornot(provider, get) {
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'données SSR de la page OnlineOrNot', en: 'OnlineOrNot page SSR data' };
+
+export async function collect(provider, get) {
   const url = provider.source.url;
-  try {
-    const res = await get(url);
-    if (!res.ok) return { status: 'inconnu', collect: { state: 'error', error: `HTTP ${res.status} sur ${url}` } };
-    const doc = parseOnlineornotHtml(await res.text());
-    const rawComponents = doc?.loaderData?.root?.result?.components;
-    if (!Array.isArray(rawComponents) || rawComponents.length === 0) {
-      return { status: 'inconnu', collect: { state: 'error', error: 'données SSR introuvables ou sans composant (structure de page changée ?)' } };
-    }
-    const components = rawComponents.filter((c) => c?.name).map((c) => ({ name: c.name, status: onlineornotStatus(c.status) }));
-    const byDay = doc?.loaderData?.['routes/_index']?.result?.incidents ?? {};
-    const open = Object.values(byDay).flat().filter((i) => i && i.ended == null);
-    return {
-      status: worstOf(components.map((c) => c.status)),
-      rawStatus: `${components.length} components : ${summarize(rawComponents)}`,
-      rawIndicator: 'ssr',
-      components,
-      incidents: open.map((i) => ({
-        title: i.title,
-        state: UPDATE_STATE[i.updates?.[0]?.status] ?? 'en cours',
-        createdAt: i.started ?? null,
-        updatedAt: i.updates?.[0]?.createdAt ?? null,
-        url: i.id ? `${url.replace(/\/+$/, '')}/incidents/${i.id}` : null,
-      })),
-      collect: { state: 'ok', error: null },
-    };
-  } catch (err) {
-    return {
-      status: 'inconnu',
-      collect: { state: 'error', error: err.name === 'AbortError' ? 'timeout' : `erreur réseau : ${err.message}` },
-    };
-  }
+  const doc = parseOnlineornotHtml(await get(url, { as: 'text' }));
+  const rawComponents = doc?.loaderData?.root?.result?.components;
+  if (!Array.isArray(rawComponents) || rawComponents.length === 0) throw fail('schema', 'SSR (loaderData.root.result.components)');
+  const components = rawComponents.filter((c) => c?.name).map((c) => ({ name: c.name, status: onlineornotStatus(c.status) }));
+  const byDay = doc?.loaderData?.['routes/_index']?.result?.incidents ?? {};
+  const open = Object.values(byDay).flat().filter((i) => i && i.ended == null);
+  return {
+    indicator: null,
+    rawStatus: `${components.length} components : ${summarize(rawComponents)}`,
+    rawIndicator: 'ssr',
+    components,
+    incidents: open.map((i) => ({
+      title: i.title,
+      state: UPDATE_STATE[i.updates?.[0]?.status] ?? 'en cours',
+      createdAt: i.started ?? null,
+      updatedAt: i.updates?.[0]?.createdAt ?? null,
+      url: i.id ? `${url.replace(/\/+$/, '')}/incidents/${i.id}` : null,
+    })),
+  };
 }
 
 function summarize(components) {

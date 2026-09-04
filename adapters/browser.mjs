@@ -3,8 +3,9 @@
 // interactifs ne sont jamais contournés), puis analyse le DOM rendu.
 // Utilisé par xAI seulement : status.x.ai répond 403 à tout client non navigateur,
 // y compris sur /api/v2/*, /feed et /rss (vérifié). Un fournisseur sans parseur dédié
-// reste « Non vérifié » : pas de repli par mots-clés sur le texte de la page
-import { worstOf } from '../lib/normalize.mjs';
+// reste « Non vérifié » : pas de repli par mots-clés sur le texte de la page.
+// Le client `get` du runner n'est pas utilisé : le navigateur fait ses propres requêtes
+import { fail, ERROR_KINDS } from '../lib/errors.mjs';
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
@@ -23,20 +24,18 @@ export function pillStatus(pill) {
   return PILL[(pill ?? '').trim().toLowerCase()] ?? 'inconnu';
 }
 
-export async function collectBrowser(provider) {
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'navigateur headless', en: 'headless browser' };
+
+export async function collect(provider) {
   let chromium;
   try {
     ({ chromium } = await import('playwright'));
   } catch {
-    return {
-      status: 'inconnu',
-      collect: { state: 'error', error: 'playwright absent : npm ci && npx playwright install chromium' },
-    };
+    throw fail('browser', 'playwright absent : npm ci && npx playwright install chromium', 'playwright missing: npm ci && npx playwright install chromium');
   }
   const parse = PARSE[provider.id];
-  if (!parse) {
-    return { status: 'inconnu', collect: { state: 'error', error: `aucun parseur navigateur pour ${provider.id}` } };
-  }
+  if (!parse) throw fail('browser', `aucun parseur navigateur pour ${provider.id}`, `no browser parser for ${provider.id}`);
   const browser = await chromium.launch({ headless: true });
   const ctx = await browser.newContext({
     userAgent: UA,
@@ -52,19 +51,11 @@ export async function collectBrowser(provider) {
     // Attendre que le défi se résolve (titre ne dit plus « Attention Required »)
     await page.waitForFunction(() => !/Attention Required/i.test(document.title), { timeout: 45000 }).catch(() => {});
     await page.waitForTimeout(provider.renderWaitMs ?? 2500);
-    const parsed = await parse(page, provider);
-    return {
-      ...parsed,
-      collect: { state: parsed.error ? 'error' : 'ok', error: parsed.error ?? null },
-    };
+    return await parse(page, provider);
   } catch (err) {
-    return {
-      status: 'inconnu',
-      collect: {
-        state: 'error',
-        error: err.name === 'TimeoutError' ? `timeout sur ${provider.source.url}` : `erreur navigateur : ${err.message}`,
-      },
-    };
+    // TimeoutError Playwright : classé timeout par le runner ; le reste : erreur navigateur
+    if (err.name === 'TimeoutError' || ERROR_KINDS.includes(err.code)) throw err;
+    throw fail('browser', err.message);
   } finally {
     await browser.close();
   }
@@ -85,7 +76,13 @@ async function parseXai(page) {
       })
       .filter((r) => r.name)
   );
+  if (!rows.length) throw fail('schema', 'aucun service dans le DOM (page non rendue ou défi non résolu)', 'no service in the DOM (page not rendered or challenge unsolved)');
   const services = rows.map((r) => ({ name: r.name, pill: r.pill, status: pillStatus(r.pill) }));
+  const unknown = services.filter((s) => s.status === 'inconnu');
+  if (unknown.length) {
+    const pills = unknown.map((s) => `${s.name}=« ${s.pill} »`).join(', ');
+    throw fail('schema', `pilule non reconnue : ${pills}`, `unrecognised pill: ${pills}`);
+  }
   const incidents = await page.$$eval('a.p-2', (els) =>
     els
       .map((e) => {
@@ -95,17 +92,13 @@ async function parseXai(page) {
       })
       .filter((i) => i.title)
   );
-  const unknown = services.filter((s) => s.status === 'inconnu');
-  const out = {
-    status: services.length ? worstOf(services.map((s) => s.status)) : 'inconnu',
-    rawStatus: services.length ? `${services.length} services : ${summarize(services)}` : null,
+  return {
+    indicator: null,
+    rawStatus: `${services.length} services : ${summarize(services)}`,
     rawIndicator: 'statuspage_dom',
     components: services.map((s) => ({ name: s.name, status: s.status })),
     incidents,
   };
-  if (!rows.length) out.error = 'aucun service trouvé dans le DOM (page non rendue ou défi non résolu)';
-  else if (unknown.length) out.error = `pilule non reconnue : ${unknown.map((s) => `${s.name}=« ${s.pill} »`).join(', ')}`;
-  return out;
 }
 
 function summarize(services) {
