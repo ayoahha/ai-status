@@ -1,6 +1,6 @@
 // Collecteur : parcourt providers.json, lance l'adaptateur adéquat par fournisseur,
 // et écrit public/data/status.json (contrat v2). Un échec ne bloque jamais les autres.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -20,6 +20,7 @@ import * as volcengine from './adapters/volcengine.mjs';
 import * as unavailable from './adapters/unavailable.mjs';
 import { get } from './lib/http.mjs';
 import { collectAll, buildOutput } from './lib/collect.mjs';
+import { assertStatusDocument, MAX_STATUS_BYTES } from './public/status-contract.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const providers = JSON.parse(readFileSync(path.join(root, 'providers.json'), 'utf8'));
@@ -34,7 +35,12 @@ const out = buildOutput(providers, settled, now, ADAPTERS);
 const outPath = path.join(root, 'public', 'data', 'status.json');
 mkdirSync(path.dirname(outPath), { recursive: true });
 // Compact : le fichier est servi tel quel à chaque visiteur
-writeFileSync(outPath, JSON.stringify(out) + '\n');
+const serialized = JSON.stringify(out) + '\n';
+if (Buffer.byteLength(serialized) > MAX_STATUS_BYTES) throw new Error('status.json dépasse la borne de publication');
+assertStatusDocument(JSON.parse(serialized), providers);
+const tempPath = `${outPath}.tmp-${process.pid}`;
+writeFileSync(tempPath, serialized);
+renameSync(tempPath, outPath);
 console.log(`écrit ${outPath} (${out.providers.length} fournisseurs)`);
 const ok = out.providers.filter((p) => p.collect.state === 'ok').length;
 console.log(`collecte ok : ${ok}/${out.providers.length} ; pire état : ${out.summary.worst}`);

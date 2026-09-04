@@ -2,12 +2,14 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
+import { MAX_STATUS_BYTES } from '../public/status-contract.js';
 
 const NOW = Date.parse('2026-09-04T08:00:00Z');
 const MINUTE = 60_000;
 const files = {
   '/': ['text/html; charset=utf-8', readFileSync(new URL('../public/index.html', import.meta.url))],
   '/app.js': ['text/javascript; charset=utf-8', readFileSync(new URL('../public/app.js', import.meta.url))],
+  '/status-contract.js': ['text/javascript; charset=utf-8', readFileSync(new URL('../public/status-contract.js', import.meta.url))],
   '/style.css': ['text/css; charset=utf-8', readFileSync(new URL('../public/style.css', import.meta.url))],
 };
 
@@ -172,6 +174,33 @@ try {
     await page.getByRole('button', { name: 'Rafraîchir' }).click();
     await page.locator('#refresh-error').waitFor();
     assert.equal(await page.getByText('Données actuelles', { exact: true }).count(), 1);
+  });
+
+  const links = statusDoc(new Date(NOW).toISOString(), 'Liens filtrés');
+  links.providers[0].incidents = [
+    { title: 'Lien sûr', status: 'investigating', impact: null, startedAt: null, updatedAt: null, url: 'https://example.com/incidents/ok', components: [] },
+  ];
+  links.summary.activeIncidents = 1;
+  await scenario([{ body: links }], async (page) => {
+    await page.getByText('Liens filtrés', { exact: true }).waitFor();
+    await page.locator('#test details').evaluate((details) => { details.open = true; });
+    assert.equal(await page.locator('#test .incident-link').count(), 1);
+    assert.equal(await page.locator('#test .incident-link').getAttribute('href'), 'https://example.com/incidents/ok');
+    assert.equal(await page.locator('#test .incident-link').getAttribute('rel'), 'noopener noreferrer');
+    assert.equal(await page.getByRole('link', { name: 'page officielle' }).getAttribute('rel'), 'noopener noreferrer');
+  });
+
+  const oversized = statusDoc(new Date(NOW).toISOString(), 'Document excessif');
+  oversized.providers[0].components = Array.from({ length: 5_000 }, (_, index) => ({
+    name: `${index}-${'x'.repeat(2_100)}`,
+    kind: 'service',
+    status: 'operationnel',
+  }));
+  assert.ok(Buffer.byteLength(JSON.stringify(oversized)) > MAX_STATUS_BYTES);
+  await scenario([{ body: oversized }], async (page) => {
+    await page.getByText('Données indisponibles', { exact: true }).waitFor();
+    await page.locator('#refresh-error').waitFor();
+    assert.equal(await page.getByText('Document excessif', { exact: true }).count(), 0);
   });
 
   await scenario([{ body: old }, { hold: true, body: fresh }], async (page) => {

@@ -1,6 +1,8 @@
 // Lecture de data/status.json (contrat v2, généré par la collecte GitHub Actions).
 // Tout texte externe est inséré via textContent (pas d'innerHTML) → aucun contenu
 // externe exécuté ou interprété comme instructions
+import { MAX_STATUS_BYTES, safeExternalUrl, validateStatusDocument } from './status-contract.js';
+
 const FRESHNESS_MS = 60 * 1000;
 const REFRESH_MS = 30 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 15 * 1000;
@@ -242,8 +244,8 @@ function renderOngoing() {
     body.appendChild(head);
     const alerted = p.components.filter((c) => c.status !== 'operationnel');
     if (alerted.length) body.appendChild(el('p', 'ongoing-comps', alerted.map((c) => c.name).join(', ')));
-    for (const inc of p.incidents) body.appendChild(incidentLine(inc));
-    for (const m of p.maintenances.filter((m) => m.state !== 'scheduled')) body.appendChild(maintenanceLine(m));
+    for (const inc of p.incidents) body.appendChild(incidentLine(inc, p));
+    for (const m of p.maintenances.filter((m) => m.state !== 'scheduled')) body.appendChild(maintenanceLine(m, p));
     li.appendChild(body);
     items.push(li);
   }
@@ -251,15 +253,17 @@ function renderOngoing() {
   for (const li of items) list.appendChild(li);
 }
 
-function externalLink(href, text, className) {
+function externalLink(href, text, className, provider) {
+  const safeHref = safeExternalUrl(href, provider.statusUrl, provider.collect.method);
+  if (!safeHref) return null;
   const a = el('a', className, text);
-  a.href = href;
+  a.href = safeHref;
   a.target = '_blank';
-  a.rel = 'noopener';
+  a.rel = 'noopener noreferrer';
   return a;
 }
 
-function incidentLine(inc) {
+function incidentLine(inc, provider) {
   const p = el('p', 'incident');
   const title = el('span', 'incident-title', inc.title);
   title.lang = langOf(inc.title);
@@ -268,14 +272,15 @@ function incidentLine(inc) {
   if (inc.startedAt) meta.push(`${t('since')} ${fmtDate(inc.startedAt)}`);
   if (inc.components?.length) meta.push(inc.components.join(', '));
   p.appendChild(el('span', 'incident-meta', ` · ${meta.join(' · ')}`));
-  if (inc.url) {
+  const link = inc.url && externalLink(inc.url, t('detail'), 'incident-link', provider);
+  if (link) {
     p.appendChild(document.createTextNode(' · '));
-    p.appendChild(externalLink(inc.url, t('detail'), 'incident-link'));
+    p.appendChild(link);
   }
   return p;
 }
 
-function maintenanceLine(m) {
+function maintenanceLine(m, provider) {
   const p = el('p', 'incident maintenance');
   const title = el('span', 'incident-title', m.title);
   title.lang = langOf(m.title);
@@ -284,9 +289,10 @@ function maintenanceLine(m) {
   if (m.scheduledFor) meta.push(`${m.state === 'scheduled' ? t('plannedFor') : t('since')} ${fmtDate(m.scheduledFor)}`);
   if (m.scheduledUntil) meta.push(`${t('until')} ${fmtDate(m.scheduledUntil)}`);
   p.appendChild(el('span', 'incident-meta', ` · ${meta.join(' · ')}`));
-  if (m.url) {
+  const link = m.url && externalLink(m.url, t('detail'), 'incident-link', provider);
+  if (link) {
     p.appendChild(document.createTextNode(' · '));
-    p.appendChild(externalLink(m.url, t('detail'), 'incident-link'));
+    p.appendChild(link);
   }
   return p;
 }
@@ -337,11 +343,11 @@ function cardBody(p) {
   }
   if (p.incidents.length) {
     body.appendChild(el('h4', 'sub', t('incidents')));
-    for (const inc of p.incidents) body.appendChild(incidentLine(inc));
+    for (const inc of p.incidents) body.appendChild(incidentLine(inc, p));
   }
   if (p.maintenances.length) {
     body.appendChild(el('h4', 'sub', t('maintenances')));
-    for (const m of p.maintenances) body.appendChild(maintenanceLine(m));
+    for (const m of p.maintenances) body.appendChild(maintenanceLine(m, p));
   }
   const models = p.components.filter((c) => c.kind === 'model');
   const services = p.components.filter((c) => c.kind !== 'model');
@@ -351,8 +357,11 @@ function cardBody(p) {
   // Libellé de la famille de source fourni par le collecteur ; repli sur l'id machine
   meta.appendChild(document.createTextNode(`${t('readVia')} ${localized(p.collect.methodLabel, p.collect.methodLabelEn) ?? p.collect.method} · `));
   meta.appendChild(ageSpan(p.collectedAt));
-  meta.appendChild(document.createTextNode(' · '));
-  meta.appendChild(externalLink(p.statusUrl, t('officialPage')));
+  const official = externalLink(p.statusUrl, t('officialPage'), null, p);
+  if (official) {
+    meta.appendChild(document.createTextNode(' · '));
+    meta.appendChild(official);
+  }
   body.appendChild(meta);
   return body;
 }
@@ -427,48 +436,6 @@ function renderAll() {
   renderFreshness();
 }
 
-const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
-const isStringOrNull = (value) => value === null || typeof value === 'string';
-const isValidDate = (value) => typeof value === 'string' && Number.isFinite(Date.parse(value));
-const hasStrings = (value, keys) => isObject(value) && keys.every((key) => typeof value[key] === 'string');
-
-function validateData(doc) {
-  if (!isObject(doc) || doc.schemaVersion !== 2 || !isValidDate(doc.generatedAt)) return false;
-  if (!isObject(doc.summary) || !SEVERITY_ORDER.includes(doc.summary.worst) || !isObject(doc.summary.counts)) return false;
-  if (!['activeIncidents', 'activeMaintenances'].every((key) => Number.isInteger(doc.summary[key]) && doc.summary[key] >= 0)) return false;
-  if (!SEVERITY_ORDER.every((status) => Number.isInteger(doc.summary.counts[status]) && doc.summary.counts[status] >= 0)) return false;
-  for (const key of ['labels', 'labelsEn']) {
-    if (doc[key] != null && (!isObject(doc[key]) || !SEVERITY_ORDER.every((status) => typeof doc[key][status] === 'string'))) return false;
-  }
-  if (!Array.isArray(doc.providers) || doc.providers.length === 0) return false;
-
-  const validProviders = doc.providers.every((provider) => {
-    if (!hasStrings(provider, ['id', 'name', 'statusUrl', 'status', 'reason', 'collectedAt'])) return false;
-    if (!SEVERITY_ORDER.includes(provider.status) || !isValidDate(provider.collectedAt)) return false;
-    if (!isStringOrNull(provider.group) || !isStringOrNull(provider.scope) || !isStringOrNull(provider.sourceText)) return false;
-    if (!['scopeEn', 'reasonEn'].every((key) => provider[key] === undefined || isStringOrNull(provider[key]))) return false;
-    if (!isObject(provider.collect) || !['ok', 'error'].includes(provider.collect.state) || typeof provider.collect.method !== 'string' || !isStringOrNull(provider.collect.error)) return false;
-    if (!['errorEn', 'methodLabel', 'methodLabelEn'].every((key) => provider.collect[key] === undefined || isStringOrNull(provider.collect[key]))) return false;
-    if (provider.collect.state === 'error' && (provider.status !== 'inconnu' || typeof provider.collect.error !== 'string')) return false;
-    if (![provider.components, provider.incidents, provider.maintenances].every(Array.isArray)) return false;
-    if (!provider.components.every((component) => hasStrings(component, ['name', 'kind', 'status']) && ['model', 'service'].includes(component.kind) && SEVERITY_ORDER.includes(component.status))) return false;
-    if (!provider.incidents.every((incident) => hasStrings(incident, ['title', 'status']) && Array.isArray(incident.components) && incident.components.every((name) => typeof name === 'string') && ['impact', 'startedAt', 'updatedAt', 'url'].every((key) => isStringOrNull(incident[key])))) return false;
-    return provider.maintenances.every((maintenance) => hasStrings(maintenance, ['title', 'state']) && ['scheduledFor', 'scheduledUntil', 'url'].every((key) => isStringOrNull(maintenance[key])));
-  });
-  if (!validProviders || new Set(doc.providers.map((provider) => provider.id)).size !== doc.providers.length) return false;
-
-  const counts = Object.fromEntries(SEVERITY_ORDER.map((status) => [status, 0]));
-  for (const provider of doc.providers) counts[provider.status] += 1;
-  if (SEVERITY_ORDER.some((status) => counts[status] !== doc.summary.counts[status])) return false;
-  const worst = [...doc.providers]
-    .map((provider) => provider.status)
-    .filter((status) => status !== 'inconnu')
-    .sort((a, b) => severity(a) - severity(b))[0] ?? 'operationnel';
-  if (doc.summary.worst !== worst) return false;
-  if (doc.summary.activeIncidents !== doc.providers.reduce((total, provider) => total + provider.incidents.length, 0)) return false;
-  return doc.summary.activeMaintenances === doc.providers.reduce((total, provider) => total + provider.maintenances.filter((maintenance) => maintenance.state !== 'scheduled').length, 0);
-}
-
 function resetUnavailable() {
   data = null;
   labels = FALLBACK_LABELS;
@@ -481,6 +448,36 @@ function resetUnavailable() {
   $('result-count').textContent = '';
   $('stale').hidden = true;
   $('stale').textContent = '';
+}
+
+async function readStatusJson(response) {
+  const declared = Number(response.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > MAX_STATUS_BYTES) throw new Error('données trop volumineuses');
+  if (!response.body) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > MAX_STATUS_BYTES) throw new Error('données trop volumineuses');
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  const reader = response.body.getReader();
+  const chunks = [];
+  let length = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    length += value.byteLength;
+    if (length > MAX_STATUS_BYTES) {
+      await reader.cancel();
+      throw new Error('données trop volumineuses');
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
 }
 
 async function refreshData(source) {
@@ -500,8 +497,8 @@ async function refreshData(source) {
   try {
     const res = await fetch('data/status.json', { cache: 'no-store', signal: controller.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const nextData = await res.json();
-    if (!validateData(nextData)) throw new Error('format de données inattendu');
+    const nextData = await readStatusJson(res);
+    if (!validateStatusDocument(nextData)) throw new Error('format de données inattendu');
     if (data && Date.parse(nextData.generatedAt) < Date.parse(data.generatedAt)) throw new Error('données plus anciennes que celles affichées');
 
     if (!data || nextData.generatedAt !== data.generatedAt) {
