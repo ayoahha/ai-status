@@ -316,12 +316,16 @@ try {
     incidents: [{ title: 'Network issue', status: 'en cours', impact: null, startedAt: bilingual.generatedAt, updatedAt: null, url: null, components: [] }], maintenances: [],
   });
   bilingual.summary = { worst: 'degradation', counts: { operationnel: 1, degradation: 1, incident_majeur: 0, maintenance: 0, indisponible: 0, inconnu: 0 }, activeIncidents: 1, activeMaintenances: 0 };
+  // Les champs labels du JSON sont conservés pour le contrat mais ignorés : la page affiche ceux du module
+  bilingual.labels.degradation = 'Bidon';
+  bilingual.labelsEn.degradation = 'Bogus';
   await scenario([{ body: bilingual }], async (page) => {
     await page.getByText('Fournisseur test', { exact: true }).waitFor();
     assert.equal(await page.evaluate(() => document.documentElement.lang), 'fr');
     assert.equal(await page.title(), 'État des fournisseurs IA');
     assert.equal(await page.locator('#global .card-count').textContent(), 'Statut global');
     assert.equal(await page.locator('#global .card-reason').textContent(), '1 incident en cours');
+    assert.equal(await page.locator('#global .card-state').textContent(), 'Dégradation', 'libellé du contrat, pas du JSON');
     assert.match(await page.locator('#global .meta').textContent(), /Lu via API Alibaba Cloud/);
     assert.equal(await page.locator('#g-cn').textContent(), 'Fournisseurs · Chine');
     // État à conserver : recherche vide, filtre « dégradation », tri par nom, carte ouverte
@@ -347,7 +351,7 @@ try {
     assert.equal(await page.locator('#global .card-count').textContent(), 'Global status');
     assert.equal(await page.locator('#global .card-reason').textContent(), '1 incident in progress');
     assert.equal(await page.locator('#global .card-scope').textContent(), 'Global cloud status');
-    assert.equal(await page.locator('#global .card-state').textContent(), 'Degraded');
+    assert.equal(await page.locator('#global .card-state').textContent(), 'Degraded', 'libellé du contrat, pas du JSON');
     assert.equal(await page.locator('#g-cn').textContent(), 'Providers · China');
     assert.match(await page.locator('#collected-at').textContent(), /^Refreshed .* · collected /);
     assert.equal(await page.locator('.foot-title').first().textContent(), 'Collection');

@@ -1,13 +1,12 @@
 // Lecture de data/status.json (contrat v2, généré par la collecte GitHub Actions).
 // Tout texte externe est inséré via textContent (pas d'innerHTML) → aucun contenu
 // externe exécuté ou interprété comme instructions
-import { isActiveMaintenanceState, MAX_STATUS_BYTES, safeExternalUrl, validateStatusDocument } from './status-contract.js';
+import { DISPLAY_ORDER, isActiveMaintenanceState, MAX_STATUS_BYTES, safeExternalUrl, STATUS_LABELS, STATUS_LABELS_EN, validateStatusDocument } from './status-contract.js';
 
 const FRESHNESS_MS = 60 * 1000;
 const REFRESH_MS = 30 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 15 * 1000;
 const STALE_MS = 2 * 60 * 60 * 1000; // 4 cadences de collecte ratées
-const SEVERITY_ORDER = ['indisponible', 'incident_majeur', 'degradation', 'maintenance', 'inconnu', 'operationnel'];
 // Textes de l'interface en deux langues. Le français reste la langue par défaut ; le choix
 // est mémorisé dans localStorage (sans dépendance) et appliqué côté client sans requête.
 // Les noms propres, titres d'incidents et textes bruts des sources ne sont jamais traduits
@@ -37,7 +36,6 @@ const T = {
     groups: { us: 'Fournisseurs · USA', eu: 'Fournisseurs · Europe', cn: 'Fournisseurs · Chine', cloud: 'Clouds d’inférence et API', other: 'Autres' },
     groupEmpty: 'Aucune source suivie pour l’instant.',
     incidentStates: { investigating: 'en investigation', identified: 'cause identifiée', monitoring: 'sous surveillance', 'en cours': 'en cours', in_progress: 'en cours', verifying: 'en vérification', scheduled: 'planifiée' },
-    labels: { operationnel: 'Opérationnel', degradation: 'Dégradation', incident_majeur: 'Incident majeur', maintenance: 'Maintenance', indisponible: 'Indisponible', inconnu: 'Non vérifié' },
     footCollect: 'Collecte', footCollectText: 'Toutes les 30 minutes par GitHub Actions. Les données sont publiées avec la page, dans le même déploiement.',
     footRefresh: 'Actualisation', footRefreshText: 'La page recharge les données toutes les 30 minutes, au retour dans un onglet ancien, ou avec le bouton « Rafraîchir ».',
     footRead: 'Lecture', footReadText: 'Chaque ligne dépliée donne le périmètre mesuré, la méthode de lecture, la fraîcheur, les incidents, les composants et la page officielle.',
@@ -70,7 +68,6 @@ const T = {
     groups: { us: 'Providers · USA', eu: 'Providers · Europe', cn: 'Providers · China', cloud: 'Inference clouds and APIs', other: 'Others' },
     groupEmpty: 'No source tracked yet.',
     incidentStates: { investigating: 'investigating', identified: 'identified', monitoring: 'monitoring', 'en cours': 'in progress', in_progress: 'in progress', verifying: 'verifying', scheduled: 'scheduled' },
-    labels: { operationnel: 'Operational', degradation: 'Degraded', incident_majeur: 'Major incident', maintenance: 'Maintenance', indisponible: 'Unavailable', inconnu: 'Unverified' },
     footCollect: 'Collection', footCollectText: 'Every 30 minutes by GitHub Actions. The data is published with the page, in the same deployment.',
     footRefresh: 'Refresh', footRefreshText: 'The page reloads the data every 30 minutes, when returning to an old tab, or with the “Refresh” button.',
     footRead: 'Reading', footReadText: 'Each expanded row gives the measured scope, the reading method, the freshness, the incidents, the components and the official page.',
@@ -84,10 +81,10 @@ const LANGS = ['fr', 'en'];
 // « eu » est affiché même sans fournisseur, avec un texte
 const GROUPS = ['us', 'eu', 'cn', 'cloud', 'other'];
 const ALWAYS_SHOWN = new Set(['eu']);
-const FALLBACK_LABELS = T.fr.labels;
+// Libellés d'état : ceux du contrat, jamais ceux du JSON (champs labels conservés pour la stabilité)
+const LABELS = { fr: STATUS_LABELS, en: STATUS_LABELS_EN };
 
 let data = null;
-let labels = FALLBACK_LABELS;
 let lang = readLang();
 let filter = 'all';
 let query = '';
@@ -104,7 +101,7 @@ const el = (tag, className, text) => {
   if (text != null) e.textContent = text;
   return e;
 };
-const label = (status) => labels[status] ?? T[lang].labels[status] ?? status;
+const label = (status) => LABELS[lang][status] ?? status;
 const t = (key) => T[lang][key];
 function readLang() {
   try { return LANGS.includes(localStorage.getItem('lang')) ? localStorage.getItem('lang') : 'fr'; } catch { return 'fr'; }
@@ -112,8 +109,8 @@ function readLang() {
 // Texte généré par le collecteur dans les deux langues (raison, périmètre, note de collecte)
 const localized = (fr, en) => (lang === 'en' && en ? en : fr);
 const severity = (status) => {
-  const i = SEVERITY_ORDER.indexOf(status);
-  return i === -1 ? SEVERITY_ORDER.length : i;
+  const i = DISPLAY_ORDER.indexOf(status);
+  return i === -1 ? DISPLAY_ORDER.length : i;
 };
 // État réel = ni opérationnel ni non vérifié : c'est ce qui compte comme alerte
 const isAlert = (status) => status !== 'operationnel' && status !== 'inconnu';
@@ -194,7 +191,7 @@ function renderSummary() {
   counts.textContent = '';
   const all = countButton('all', t('all'), data.providers.length);
   counts.appendChild(all);
-  for (const status of SEVERITY_ORDER) {
+  for (const status of DISPLAY_ORDER) {
     const n = s.counts[status] ?? 0;
     if (n > 0) counts.appendChild(countButton(status, label(status), n));
   }
@@ -441,7 +438,6 @@ function renderSections() {
 }
 
 function renderAll() {
-  labels = (lang === 'en' ? data.labelsEn : data.labels) ?? T[lang].labels;
   renderSummary();
   renderOngoing();
   renderSections();
@@ -450,7 +446,6 @@ function renderAll() {
 
 function resetUnavailable() {
   data = null;
-  labels = FALLBACK_LABELS;
   $('overall').textContent = t('unavailable');
   $('collected-at').textContent = t('cannotLoad');
   $('counts').textContent = '';

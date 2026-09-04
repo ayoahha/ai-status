@@ -28,7 +28,7 @@ import { parseAzureRows } from '../adapters/azure.mjs';
 import * as tencent from '../adapters/tencent.mjs';
 import * as volcengine from '../adapters/volcengine.mjs';
 import { parseVolcengineRss } from '../adapters/volcengine.mjs';
-import { MAX_STATUS_BYTES, STATUS_LIMITS, safeExternalUrl, validateStatusDocument } from '../public/status-contract.js';
+import { DISPLAY_ORDER, MAX_STATUS_BYTES, STATUS_LIMITS, safeExternalUrl, summarize, validateStatusDocument } from '../public/status-contract.js';
 
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8'));
 const fixtureText = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
@@ -853,6 +853,9 @@ for (const mutate of [
   (doc) => { doc.providers[0].components[0].name = null; },
   (doc) => { doc.providers[1].id = doc.providers[0].id; },
   (doc) => { doc.summary.counts.inconnu += 1; },
+  (doc) => { doc.summary.worst = 'degradation'; },
+  (doc) => { doc.summary.activeIncidents += 1; },
+  (doc) => { doc.summary.activeMaintenances += 1; },
   (doc) => { doc.providers[0].collectedAt = 'jamais'; },
   (doc) => { doc.providers[0].incidents[0].url = 'javascript:alert(1)'; },
 ]) {
@@ -860,6 +863,11 @@ for (const mutate of [
   mutate(invalid);
   assert.strictEqual(validateStatusDocument(invalid, decl), false);
 }
+
+// 9b. Contrat partagé : résumé produit et vérifié par la même fonction ; ordre d'affichage dérivé de la gravité.
+assert.deepStrictEqual(summarize(out.providers), out.summary, 'buildOutput et la validation partagent summarize');
+assert.deepStrictEqual(summarize([]), { worst: 'operationnel', counts: { operationnel: 0, maintenance: 0, degradation: 0, incident_majeur: 0, indisponible: 0, inconnu: 0 }, activeIncidents: 0, activeMaintenances: 0 });
+assert.deepStrictEqual(DISPLAY_ORDER, ['indisponible', 'incident_majeur', 'degradation', 'maintenance', 'inconnu', 'operationnel'], 'pire d’abord, inconnu juste avant le vert');
 
 // 10. providers.json : cohérence des déclarations.
 const providers = JSON.parse(readFileSync(new URL('../providers.json', import.meta.url), 'utf8'));

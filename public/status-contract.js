@@ -7,7 +7,41 @@ export const MAX_STATUS_BYTES = 10 * 1024 * 1024;
 // ponytail: bornes de publication généreuses ; ne les relever qu'après une mesure légitime
 export const STATUS_LIMITS = Object.freeze({ providers: 100, providerBytes: 96 * 1024, components: 5_000, events: 1_000, eventComponents: 5_000, string: 65_536 });
 
-const REAL_SEVERITY = STATUS_VALUES.filter((status) => status !== 'inconnu');
+// Gravité réelle, du meilleur au pire ; « inconnu » est à part : il interdit le vert
+// sans jamais l'emporter sur un état réel (worstOf)
+export const SEVERITY = Object.freeze(STATUS_VALUES.filter((status) => status !== 'inconnu'));
+// Ordre d'affichage (tri, compteurs) : du pire au meilleur, « inconnu » juste avant le vert
+export const DISPLAY_ORDER = Object.freeze([...SEVERITY].reverse().flatMap((status) => (status === 'operationnel' ? ['inconnu', status] : [status])));
+
+export const STATUS_LABELS = Object.freeze({
+  operationnel: 'Opérationnel',
+  degradation: 'Dégradation',
+  incident_majeur: 'Incident majeur',
+  maintenance: 'Maintenance',
+  indisponible: 'Indisponible',
+  inconnu: 'Non vérifié',
+});
+export const STATUS_LABELS_EN = Object.freeze({
+  operationnel: 'Operational',
+  degradation: 'Degraded',
+  incident_majeur: 'Major incident',
+  maintenance: 'Maintenance',
+  indisponible: 'Unavailable',
+  inconnu: 'Unverified',
+});
+
+// Pire état d'une liste. Un état réel dégradé l'emporte sur « inconnu » ; mais un
+// « inconnu » interdit « operationnel » : on ne déclare pas sain ce qu'on n'a pas pu lire
+export function worstOf(statuses) {
+  let worst = 'operationnel';
+  let unknown = false;
+  for (const s of statuses) {
+    const rank = SEVERITY.indexOf(s);
+    if (rank < 0) unknown = true;
+    else if (rank > SEVERITY.indexOf(worst)) worst = s;
+  }
+  return worst === 'operationnel' && unknown ? 'inconnu' : worst;
+}
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isString = (value, { empty = true } = {}) =>
   typeof value === 'string' && value.length <= STATUS_LIMITS.string && (empty || value.length > 0);
@@ -17,6 +51,19 @@ const isDate = (value) => isString(value, { empty: false }) && Number.isFinite(D
 const isDateOrNull = (value) => value === null || isDate(value);
 const isList = (value, limit) => Array.isArray(value) && value.length <= limit;
 export const isActiveMaintenanceState = (state) => state !== 'scheduled';
+
+// Résumé du bandeau, produit par le collecteur et recalculé à l'identique par la
+// validation. worst ignore « inconnu » : le bandeau l'affiche à part, en compteur
+export function summarize(providers) {
+  const counts = Object.fromEntries(STATUS_VALUES.map((status) => [status, 0]));
+  for (const provider of providers) counts[provider.status] += 1;
+  return {
+    worst: worstOf(providers.map((provider) => provider.status).filter((status) => status !== 'inconnu')),
+    counts,
+    activeIncidents: providers.reduce((total, provider) => total + provider.incidents.length, 0),
+    activeMaintenances: providers.reduce((total, provider) => total + provider.maintenances.filter((m) => isActiveMaintenanceState(m.state)).length, 0),
+  };
+}
 
 function basicHttpsUrl(value) {
   if (!isString(value, { empty: false })) return null;
@@ -99,19 +146,10 @@ export function validateStatusDocument(doc, expectedProviders = null) {
     if (expectedProviders.some((expected, index) => expected.source?.kind !== doc.providers[index].collect.method)) return false;
   }
 
-  const counts = Object.fromEntries(STATUS_VALUES.map((status) => [status, 0]));
-  for (const provider of doc.providers) counts[provider.status] += 1;
-  if (STATUS_VALUES.some((status) => counts[status] !== doc.summary.counts[status])) return false;
-  const worst = doc.providers
-    .map((provider) => provider.status)
-    .filter((status) => status !== 'inconnu')
-    .reduce((current, status) => REAL_SEVERITY.indexOf(status) > REAL_SEVERITY.indexOf(current) ? status : current, 'operationnel');
-  if (doc.summary.worst !== worst) return false;
-  if (doc.summary.activeIncidents !== doc.providers.reduce((total, provider) => total + provider.incidents.length, 0)) return false;
-  return doc.summary.activeMaintenances === doc.providers.reduce(
-    (total, provider) => total + provider.maintenances.filter((maintenance) => isActiveMaintenanceState(maintenance.state)).length,
-    0,
-  );
+  // Même fonction que le collecteur : un résumé divergent est impossible par construction
+  const expected = summarize(doc.providers);
+  if (STATUS_VALUES.some((status) => expected.counts[status] !== doc.summary.counts[status])) return false;
+  return ['worst', 'activeIncidents', 'activeMaintenances'].every((key) => doc.summary[key] === expected[key]);
 }
 
 export function assertStatusDocument(doc, expectedProviders = null) {
