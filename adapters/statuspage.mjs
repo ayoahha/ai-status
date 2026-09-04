@@ -1,4 +1,4 @@
-import { normalizeIndicator, normalizeComponentStatus, worstOf } from '../lib/normalize.mjs';
+import { normalizeIndicator, normalizeComponentStatus } from '../lib/normalize.mjs';
 import { fail } from '../lib/errors.mjs';
 
 // Adaptateur générique pour les pages Atlassian Statuspage (API v2 publique, sans jeton).
@@ -16,8 +16,6 @@ export async function collect(provider, get) {
   const components = data.components
     .filter((c) => !c.group)
     .map((c) => ({ name: c.name, status: normalizeComponentStatus(c.status) }));
-  const impacted = components.filter((c) => c.status !== 'operationnel');
-
   const maintenances = (data.scheduled_maintenances ?? [])
     .filter((m) => m.status !== 'completed')
     .map((m) => ({
@@ -27,16 +25,9 @@ export async function collect(provider, get) {
       scheduledUntil: m.scheduled_until ?? null,
       url: m.shortlink ?? null,
     }));
-  const inProgress = maintenances.some((m) => m.state === 'in_progress' || m.state === 'verifying');
-
-  const status = worstOf([
-    normalizeIndicator(indicator),
-    ...impacted.map((c) => c.status),
-    ...(inProgress ? ['maintenance'] : []),
-  ]);
 
   return {
-    status,
+    indicator: normalizeIndicator(indicator),
     rawStatus: data.status?.description ?? null,
     rawIndicator: indicator,
     components,

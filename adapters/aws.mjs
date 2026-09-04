@@ -54,7 +54,7 @@ export async function collect(provider, get) {
     }))
     .filter((i) => i.components.length > 0);
   return {
-    status: worstOf(components.map((c) => c.status)),
+    indicator: null,
     rawStatus: impacted.size ? `${impacted.size} region(s) impacted` : `No open event (${serviceName}, ${scoped.length} regions)`,
     rawIndicator: impacted.size ? 'open_event' : 'none',
     components,

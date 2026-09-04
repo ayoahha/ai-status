@@ -114,10 +114,10 @@ const s3c = await read({ collect: async () => { throw fail('scope', 'X'); } }, p
 assert.strictEqual(s3c.collect.error, 'périmètre absent de la source : X');
 assert.strictEqual(s3c.reason, 'source non lue');
 // Un adaptateur qui rend un résultat n'a plus de mot à dire sur l'échec : sans note, error null
-const s3d = await read({ collect: async () => ({ status: 'operationnel', components: [] }) }, provider, okJson({}));
+const s3d = await read({ collect: async () => ({ indicator: 'operationnel', components: [] }) }, provider, okJson({}));
 assert.deepStrictEqual(s3d.collect, { state: 'ok', method: 'statuspage', error: null, errorEn: null });
 // Note non fatale : state ok, texte dans error / errorEn
-const s3e = await read({ collect: async () => ({ status: 'operationnel', components: [], note: 'n', noteEn: 'n-en' }) }, provider, okJson({}));
+const s3e = await read({ collect: async () => ({ indicator: 'operationnel', components: [], note: 'n', noteEn: 'n-en' }) }, provider, okJson({}));
 assert.deepStrictEqual(s3e.collect, { state: 'ok', method: 'statuspage', error: 'n', errorEn: 'n-en' });
 assert.strictEqual(s3e.status, 'operationnel');
 
@@ -430,8 +430,8 @@ const decl = [
 ];
 const adapters = {
   sp: { collect: async (p) => p.id === 'a'
-    ? { status: 'incident_majeur', rawStatus: 'Major outage', components: [{ name: 'm-1', status: 'incident_majeur' }, { name: 'API', status: 'operationnel' }], incidents: [{ title: 'Down', state: 'investigating', createdAt: '2026-09-03T10:00:00Z' }, { title: 'Old', state: 'resolved' }] }
-    : { status: 'operationnel', components: [{ name: 'API', status: 'operationnel' }], maintenances: [{ title: 'M', state: 'scheduled' }] } },
+    ? { indicator: 'incident_majeur', rawStatus: 'Major outage', components: [{ name: 'm-1', status: 'incident_majeur' }, { name: 'API', status: 'operationnel' }], incidents: [{ title: 'Down', state: 'investigating', createdAt: '2026-09-03T10:00:00Z' }, { title: 'Old', state: 'resolved' }] }
+    : { indicator: 'operationnel', components: [{ name: 'API', status: 'operationnel' }], maintenances: [{ title: 'M', state: 'scheduled' }] } },
   unavailable,
 };
 const settled = await collectAll(decl, adapters, okJson({}));
@@ -462,9 +462,16 @@ assert.strictEqual(pd.collect.error, 'injoignable', 'source injoignable : la not
 assert.strictEqual(pd.collect.errorEn, 'injoignable', 'sans noteEn, la note FR sert en anglais');
 assert.strictEqual(pd.reason, 'source non lue');
 assert.strictEqual(pd.reasonEn, 'source not read');
-// 8b. Un adaptateur qui renvoie ok + operationnel mais un composant inconnu ne passe pas vert.
-const px = buildProvider(decl[2], { status: 'fulfilled', value: { status: 'operationnel', components: [{ name: 'X', status: 'bizarre' }], collectedAt: 'now' } });
-assert.strictEqual(px.components[0].status, 'inconnu');
+// 8b. Dérivation du statut par le contrat : indicateur, composants, maintenance en cours.
+const derive = (value) => buildProvider(decl[2], { status: 'fulfilled', value: { collectedAt: 'now', ...value } }).status;
+assert.strictEqual(derive({ indicator: 'operationnel', components: [{ name: 'X', status: 'bizarre' }] }), 'inconnu', 'composant au vocabulaire inconnu : jamais vert');
+assert.strictEqual(derive({ indicator: null, components: [] }), 'operationnel', 'sans indicateur ni composant : aucun incident déclaré');
+assert.strictEqual(derive({ indicator: null, components: [{ name: 'A', status: 'degradation' }, { name: 'B', status: 'inconnu' }] }), 'degradation', 'un état réel l’emporte sur inconnu');
+assert.strictEqual(derive({ indicator: 'degradation', components: [{ name: 'A', status: 'operationnel' }] }), 'degradation', 'indicateur de page seul');
+assert.strictEqual(derive({ indicator: 'operationnel', components: [{ name: 'A', status: 'incident_majeur' }] }), 'incident_majeur', 'composant pire que l’indicateur');
+assert.strictEqual(derive({ indicator: 'operationnel', components: [], maintenances: [{ title: 'M', state: 'in_progress' }] }), 'maintenance', 'maintenance en cours');
+assert.strictEqual(derive({ indicator: 'operationnel', components: [], maintenances: [{ title: 'M', state: 'scheduled' }] }), 'operationnel', 'maintenance planifiée : sans effet');
+assert.strictEqual(derive({ indicator: 'bizarre', components: [] }), 'inconnu', 'indicateur hors enum : inconnu');
 // 8c. Un adaptateur rejeté est forcé à inconnu, quoi qu'il ait pu promettre.
 const py = buildProvider(decl[2], { status: 'rejected', reason: new Error('x') });
 assert.strictEqual(py.status, 'inconnu');

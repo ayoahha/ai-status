@@ -36,7 +36,7 @@ export async function collect(provider, get) {
   // État d'un produit = pire impact des incidents ouverts qui le citent
   const productStatus = (title) => worstOf(ongoing.filter((i) => i.products.includes(title)).map((i) => i.impact));
   return {
-    status: worstOf(ongoing.map((i) => i.impact)),
+    indicator: null,
     rawStatus:
       ongoing.length === 0
         ? `Aucun incident déclaré (périmètre ${prefixes.join(' / ')}, ${scoped.length} produits)`

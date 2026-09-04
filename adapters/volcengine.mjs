@@ -54,7 +54,7 @@ export async function collect(provider, get) {
   const alerted = components.filter((c) => c.status !== 'operationnel').length;
   const badIds = bad.map((r) => r.id).join(', ');
   return {
-    status: worstOf(components.map((c) => c.status)),
+    indicator: null,
     rawStatus: alerted ? `${alerted} region(s) with an unresolved event` : `No unresolved event (${components.length} regions)`,
     rawIndicator: alerted ? 'unresolved' : 'none',
     components: components.map(({ name, status }) => ({ name, status })),

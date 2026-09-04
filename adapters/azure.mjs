@@ -35,7 +35,7 @@ export async function collect(provider, get) {
   const alerted = components.filter((c) => c.status !== 'operationnel');
   const missing = wanted.filter((name) => !rows.has(name));
   return {
-    status: worstOf(components.map((c) => c.status)),
+    indicator: null,
     rawStatus: alerted.length ? `${alerted.length} service(s) with a non-Good cell` : `All cells Good (${found.length} services)`,
     rawIndicator: alerted.length ? 'alert' : 'good',
     components,

@@ -14,7 +14,7 @@ export async function collect(provider, get) {
   if (!Array.isArray(components) || components.length === 0 || !Array.isArray(changes)) throw fail('schema', 'summary/active (composants ou active_changes)');
   const titles = changes.map((c) => c.title ?? c.name ?? JSON.stringify(c).slice(0, 120));
   return {
-    status: changes.length === 0 ? 'operationnel' : 'degradation',
+    indicator: changes.length === 0 ? 'operationnel' : 'degradation',
     rawStatus: changes.length === 0 ? `Aucun changement actif (${components.length} services)` : titles.join(' ; '),
     rawIndicator: changes.length === 0 ? 'no_active_change' : 'active_change',
     // Sans schéma connu des changements, l'état par service reste illisible en incident

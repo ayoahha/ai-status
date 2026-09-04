@@ -35,7 +35,7 @@ export async function collect(provider, get) {
       components: [p.ProductName ?? p.ProductId],
     }));
   return {
-    status: worstOf(components.map((c) => c.status)),
+    indicator: null,
     rawStatus: components.every((c) => c.status === 'operationnel') ? `NORMAL (${components.length} products)` : products.map((p) => `${p.ProductId}=${p.CurrentStatus}`).join(', '),
     rawIndicator: 'describe_product_event',
     components,

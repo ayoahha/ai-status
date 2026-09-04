@@ -9,19 +9,19 @@ export async function collect(provider, get) {
   if (!Array.isArray(events)) throw fail('schema', 'listHistoryEvent');
   const now = Date.now();
   const ongoing = events.filter((e) => !e.endTime || e.endTime > now);
-  const impacted = ongoing.flatMap((e) => e.products ?? []).filter(Boolean);
   return {
-    status: ongoing.length > 0 ? 'degradation' : 'operationnel',
+    indicator: ongoing.length > 0 ? 'degradation' : 'operationnel',
     rawStatus:
       ongoing.length > 0
         ? `${ongoing.length} événement(s) en cours`
         : 'Aucun incident déclaré (statut cloud global)',
     rawIndicator: ongoing.length > 0 ? 'ALARM' : 'NONE',
-    components: [...new Set(impacted)],
+    components: [],
     incidents: ongoing.map((e) => ({
       title: (e.title ?? '').replace(/^\s*\[Incident[^\]]*\]\s*/, ''),
       state: 'en cours',
       createdAt: e.startTime ? new Date(e.startTime).toISOString() : null,
+      components: (e.products ?? []).filter(Boolean),
     })),
   };
 }

@@ -1,4 +1,3 @@
-import { worstOf } from '../lib/normalize.mjs';
 import { fail } from '../lib/errors.mjs';
 
 // Pages Better Stack (Together AI) : endpoint public documenté /index.json
@@ -39,9 +38,8 @@ export async function collect(provider, get) {
     scheduledUntil: null,
     url: null,
   }));
-  const inProgress = maintenances.some((m) => m.state === 'in_progress');
   return {
-    status: worstOf([betterstackStatus(aggregate), ...components.map((c) => c.status), ...(inProgress ? ['maintenance'] : [])]),
+    indicator: betterstackStatus(aggregate),
     rawStatus: aggregate,
     rawIndicator: aggregate,
     components,

@@ -1,4 +1,3 @@
-import { worstOf } from '../lib/normalize.mjs';
 import { fail } from '../lib/errors.mjs';
 
 // Pages Instatus (Perplexity) : API publique documentée (https://instat.us/public-api)
@@ -34,9 +33,8 @@ export async function collect(provider, get) {
     scheduledUntil: null,
     url: m.url ?? null,
   }));
-  const inProgress = maintenances.some((m) => m.state === 'in_progress');
   return {
-    status: worstOf([PAGE[pageStatus] ?? 'inconnu', ...components.map((c) => c.status), ...(inProgress ? ['maintenance'] : [])]),
+    indicator: PAGE[pageStatus] ?? 'inconnu',
     rawStatus: pageStatus,
     rawIndicator: pageStatus,
     components,

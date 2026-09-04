@@ -5,7 +5,6 @@
 // y compris sur /api/v2/*, /feed et /rss (vérifié). Un fournisseur sans parseur dédié
 // reste « Non vérifié » : pas de repli par mots-clés sur le texte de la page.
 // Le client `get` du runner n'est pas utilisé : le navigateur fait ses propres requêtes
-import { worstOf } from '../lib/normalize.mjs';
 import { fail } from '../lib/errors.mjs';
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
@@ -88,7 +87,7 @@ async function parseXai(page) {
       .filter((i) => i.title)
   );
   return {
-    status: worstOf(services.map((s) => s.status)),
+    indicator: null,
     rawStatus: `${services.length} services : ${summarize(services)}`,
     rawIndicator: 'statuspage_dom',
     components: services.map((s) => ({ name: s.name, status: s.status })),

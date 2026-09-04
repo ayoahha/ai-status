@@ -61,7 +61,7 @@ export async function collect(provider, get) {
   const byDay = doc?.loaderData?.['routes/_index']?.result?.incidents ?? {};
   const open = Object.values(byDay).flat().filter((i) => i && i.ended == null);
   return {
-    status: worstOf(components.map((c) => c.status)),
+    indicator: null,
     rawStatus: `${components.length} components : ${summarize(rawComponents)}`,
     rawIndicator: 'ssr',
     components,

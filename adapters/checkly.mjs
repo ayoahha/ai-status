@@ -37,7 +37,7 @@ export async function collect(provider, get) {
   const maintenances = [...windows.active.map((w) => ({ ...w, _state: 'in_progress' })), ...(windows.upcoming ?? []).map((w) => ({ ...w, _state: 'scheduled' }))]
     .map((w) => ({ title: w.name ?? w.title ?? 'maintenance', state: w._state, scheduledFor: w.startsAt ?? w.startAt ?? null, scheduledUntil: w.endsAt ?? w.endAt ?? null, url: null }));
   return {
-    status: worstOf([...open.map((i) => checklySeverity(i.severity)), ...components.map((c) => c.status), ...(windows.active.length ? ['maintenance'] : [])]),
+    indicator: worstOf(open.map((i) => checklySeverity(i.severity))),
     rawStatus: open.length ? `${open.length} unresolved incident(s)` : `No unresolved incident (${services.length} services)`,
     rawIndicator: open.length ? 'unresolved' : 'none',
     components,
