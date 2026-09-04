@@ -1,4 +1,3 @@
-import { worstOf } from '../lib/normalize.mjs';
 import { fail } from '../lib/errors.mjs';
 
 // Pages OnlineOrNot (OpenRouter) : aucun endpoint JSON public sans jeton (l'API
@@ -52,11 +51,14 @@ export function parseOnlineornotHtml(html) {
   return decodeTurboStream(JSON.parse(chunks.join('')));
 }
 
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'données SSR de la page OnlineOrNot', en: 'OnlineOrNot page SSR data' };
+
 export async function collect(provider, get) {
   const url = provider.source.url;
   const doc = parseOnlineornotHtml(await get(url, { as: 'text' }));
   const rawComponents = doc?.loaderData?.root?.result?.components;
-  if (!Array.isArray(rawComponents) || rawComponents.length === 0) throw fail('schema', 'données SSR introuvables ou sans composant');
+  if (!Array.isArray(rawComponents) || rawComponents.length === 0) throw fail('schema', 'SSR (loaderData.root.result.components)');
   const components = rawComponents.filter((c) => c?.name).map((c) => ({ name: c.name, status: onlineornotStatus(c.status) }));
   const byDay = doc?.loaderData?.['routes/_index']?.result?.incidents ?? {};
   const open = Object.values(byDay).flat().filter((i) => i && i.ended == null);

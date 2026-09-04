@@ -29,7 +29,7 @@ const ADAPTERS = { statuspage, alibaba, google, flashcat, browser, instatus, bet
 
 const now = new Date().toISOString();
 const settled = await collectAll(providers, ADAPTERS, get);
-const out = buildOutput(providers, settled, now);
+const out = buildOutput(providers, settled, now, ADAPTERS);
 
 const outPath = path.join(root, 'public', 'data', 'status.json');
 mkdirSync(path.dirname(outPath), { recursive: true });

@@ -3,6 +3,9 @@ import { fail } from '../lib/errors.mjs';
 // Alibaba Cloud : l'API publique /api/status/listHistoryEvent fournit les événements
 // du statut cloud global (pas Qwen en particulier). Un événement sans fin (ou avec fin
 // dans le futur) = en cours. Seuls les événements en cours sont exposés.
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'API Alibaba Cloud', en: 'Alibaba Cloud API' };
+
 export async function collect(provider, get) {
   const data = await get(provider.source.url.replace(/\/+$/, '') + '/api/status/listHistoryEvent');
   const events = data?.data;

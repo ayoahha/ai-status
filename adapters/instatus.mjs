@@ -19,12 +19,15 @@ export function instatusComponentStatus(status) {
   return COMPONENT[status] ?? 'inconnu';
 }
 
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'API Instatus', en: 'Instatus API' };
+
 export async function collect(provider, get) {
   const base = provider.source.url.replace(/\/+$/, '');
   const [summary, comps] = await Promise.all([get(`${base}/summary.json`), get(`${base}/v2/components.json`)]);
   const raw = comps?.components;
   const pageStatus = summary?.page?.status;
-  if (typeof pageStatus !== 'string' || !Array.isArray(raw) || raw.length === 0) throw fail('schema', 'page.status ou components');
+  if (typeof pageStatus !== 'string' || !Array.isArray(raw) || raw.length === 0) throw fail('schema', 'summary.json (page.status) / v2/components.json (components)');
   const components = raw.map((c) => ({ name: c.name, status: instatusComponentStatus(c.status) }));
   const maintenances = (summary.activeMaintenances ?? []).map((m) => ({
     title: m.name,

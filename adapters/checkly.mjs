@@ -15,14 +15,17 @@ export function checklySeverity(severity) {
   return SEVERITY[severity] ?? 'inconnu';
 }
 
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'API JSON de la page Checkly', en: 'Checkly page JSON API' };
+
 export async function collect(provider, get) {
   const base = `${provider.source.url.replace(/\/+$/, '')}/api/status-page/${provider.source.slug}`;
   const [udoc, idoc, windows] = await Promise.all([get(`${base}/uptime`), get(`${base}/unresolved-incidents`), get(`${base}/maintenance-windows`)]);
   const groups = udoc?.metadata;
   const incidents = idoc?.incidents;
-  if (!Array.isArray(groups) || !Array.isArray(incidents) || !Array.isArray(windows?.active)) throw fail('schema', 'metadata, incidents ou active');
+  if (!Array.isArray(groups) || !Array.isArray(incidents) || !Array.isArray(windows?.active)) throw fail('schema', 'uptime.metadata / unresolved-incidents.incidents / maintenance-windows.active');
   const services = groups.flatMap((g) => g.services ?? []).filter((s) => s?.name);
-  if (services.length === 0) throw fail('schema', 'uptime sans service');
+  if (services.length === 0) throw fail('schema', 'uptime.metadata (0 services)');
 
   const open = incidents.filter((i) => i.lastUpdateStatus !== 'RESOLVED');
   // Service → pire sévérité des incidents ouverts qui le citent ; incident sans liste

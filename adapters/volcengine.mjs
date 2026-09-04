@@ -1,4 +1,3 @@
-import { worstOf } from '../lib/normalize.mjs';
 import { fail } from '../lib/errors.mjs';
 
 // Volcengine status (status.volcengine.com, plateforme Ark qui sert les modèles Doubao) :
@@ -25,6 +24,9 @@ export function parseVolcengineRss(xml) {
   return { region, items };
 }
 
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'flux RSS Volcengine status', en: 'Volcengine status RSS feeds' };
+
 export async function collect(provider, get) {
   const base = provider.source.url.replace(/\/+$/, '');
   const { product, productLabel, regions = [] } = provider.source;
@@ -34,11 +36,16 @@ export async function collect(provider, get) {
       const parsed = parseVolcengineRss(await get(`${base}/rss/zh/${r}/${product}`, { as: 'text', accept: 'application/rss+xml,text/xml' }));
       return { id: r, parsed, why: parsed.region ? null : 'canal sans région' };
     } catch (err) {
-      return { id: r, parsed: null, why: err.message };
+      return { id: r, parsed: null, why: err.message, err };
     }
   }));
   const bad = results.filter((r) => r.why);
-  if (bad.length === results.length) throw fail('schema', `aucun flux RSS lisible (${bad.map((r) => `${r.id}: ${r.why}`).join(', ')})`);
+  if (bad.length === results.length) {
+    // Réseau, HTTP ou timeout partout : l'erreur d'origine garde sa classification
+    const first = bad.find((r) => r.err);
+    if (first) throw first.err;
+    throw fail('schema', bad.map((r) => `${r.id}: rss/zh (channel title)`).join(', '));
+  }
   const components = results.map((r) => {
     if (r.why) return { name: `${productLabel} (${r.id})`, status: 'inconnu' };
     const ongoing = r.parsed.items.filter((i) => !i.title.includes('已恢复'));

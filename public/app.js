@@ -34,7 +34,6 @@ const T = {
     providers: (n) => countWord(n, 'fournisseur'), inAlert: (n) => `${n} en alerte`, unverified: (n) => `${n} non vérifié${n > 1 ? 's' : ''}`,
     groups: { us: 'Fournisseurs · USA', eu: 'Fournisseurs · Europe', cn: 'Fournisseurs · Chine', cloud: 'Clouds d’inférence et API', other: 'Autres' },
     groupEmpty: 'Aucune source suivie pour l’instant.',
-    methods: { statuspage: 'API Statuspage', google: 'flux JSON Google Cloud', flashcat: 'API Flashcat', browser: 'navigateur headless', alibaba: 'API Alibaba Cloud', unavailable: 'aucune requête', instatus: 'API Instatus', betterstack: 'API Better Stack', checkly: 'API JSON de la page Checkly', onlineornot: 'données SSR de la page OnlineOrNot', aws: 'flux JSON AWS Health', azure: 'tableau HTML Azure status', tencent: 'API JSON Tencent Cloud status', volcengine: 'flux RSS Volcengine status' },
     incidentStates: { investigating: 'en investigation', identified: 'cause identifiée', monitoring: 'sous surveillance', 'en cours': 'en cours', in_progress: 'en cours', verifying: 'en vérification', scheduled: 'planifiée' },
     labels: { operationnel: 'Opérationnel', degradation: 'Dégradation', incident_majeur: 'Incident majeur', maintenance: 'Maintenance', indisponible: 'Indisponible', inconnu: 'Non vérifié' },
     footCollect: 'Collecte', footCollectText: 'Toutes les 30 minutes par GitHub Actions. Les données sont publiées avec la page, dans le même déploiement.',
@@ -68,7 +67,6 @@ const T = {
     providers: (n) => countWord(n, 'provider'), inAlert: (n) => `${n} in alert`, unverified: (n) => `${n} unverified`,
     groups: { us: 'Providers · USA', eu: 'Providers · Europe', cn: 'Providers · China', cloud: 'Inference clouds and APIs', other: 'Others' },
     groupEmpty: 'No source tracked yet.',
-    methods: { statuspage: 'Statuspage API', google: 'Google Cloud JSON feeds', flashcat: 'Flashcat API', browser: 'headless browser', alibaba: 'Alibaba Cloud API', unavailable: 'no request', instatus: 'Instatus API', betterstack: 'Better Stack API', checkly: 'Checkly page JSON API', onlineornot: 'OnlineOrNot page SSR data', aws: 'AWS Health JSON feeds', azure: 'Azure status HTML table', tencent: 'Tencent Cloud status JSON API', volcengine: 'Volcengine status RSS feeds' },
     incidentStates: { investigating: 'investigating', identified: 'identified', monitoring: 'monitoring', 'en cours': 'in progress', in_progress: 'in progress', verifying: 'verifying', scheduled: 'scheduled' },
     labels: { operationnel: 'Operational', degradation: 'Degraded', incident_majeur: 'Major incident', maintenance: 'Maintenance', indisponible: 'Unavailable', inconnu: 'Unverified' },
     footCollect: 'Collection', footCollectText: 'Every 30 minutes by GitHub Actions. The data is published with the page, in the same deployment.',
@@ -350,7 +348,8 @@ function cardBody(p) {
   if (models.length) body.appendChild(componentList(t('models'), models));
   if (services.length) body.appendChild(componentList(models.length ? t('services') : t('componentsTitle'), services));
   const meta = el('p', 'meta');
-  meta.appendChild(document.createTextNode(`${t('readVia')} ${t('methods')[p.collect.method] ?? p.collect.method} · `));
+  // Libellé de la famille de source fourni par le collecteur ; repli sur l'id machine
+  meta.appendChild(document.createTextNode(`${t('readVia')} ${localized(p.collect.methodLabel, p.collect.methodLabelEn) ?? p.collect.method} · `));
   meta.appendChild(ageSpan(p.collectedAt));
   meta.appendChild(document.createTextNode(' · '));
   meta.appendChild(externalLink(p.statusUrl, t('officialPage')));
@@ -449,7 +448,7 @@ function validateData(doc) {
     if (!isStringOrNull(provider.group) || !isStringOrNull(provider.scope) || !isStringOrNull(provider.sourceText)) return false;
     if (!['scopeEn', 'reasonEn'].every((key) => provider[key] === undefined || isStringOrNull(provider[key]))) return false;
     if (!isObject(provider.collect) || !['ok', 'error'].includes(provider.collect.state) || typeof provider.collect.method !== 'string' || !isStringOrNull(provider.collect.error)) return false;
-    if (provider.collect.errorEn !== undefined && !isStringOrNull(provider.collect.errorEn)) return false;
+    if (!['errorEn', 'methodLabel', 'methodLabelEn'].every((key) => provider.collect[key] === undefined || isStringOrNull(provider.collect[key]))) return false;
     if (provider.collect.state === 'error' && (provider.status !== 'inconnu' || typeof provider.collect.error !== 'string')) return false;
     if (![provider.components, provider.incidents, provider.maintenances].every(Array.isArray)) return false;
     if (!provider.components.every((component) => hasStrings(component, ['name', 'kind', 'status']) && ['model', 'service'].includes(component.kind) && SEVERITY_ORDER.includes(component.status))) return false;

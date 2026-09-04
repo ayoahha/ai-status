@@ -45,7 +45,7 @@ const utf8bom = (obj) => new TextEncoder().encode('﻿' + JSON.stringify(obj));
 const failing = async () => { throw new Error('ECONNREFUSED'); };
 const aborting = async () => { const e = new Error('aborted'); e.name = 'AbortError'; throw e; };
 // Lecture d'un fournisseur par le seam complet : runner (isolation, horodatage) puis contrat
-const read = async (mod, p, get) => buildProvider(p, (await collectAll([p], { [p.source.kind]: mod }, get))[0]);
+const read = async (mod, p, get) => buildProvider(p, (await collectAll([p], { [p.source.kind]: mod }, get))[0], mod);
 const names = (components) => components.map((c) => c.name);
 const impacted = (components) => components.filter((c) => c.status !== 'operationnel').map((c) => c.name);
 
@@ -93,7 +93,7 @@ assert.strictEqual(classifyKind('Claude API'), 'service');
 assert.strictEqual(classifyKind('Claude Code'), 'service');
 
 // 3. Runner : tout échec (réseau, HTTP, timeout, schéma, famille inconnue) → inconnu,
-// state error, texte FR et EN par code. Un seul jeu de tests pour tous les adaptateurs.
+// state error, texte FR et EN par code. Un seul jeu de tests pour tous les adaptateurs
 const s1 = await read(statuspage, provider, failing);
 assert.strictEqual(s1.status, 'inconnu');
 assert.strictEqual(s1.collect.state, 'error');
@@ -105,20 +105,23 @@ assert.strictEqual(s2.collect.error, 'réponse HTTP : 500 (https://ex.com/api/v2
 assert.strictEqual(s2.collect.errorEn, 'HTTP response: 500 (https://ex.com/api/v2/summary.json)');
 const s3 = await read(statuspage, provider, okJson({ foo: 1 }));
 assert.strictEqual(s3.status, 'inconnu');
-assert.strictEqual(s3.collect.error, 'schéma inattendu : summary.json');
-assert.strictEqual(s3.collect.errorEn, 'unexpected schema: summary.json');
+assert.strictEqual(s3.collect.error, 'schéma inattendu : summary.json (status.indicator / components)');
+assert.strictEqual(s3.collect.errorEn, 'unexpected schema: summary.json (status.indicator / components)');
 const s3b = await read(statuspage, provider, aborting);
 assert.strictEqual(s3b.collect.error, 'délai dépassé');
 assert.strictEqual(s3b.collect.errorEn, 'timed out');
 const s3c = await read({ collect: async () => { throw fail('scope', 'X'); } }, provider, okJson({}));
 assert.strictEqual(s3c.collect.error, 'périmètre absent de la source : X');
 assert.strictEqual(s3c.reason, 'source non lue');
+const s3f = await read(unavailable, { ...provider, source: { kind: 'unavailable', url: 'https://ex.com' } }, okJson({}));
+assert.strictEqual(s3f.collect.error, 'source indisponible', 'sans note : le mot du code');
+assert.strictEqual(s3f.collect.errorEn, 'source unavailable');
 // Un adaptateur qui rend un résultat n'a plus de mot à dire sur l'échec : sans note, error null
 const s3d = await read({ collect: async () => ({ indicator: 'operationnel', components: [] }) }, provider, okJson({}));
-assert.deepStrictEqual(s3d.collect, { state: 'ok', method: 'statuspage', error: null, errorEn: null });
+assert.deepStrictEqual(s3d.collect, { state: 'ok', method: 'statuspage', methodLabel: null, methodLabelEn: null, error: null, errorEn: null }, 'sans METHOD : libellés null, la page replie sur l’id');
 // Note non fatale : state ok, texte dans error / errorEn
 const s3e = await read({ collect: async () => ({ indicator: 'operationnel', components: [], note: 'n', noteEn: 'n-en' }) }, provider, okJson({}));
-assert.deepStrictEqual(s3e.collect, { state: 'ok', method: 'statuspage', error: 'n', errorEn: 'n-en' });
+assert.deepStrictEqual(s3e.collect, { state: 'ok', method: 'statuspage', methodLabel: null, methodLabelEn: null, error: 'n', errorEn: 'n-en' });
 assert.strictEqual(s3e.status, 'operationnel');
 
 // 3b. Statuspage : fixture réelle Anthropic, tout operational → 6 composants, aucun impacté.
@@ -130,6 +133,8 @@ assert.deepStrictEqual(impacted(s4.components), []);
 assert.deepStrictEqual(s4.incidents, []);
 assert.deepStrictEqual(s4.maintenances, []);
 assert.strictEqual(s4.collect.state, 'ok');
+assert.strictEqual(s4.collect.methodLabel, 'API Statuspage');
+assert.strictEqual(s4.collect.methodLabelEn, 'Statuspage API');
 
 // 3c. Statuspage : composant dégradé + groupe (ignoré) + incident actif + maintenance en cours.
 const s5 = await read(statuspage, provider, okJson({
@@ -417,8 +422,12 @@ assert.deepStrictEqual(impacted(v2.components), ['火山方舟 (华北2（北京
 assert.strictEqual(v2.incidents.length, 1);
 const v3 = await read(volcengine, vProvider, byUrlText({ 'cn-beijing': rssBeijing, 'cn-shanghai': '<rss version="2.0"><channel><title>火山引擎火山方舟大模型服务平台()服务状态</title></channel></rss>' }));
 assert.strictEqual(v3.status, 'inconnu', 'région sans nom (inexistante) → composant illisible, jamais vert');
-assert.strictEqual((await read(volcengine, vProvider, httpFail(500))).status, 'inconnu');
-assert.strictEqual((await read(volcengine, vProvider, okText('GetRSS failed'))).status, 'inconnu');
+const v4 = await read(volcengine, vProvider, httpFail(500));
+assert.strictEqual(v4.status, 'inconnu');
+assert.match(v4.collect.error, /^réponse HTTP : 500/, 'toutes les régions en HTTP : classification conservée');
+const v5 = await read(volcengine, vProvider, okText('GetRSS failed'));
+assert.match(v5.collect.error, /^schéma inattendu/);
+assert.strictEqual(v5.status, 'inconnu');
 
 // 8. Assemblage v2 : collectAll isole les échecs, buildOutput produit le contrat.
 const decl = [
@@ -429,14 +438,14 @@ const decl = [
   { id: 'd', name: 'D', statusUrl: 'https://d', source: { kind: 'unavailable', note: 'injoignable' } },
 ];
 const adapters = {
-  sp: { collect: async (p) => p.id === 'a'
+  sp: { METHOD: { fr: 'API SP', en: 'SP API' }, collect: async (p) => p.id === 'a'
     ? { indicator: 'incident_majeur', rawStatus: 'Major outage', components: [{ name: 'm-1', status: 'incident_majeur' }, { name: 'API', status: 'operationnel' }], incidents: [{ title: 'Down', state: 'investigating', createdAt: '2026-09-03T10:00:00Z' }, { title: 'Old', state: 'resolved' }] }
     : { indicator: 'operationnel', components: [{ name: 'API', status: 'operationnel' }], maintenances: [{ title: 'M', state: 'scheduled' }] } },
   unavailable,
 };
 const settled = await collectAll(decl, adapters, okJson({}));
 assert.strictEqual(settled[1].status, 'rejected', 'adaptateur inconnu : rejet isolé, pas de plantage');
-const out = buildOutput(decl, settled, '2026-09-03T12:00:00Z');
+const out = buildOutput(decl, settled, '2026-09-03T12:00:00Z', adapters);
 assert.strictEqual(out.schemaVersion, 2);
 assert.deepStrictEqual(out.labels, STATUS_LABELS);
 assert.strictEqual(out.summary.worst, 'incident_majeur');
@@ -458,11 +467,16 @@ assert.strictEqual(pb.name, 'B', 'identité conservée en échec');
 assert.strictEqual(pb.collect.error, 'adaptateur inconnu : boom');
 assert.strictEqual(pb.collect.errorEn, 'unknown adapter: boom');
 assert.strictEqual(pd.collect.method, 'unavailable');
+assert.strictEqual(pa.collect.methodLabel, 'API SP');
+assert.strictEqual(pa.collect.methodLabelEn, 'SP API');
+assert.strictEqual(pb.collect.methodLabel, null, 'famille inconnue : pas de libellé');
+assert.strictEqual(pd.collect.methodLabel, 'aucune requête');
+assert.strictEqual(pd.collect.methodLabelEn, 'no request');
 assert.strictEqual(pd.collect.error, 'injoignable', 'source injoignable : la note seule, sans préfixe');
 assert.strictEqual(pd.collect.errorEn, 'injoignable', 'sans noteEn, la note FR sert en anglais');
 assert.strictEqual(pd.reason, 'source non lue');
 assert.strictEqual(pd.reasonEn, 'source not read');
-// 8b. Dérivation du statut par le contrat : indicateur, composants, maintenance en cours.
+// 8b. Dérivation du statut par le contrat : indicateur, composants, maintenance en cours
 const derive = (value) => buildProvider(decl[2], { status: 'fulfilled', value: { collectedAt: 'now', ...value } }).status;
 assert.strictEqual(derive({ indicator: 'operationnel', components: [{ name: 'X', status: 'bizarre' }] }), 'inconnu', 'composant au vocabulaire inconnu : jamais vert');
 assert.strictEqual(derive({ indicator: null, components: [] }), 'operationnel', 'sans indicateur ni composant : aucun incident déclaré');
@@ -472,7 +486,7 @@ assert.strictEqual(derive({ indicator: 'operationnel', components: [{ name: 'A',
 assert.strictEqual(derive({ indicator: 'operationnel', components: [], maintenances: [{ title: 'M', state: 'in_progress' }] }), 'maintenance', 'maintenance en cours');
 assert.strictEqual(derive({ indicator: 'operationnel', components: [], maintenances: [{ title: 'M', state: 'scheduled' }] }), 'operationnel', 'maintenance planifiée : sans effet');
 assert.strictEqual(derive({ indicator: 'bizarre', components: [] }), 'inconnu', 'indicateur hors enum : inconnu');
-// 8c. Un adaptateur rejeté est forcé à inconnu, quoi qu'il ait pu promettre.
+// 8c. Un adaptateur rejeté est forcé à inconnu, quoi qu'il ait pu promettre
 const py = buildProvider(decl[2], { status: 'rejected', reason: new Error('x') });
 assert.strictEqual(py.status, 'inconnu');
 assert.strictEqual(py.collect.state, 'error');

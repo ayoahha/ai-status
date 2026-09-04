@@ -6,11 +6,14 @@ import { fail } from '../lib/errors.mjs';
 // les incidents non résolus et les maintenances planifiées.
 // Limite : les composants « only_show_if_degraded » n'apparaissent que dégradés.
 // Utilisé par : Anthropic, OpenAI, Cursor, Moonshot, MiniMax, Groq, Replicate, Cohere, Fireworks.
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'API Statuspage', en: 'Statuspage API' };
+
 export async function collect(provider, get) {
   const base = provider.source.url.replace(/\/+$/, '');
   const data = await get(`${base}/api/v2/summary.json`);
   const indicator = data?.status?.indicator;
-  if (typeof indicator !== 'string' || !Array.isArray(data.components)) throw fail('schema', 'summary.json');
+  if (typeof indicator !== 'string' || !Array.isArray(data.components)) throw fail('schema', 'summary.json (status.indicator / components)');
 
   // Les groupes agrègent leurs enfants : ignorés pour ne pas compter deux fois
   const components = data.components

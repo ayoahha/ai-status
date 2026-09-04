@@ -21,12 +21,15 @@ export function decodeAwsBody(bytes) {
   return JSON.parse(new TextDecoder(enc, { ignoreBOM: false }).decode(bytes));
 }
 
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'flux JSON AWS Health', en: 'AWS Health JSON feeds' };
+
 export async function collect(provider, get) {
   const { eventsUrl, servicesUrl, serviceName } = provider.source;
   const [ebytes, sbytes] = await Promise.all([get(eventsUrl, { as: 'bytes' }), get(servicesUrl, { as: 'bytes' })]);
   const events = decodeAwsBody(ebytes);
   const catalog = decodeAwsBody(sbytes);
-  if (!Array.isArray(events) || !Array.isArray(catalog)) throw fail('schema', 'currentevents ou services.json');
+  if (!Array.isArray(events) || !Array.isArray(catalog)) throw fail('schema', 'currentevents / services.json');
   const scoped = catalog.filter((s) => s.service_name === serviceName);
   if (scoped.length === 0) throw fail('scope', `${serviceName} (services.json)`);
   const label = (s) => `${serviceName} (${s.region_name ?? s.service})`;

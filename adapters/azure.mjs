@@ -25,11 +25,14 @@ export function parseAzureRows(html) {
   return rows;
 }
 
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'tableau HTML Azure status', en: 'Azure status HTML table' };
+
 export async function collect(provider, get) {
   const wanted = provider.source.services ?? [];
   const rows = parseAzureRows(await get(provider.source.url, { as: 'text' }));
   const found = wanted.filter((name) => rows.has(name));
-  if (found.length === 0) throw fail('scope', `${wanted.join(', ')} (tableau Azure)`);
+  if (found.length === 0) throw fail('scope', wanted.join(', '));
   // Service listé mais sans aucune cellule lisible : état illisible, jamais vert
   const components = found.map((name) => ({ name, status: rows.get(name).length ? worstOf(rows.get(name).map(azureLabel)) : 'inconnu' }));
   const alerted = components.filter((c) => c.status !== 'operationnel');

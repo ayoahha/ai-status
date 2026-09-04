@@ -10,13 +10,16 @@ export function betterstackStatus(state) {
   return STATE[state] ?? 'inconnu';
 }
 
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'API Better Stack', en: 'Better Stack API' };
+
 export async function collect(provider, get) {
   const doc = await get(provider.source.url.replace(/\/+$/, '') + '/index.json');
   const aggregate = doc?.data?.attributes?.aggregate_state;
   const included = doc?.included;
-  if (typeof aggregate !== 'string' || !Array.isArray(included)) throw fail('schema', 'index.json (aggregate_state ou included)');
+  if (typeof aggregate !== 'string' || !Array.isArray(included)) throw fail('schema', 'index.json (aggregate_state / included)');
   const resources = included.filter((i) => i.type === 'status_page_resource');
-  if (resources.length === 0) throw fail('schema', 'index.json sans ressource');
+  if (resources.length === 0) throw fail('schema', 'index.json (0 status_page_resource)');
   const nameOf = new Map(resources.map((r) => [String(r.id), r.attributes?.public_name]));
   // not_monitored : la page ne mesure pas cette ressource, on ne la déclare pas saine
   const components = resources.map((r) => ({ name: r.attributes?.public_name ?? String(r.id), status: betterstackStatus(r.attributes?.status) }));

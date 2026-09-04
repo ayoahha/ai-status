@@ -9,13 +9,16 @@ import { fail } from '../lib/errors.mjs';
 // `source.productPrefixes` (Vertex, Gemini) : le reste de GCP est ignoré.
 // Un état « opérationnel » signifie ici « aucun incident déclaré sur ce périmètre »,
 // pas une mesure directe du produit.
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'flux JSON Google Cloud', en: 'Google Cloud JSON feeds' };
+
 export async function collect(provider, get) {
   const base = provider.source.url.replace(/\/+$/, '');
   const prefixes = provider.source.productPrefixes ?? [];
   const inScope = (title) => prefixes.some((p) => (title ?? '').startsWith(p));
   const [pdoc, incidents] = await Promise.all([get(`${base}/products.json`), get(`${base}/incidents.json`)]);
   const products = pdoc?.products;
-  if (!Array.isArray(products) || !Array.isArray(incidents)) throw fail('schema', 'products.json ou incidents.json');
+  if (!Array.isArray(products) || !Array.isArray(incidents)) throw fail('schema', 'products.json / incidents.json');
   const scoped = products.map((p) => p.title).filter(inScope);
   if (scoped.length === 0) throw fail('scope', `${prefixes.join(', ')} (products.json)`);
 

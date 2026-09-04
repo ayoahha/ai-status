@@ -5,7 +5,7 @@
 // y compris sur /api/v2/*, /feed et /rss (vérifié). Un fournisseur sans parseur dédié
 // reste « Non vérifié » : pas de repli par mots-clés sur le texte de la page.
 // Le client `get` du runner n'est pas utilisé : le navigateur fait ses propres requêtes
-import { fail } from '../lib/errors.mjs';
+import { fail, ERROR_KINDS } from '../lib/errors.mjs';
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
@@ -24,15 +24,18 @@ export function pillStatus(pill) {
   return PILL[(pill ?? '').trim().toLowerCase()] ?? 'inconnu';
 }
 
+// Libellé de la famille de source, affiché « Lu via … » par la page
+export const METHOD = { fr: 'navigateur headless', en: 'headless browser' };
+
 export async function collect(provider) {
   let chromium;
   try {
     ({ chromium } = await import('playwright'));
   } catch {
-    throw fail('browser', 'playwright absent : npm ci && npx playwright install chromium');
+    throw fail('browser', 'playwright absent : npm ci && npx playwright install chromium', 'playwright missing: npm ci && npx playwright install chromium');
   }
   const parse = PARSE[provider.id];
-  if (!parse) throw fail('browser', `aucun parseur navigateur pour ${provider.id}`);
+  if (!parse) throw fail('browser', `aucun parseur navigateur pour ${provider.id}`, `no browser parser for ${provider.id}`);
   const browser = await chromium.launch({ headless: true });
   const ctx = await browser.newContext({
     userAgent: UA,
@@ -51,7 +54,7 @@ export async function collect(provider) {
     return await parse(page, provider);
   } catch (err) {
     // TimeoutError Playwright : classé timeout par le runner ; le reste : erreur navigateur
-    if (err.name === 'TimeoutError' || err.code) throw err;
+    if (err.name === 'TimeoutError' || ERROR_KINDS.includes(err.code)) throw err;
     throw fail('browser', err.message);
   } finally {
     await browser.close();
@@ -73,10 +76,13 @@ async function parseXai(page) {
       })
       .filter((r) => r.name)
   );
-  if (!rows.length) throw fail('schema', 'aucun service trouvé dans le DOM (page non rendue ou défi non résolu)');
+  if (!rows.length) throw fail('schema', 'aucun service dans le DOM (page non rendue ou défi non résolu)', 'no service in the DOM (page not rendered or challenge unsolved)');
   const services = rows.map((r) => ({ name: r.name, pill: r.pill, status: pillStatus(r.pill) }));
   const unknown = services.filter((s) => s.status === 'inconnu');
-  if (unknown.length) throw fail('schema', `pilule non reconnue : ${unknown.map((s) => `${s.name}=« ${s.pill} »`).join(', ')}`);
+  if (unknown.length) {
+    const pills = unknown.map((s) => `${s.name}=« ${s.pill} »`).join(', ');
+    throw fail('schema', `pilule non reconnue : ${pills}`, `unrecognised pill: ${pills}`);
+  }
   const incidents = await page.$$eval('a.p-2', (els) =>
     els
       .map((e) => {
