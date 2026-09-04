@@ -4,7 +4,7 @@
 import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
-import { normalizeIndicator, normalizeComponentStatus, normalizeGoogleImpact, worstOf, classifyKind, normalizeFailure, STATUSES, STATUS_LABELS, STATUS_LABELS_EN } from '../lib/normalize.mjs';
+import { normalizeIndicator, normalizeComponentStatus, normalizeGoogleImpact, worstOf, classifyKind, STATUSES, STATUS_LABELS, STATUS_LABELS_EN } from '../lib/normalize.mjs';
 import { collectAll, buildOutput, buildProvider, GROUPS } from '../lib/collect.mjs';
 import { HttpError, fail } from '../lib/errors.mjs';
 import { get as httpGet } from '../lib/http.mjs';
@@ -74,7 +74,6 @@ assert.strictEqual(normalizeGoogleImpact('SERVICE_OUTAGE'), 'incident_majeur');
 assert.strictEqual(normalizeGoogleImpact('SERVICE_DISRUPTION'), 'degradation');
 assert.strictEqual(normalizeGoogleImpact('SERVICE_INFORMATION'), null);
 assert.strictEqual(normalizeGoogleImpact('NOUVEL_IMPACT'), 'inconnu');
-assert.strictEqual(normalizeFailure(), 'inconnu');
 
 // 2. worstOf : le pire l'emporte ; un inconnu interdit le vert mais n'écrase pas un état réel.
 assert.strictEqual(worstOf([]), 'operationnel');
