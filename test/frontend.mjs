@@ -192,6 +192,7 @@ try {
 
   await scenario([{ body: old }, { hold: true }], async (page) => {
     await page.getByText('Ancien fournisseur', { exact: true }).waitFor();
+    await page.clock.pauseAt(await page.evaluate(() => Date.now()));
     const refresh = page.getByRole('button', { name: 'Rafraîchir' });
     const click = refresh.click();
     await waitForRequests(2);
