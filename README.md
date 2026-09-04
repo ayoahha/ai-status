@@ -13,7 +13,10 @@ providers.json          liste déclarative des fournisseurs (id, nom, groupe, p�
 collect.mjs             CLI : lit providers.json, table famille de source → adaptateur, écrit le JSON
 lib/collect.mjs         runner (exécute chaque adaptateur, isole et classe les échecs) et assemblage
                         du contrat v2 (pur, testé) : statut, résumé, raisons et erreurs FR / EN
-lib/normalize.mjs       tables de correspondance, worstOf, classifyKind
+lib/normalize.mjs       tables de correspondance propres au collecteur (Statuspage, Google), classifyKind ;
+                        ré-exporte l'enum, worstOf et les libellés du contrat partagé
+public/status-contract.js contrat v2 partagé par le collecteur, la CI et la page : enum et gravité,
+                        ordre d'affichage, libellés FR / EN, worstOf, résumé (summarize), validation, bornes
 lib/errors.mjs          erreurs typées (code http | timeout | network | schema | scope | browser…)
 lib/http.mjs            client `get` : délai total, corps borné, redirections HTTPS contrôlées, HttpError hors 2xx
 adapters/unavailable.mjs source connue mais injoignable ou inexistante : aucune requête, jamais vert
@@ -83,8 +86,8 @@ Règle : un fournisseur n'est intégré que s'il existe une source publique, sta
 {
   "schemaVersion": 2,
   "generatedAt": "2026-09-03T15:40:00Z",
-  "labels": { "operationnel": "Opérationnel", "…": "…" },   // libellés FR
-  "labelsEn": { "operationnel": "Operational", "…": "…" },  // libellés EN, pour le sélecteur de langue
+  "labels": { "operationnel": "Opérationnel", "…": "…" },   // libellés FR (conservés pour le contrat ; la page lit ceux de status-contract.js)
+  "labelsEn": { "operationnel": "Operational", "…": "…" },  // libellés EN, idem
   "summary": {
     "worst": "degradation",            // pire état réel ; « inconnu » n'y entre pas, il a son compteur
     "counts": { "operationnel": 12, "degradation": 1, "inconnu": 1, "…": 0 },
@@ -111,7 +114,7 @@ Règle : un fournisseur n'est intégré que s'il existe une source publique, sta
 }
 ```
 
-Règles : un `collect.state = error` force `status = inconnu` ; un composant à l'état illisible interdit `operationnel` au fournisseur sans écraser un état dégradé réel (`worstOf` dans `lib/normalize.mjs`) ; `kind = model` vient du motif `modelPattern` déclaré par fournisseur dans `providers.json`, sinon `service`.
+Règles : un `collect.state = error` force `status = inconnu` ; un composant à l'état illisible interdit `operationnel` au fournisseur sans écraser un état dégradé réel (`worstOf` dans `public/status-contract.js`, partagé avec la page) ; `kind = model` vient du motif `modelPattern` déclaré par fournisseur dans `providers.json`, sinon `service`.
 
 ## Lancer localement
 
