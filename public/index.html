@@ -24,6 +24,7 @@
 
   <header class="top">
     <div class="summary">
+      <p class="brand">État des fournisseurs IA</p>
       <h1 id="overall" class="overall">Chargement…</h1>
       <div class="refresh-row">
         <p class="meta" id="collected-at"></p>
@@ -55,9 +56,26 @@
 
   <main id="providers" class="providers"></main>
 
-  <footer class="foot">
-    <p>Collecte automatique toutes les 30 minutes par GitHub Actions, publiée avec la page dans le même déploiement. La page actualise les données toutes les 30 minutes, au retour dans un ancien onglet ou avec le bouton « Rafraîchir ». Le bouton ⓘ de chaque carte donne le périmètre mesuré, la méthode de lecture et la fraîcheur ; la carte dépliée liste incidents, composants et la page officielle. « Non vérifié » signifie que la source n'a pas pu être lue : ce n'est jamais un « opérationnel » par défaut.</p>
-    <p><a href="https://github.com/ayoahha/ai-status">Code source et méthode par fournisseur</a></p>
+  <footer class="foot" aria-label="À propos de cette page">
+    <div class="foot-grid">
+      <div>
+        <h2 class="foot-title">Collecte</h2>
+        <p>Toutes les 30 minutes par GitHub Actions. Les données sont publiées avec la page, dans le même déploiement.</p>
+      </div>
+      <div>
+        <h2 class="foot-title">Actualisation</h2>
+        <p>La page recharge les données toutes les 30 minutes, au retour dans un onglet ancien, ou avec le bouton « Rafraîchir ».</p>
+      </div>
+      <div>
+        <h2 class="foot-title">Lecture</h2>
+        <p>Chaque ligne dépliée donne le périmètre mesuré, la méthode de lecture, la fraîcheur, les incidents, les composants et la page officielle.</p>
+      </div>
+      <div>
+        <h2 class="foot-title">Non vérifié</h2>
+        <p>La source n'a pas pu être lue. Ce n'est jamais un « opérationnel » par défaut.</p>
+      </div>
+    </div>
+    <p class="foot-links"><a href="https://github.com/ayoahha/ai-status">Code source et méthode par fournisseur</a></p>
   </footer>
 
   <script src="app.js"></script>
