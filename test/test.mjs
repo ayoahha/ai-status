@@ -3,6 +3,7 @@
 // réelles capturées dans test/fixtures/
 import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
+import { performance } from 'node:perf_hooks';
 import { normalizeIndicator, normalizeComponentStatus, normalizeGoogleImpact, worstOf, classifyKind, normalizeFailure, STATUSES, STATUS_LABELS, STATUS_LABELS_EN } from '../lib/normalize.mjs';
 import { collectAll, buildOutput, buildProvider, GROUPS } from '../lib/collect.mjs';
 import { HttpError, fail } from '../lib/errors.mjs';
@@ -85,6 +86,12 @@ assert.strictEqual(worstOf(['__proto__']), 'inconnu', 'une propriété héritée
 assert.strictEqual(attribute(' version = \'2.0\' ', 'version'), '2.0');
 assert.strictEqual(attribute(' data-version="2.0" ', 'version'), null, 'un attribut préfixé ne remplace pas la clé exacte');
 assert.strictEqual(attribute(' version="2.0" version="1.0" ', 'version'), null, 'un attribut dupliqué est ambigu');
+assert.strictEqual(attribute(' version="junk version="2.0" " ', 'version'), null, 'un attribut imbriqué dans une valeur malformée est refusé');
+assert.strictEqual(attribute(" version='junk version='2.0' ' ", 'version'), null, 'le refus vaut aussi avec des apostrophes');
+const hostileAttributes = ' class="x"X'.repeat(20_000);
+const attributeStartedAt = performance.now();
+assert.strictEqual(attribute(hostileAttributes, 'class', { caseInsensitive: true }), null);
+assert.ok(performance.now() - attributeStartedAt < 1_000, 'les quasi-attributs sont lus sans coût quadratique');
 assert.strictEqual(elements(`${'<a>'.repeat(2_049)}${'</a>'.repeat(2_049)}`, 'item'), null, 'la profondeur XML est bornée');
 
 // 2b. classifyKind : espace de noms ou motif déclaré ; sinon service. Listes réelles.
@@ -304,6 +311,7 @@ for (const invalidFeed of [
   xaiFeed.replace(' xmlns:atom="http://www.w3.org/2005/Atom"', ''),
   xaiFeed.replace(' version="2.0"', ' data-version="2.0"'),
   xaiFeed.replace(' version="2.0"', ' version="2.0" version="1.0"'),
+  xaiFeed.replace(' version="2.0"', ' version="junk version="2.0" "'),
   xaiFeed.replace(' href="https://status.x.ai/feed.xml"', ' data-href="https://status.x.ai/feed.xml"'),
   xaiFeed.replace('<h3>Status: RESOLVED</h3>', '<h3>Status: RESOLVED</h3><h3>Status: RESOLVED</h3>'),
   xaiFeed.replace('<p>Severity: available</p>', '<p>Severity: available</p><p>Severity: available</p>'),
@@ -550,6 +558,8 @@ assert.strictEqual(z4.status, 'operationnel');
 assert.ok(/Inexistant/.test(z4.collect.error), 'service absent signalé sans casser la collecte');
 const z5 = await read(azure, zProvider, okText('<tr><td>Azure OpenAI Service</td><td data-label="Not available"></td></tr>'));
 assert.strictEqual(z5.status, 'inconnu', 'aucune cellule lisible → inconnu');
+assert.strictEqual((await read(azure, zProvider, okText('<tr><td>Azure OpenAI Service</td><td class="status-cell"><span class="status-icon" data-label="Good"></span></td><td class="status-cell"><span></span></td></tr>'))).status, 'inconnu', 'une cellule régionale illisible ne disparaît pas derrière une cellule saine');
+assert.strictEqual((await read(azure, zProvider, okText('<tr><td>Azure OpenAI Service</td><td class="status-cell"><span class="status-icon" data-label="junk data-label="Good" "></span></td></tr>'))).status, 'inconnu', 'une valeur malformée ne peut pas révéler un faux label interne');
 assert.strictEqual((await read(azure, zProvider, okText("<tr><td>Azure OpenAI Service</td><td class='status-cell'><span class='status-icon' DATA-LABEL = 'Warning'></span></td></tr>"))).status, 'degradation', 'nom d’attribut HTML insensible à la casse et guillemets simples');
 assert.strictEqual((await read(azure, zProvider, okText('<tr><td>Azure OpenAI Service</td><td class="status-cell"><span class="status-icon" data-data-label="Warning"></span></td></tr>'))).status, 'inconnu', 'un attribut préfixé ne vaut pas data-label');
 assert.strictEqual((await read(azure, zProvider, okText('<tr><td>Azure OpenAI Service</td><td class="status-cell"><!-- <span class="status-icon" data-label="Warning"></span> --><span class="status-icon" data-label="Good"></span></td></tr>'))).status, 'operationnel', 'un faux attribut en commentaire est ignoré');
@@ -584,6 +594,7 @@ assert.strictEqual(parseVolcengineRss(rssBeijing).items.length, 2);
 assert.strictEqual(parseVolcengineRss(rssBeijing, 'cn-beijing').region, '华北2（北京）');
 assert.throws(() => parseVolcengineRss(rssBeijing.replace('version="2.0"', 'data-version="2.0"')), (error) => error.code === 'schema');
 assert.throws(() => parseVolcengineRss(rssBeijing.replace('version="2.0"', 'version="2.0" version="1.0"')), (error) => error.code === 'schema');
+assert.throws(() => parseVolcengineRss(rssBeijing.replace('version="2.0"', 'version="junk version="2.0" "')), (error) => error.code === 'schema');
 const rssShanghai = fixtureText('volcengine-modelark-cn-shanghai.rss');
 assert.strictEqual(parseVolcengineRss(rssShanghai.replaceAll('华东2（上海）', '华南1（广州）'), 'cn-guangzhou').region, '华南1（广州）');
 assert.strictEqual(parseVolcengineRss(rssShanghai.replaceAll('华东2（上海）', '亚太东南（柔佛）'), 'ap-southeast-1').region, '亚太东南（柔佛）');

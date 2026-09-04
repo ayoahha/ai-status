@@ -31,10 +31,12 @@ export function parseAzureRows(html) {
         if (spans.some((tag) => /(?:^|\s)data-label\s*=/i.test(tag.attributes))) labels.push('\0');
         continue;
       }
+      const before = labels.length;
       for (const tag of spans) {
         if (!/(?:^|\s)data-label\s*=/i.test(tag.attributes)) continue;
         labels.push(hasClass(tag, 'status-icon') ? attribute(tag.attributes, 'data-label', { caseInsensitive: true }) ?? '\0' : '\0');
       }
+      if (labels.length === before) labels.push('\0');
     }
     const list = rows.get(name) ?? [];
     list.push(...labels.filter((label) => label !== 'Not available'));
