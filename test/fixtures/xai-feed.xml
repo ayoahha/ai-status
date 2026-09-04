@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>SpaceXAI System Status</title>
+    <link>https://status.x.ai</link>
+    <description>Current status and incident history of SpaceXAI's services and systems</description>
+    <language>en-us</language>
+    <atom:link href="https://status.x.ai/feed.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 03 Sep 2026 17:10:57 GMT</lastBuildDate>
+    <ttl>30</ttl>
+    <item>
+      <title>[API Console] Console not loading</title>
+      <link>https://status.x.ai/api-console/INC702624e4</link>
+      <guid isPermaLink="false">INC702624e4</guid>
+      <description><![CDATA[
+        <h3>Status: RESOLVED</h3>
+        <p>Severity: available</p>
+        <hr />
+        <h4>Updates:</h4>
+        <div>
+          <p><strong>Mon, 18 May 2026 02:29:34 GMT</strong></p>
+          <h3>Investigating</h3>
+          <p>Investigating issues related to authentication</p>
+        </div>
+        <div>
+          <p><strong>Mon, 18 May 2026 12:00:00 GMT</strong></p>
+          <h3>Updated</h3>
+          <p>The issue has been resolved.</p>
+        </div>
+      ]]></description>
+      <pubDate>Mon, 18 May 2026 01:58:00 GMT</pubDate>
+      <category>available</category>
+      <category>resolved</category>
+    </item>
+  </channel>
+</rss>

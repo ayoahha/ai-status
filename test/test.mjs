@@ -12,7 +12,7 @@ import * as alibaba from '../adapters/alibaba.mjs';
 import * as google from '../adapters/google.mjs';
 import * as flashcat from '../adapters/flashcat.mjs';
 import * as unavailable from '../adapters/unavailable.mjs';
-import { pillStatus } from '../adapters/browser.mjs';
+import * as xai from '../adapters/xai.mjs';
 import * as instatus from '../adapters/instatus.mjs';
 import { instatusComponentStatus } from '../adapters/instatus.mjs';
 import * as betterstack from '../adapters/betterstack.mjs';
@@ -228,12 +228,40 @@ assert.strictEqual(a2.incidents[0].title, 'Bar');
 const a3 = await read(alibaba, provider, okJson({ data: 'oops' }));
 assert.strictEqual(a3.status, 'inconnu');
 
-// 7. xAI : pilules.
-assert.strictEqual(pillStatus('available'), 'operationnel');
-assert.strictEqual(pillStatus(' Degraded '), 'degradation');
-assert.strictEqual(pillStatus('major outage'), 'incident_majeur');
-assert.strictEqual(pillStatus('Operational'), 'inconnu', 'vocabulaire inconnu → inconnu');
-assert.strictEqual(worstOf(['operationnel', 'operationnel', pillStatus('???')]), 'inconnu');
+// 7. xAI : le RSS officiel confirme l'absence d'incident actif ; les 13 services
+// restent déclarés localement car Docs et xAI Website n'ont aucun incident historique
+const xaiComponents = [
+  'Grok (iOS)', 'Grok (Android)', 'Grok (Web)', 'Grok Build',
+  'Grok (Office/Workspace Plugins)', 'Single Sign-On',
+  'API (us-east-1.api.x.ai)', 'API (us-west-2.api.x.ai)', 'API (eu-west-1.api.x.ai)',
+  'API Console', 'Docs', 'xAI Website', 'Grok in X',
+];
+const xaiProvider = {
+  ...provider,
+  id: 'xai',
+  statusUrl: 'https://status.x.ai',
+  source: { kind: 'xai', url: 'https://status.x.ai/feed.xml', components: xaiComponents },
+};
+const xaiFeed = fixtureText('xai-feed.xml');
+assert.strictEqual(xai.parseXaiRss(xaiFeed, xaiComponents).length, 1, 'fixture réelle réduite : incident résolu sans champ Resolved');
+const x1 = await read(xai, xaiProvider, okText(xaiFeed));
+assert.strictEqual(x1.status, 'operationnel');
+assert.deepStrictEqual(names(x1.components), xaiComponents);
+assert.deepStrictEqual(impacted(x1.components), []);
+assert.deepStrictEqual(x1.incidents, []);
+assert.strictEqual(x1.collect.methodLabel, 'flux RSS officiel xAI');
+for (const invalidFeed of [
+  xaiFeed.replace('<h3>Status: RESOLVED</h3>', '<h3>Status: INVESTIGATING</h3>'),
+  xaiFeed.replace('[API Console]', '[Service inconnu]'),
+  xaiFeed.replace('https://status.x.ai/api-console/INC702624e4', 'https://evil.test/INC702624e4'),
+  xaiFeed.replace(' xmlns:atom="http://www.w3.org/2005/Atom"', ''),
+  `<racine-en-trop />${xaiFeed}`,
+  xaiFeed.replace('</rss>', ''),
+]) {
+  const failed = await read(xai, xaiProvider, okText(invalidFeed));
+  assert.strictEqual(failed.status, 'inconnu', 'structure ou sémantique RSS inconnue → jamais vert');
+  assert.strictEqual(failed.collect.state, 'error');
+}
 
 // 7b. Instatus (Perplexity) : fixture réelle, tout OPERATIONAL ; états dégradés ; réponses cassées.
 const iProvider = { ...provider, statusUrl: 'https://status.perplexity.com', source: { kind: 'instatus', url: 'https://status.perplexity.com' } };
@@ -657,7 +685,7 @@ for (const mutate of [
 
 // 10. providers.json : cohérence des déclarations.
 const providers = JSON.parse(readFileSync(new URL('../providers.json', import.meta.url), 'utf8'));
-const kinds = new Set(['statuspage', 'alibaba', 'google', 'flashcat', 'browser', 'unavailable', 'instatus', 'betterstack', 'checkly', 'onlineornot', 'aws', 'azure', 'tencent', 'volcengine']);
+const kinds = new Set(['statuspage', 'alibaba', 'google', 'flashcat', 'xai', 'unavailable', 'instatus', 'betterstack', 'checkly', 'onlineornot', 'aws', 'azure', 'tencent', 'volcengine']);
 assert.strictEqual(new Set(providers.map((p) => p.id)).size, providers.length, 'ids fournisseurs dupliqués');
 for (const p of providers) {
   assert.ok(p.id && p.name && p.statusUrl && p.source?.kind && p.source?.url, `fournisseur incomplet : ${p.id}`);
@@ -667,7 +695,11 @@ for (const p of providers) {
   if (p.source.kind === 'unavailable') assert.ok(p.source.note, `note manquante : ${p.id}`);
   if (p.source.kind === 'google') assert.ok(p.source.productPrefixes?.length, `productPrefixes manquant : ${p.id}`);
   if (p.source.kind === 'flashcat') assert.ok(p.source.pageId, `pageId manquant : ${p.id}`);
-  if (p.source.kind === 'browser') assert.strictEqual(p.id, 'xai', 'seul xAI a un parseur navigateur');
+  if (p.source.kind === 'xai') {
+    assert.strictEqual(p.id, 'xai', 'seul xAI utilise ce flux RSS');
+    assert.strictEqual(p.source.url, 'https://status.x.ai/feed.xml');
+    assert.deepStrictEqual(p.source.components, xaiComponents, 'les 13 composants xAI restent stables et ordonnés');
+  }
   if (p.source.kind === 'checkly') assert.ok(p.source.slug, `slug manquant : ${p.id}`);
   if (p.source.kind === 'aws') assert.ok(p.source.eventsUrl && p.source.servicesUrl && p.source.serviceName, `source aws incomplète : ${p.id}`);
   if (p.source.kind === 'azure') assert.ok(p.source.services?.length, `services manquants : ${p.id}`);

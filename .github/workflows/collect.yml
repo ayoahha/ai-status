@@ -51,25 +51,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      # persist-credentials: false : pas de jeton dans .git/config pendant que Chromium
-      # charge des pages tierces
+      # persist-credentials: false : pas de jeton dans .git/config pendant la collecte
+      # de sources tierces
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
-      - name: Installer les dépendances
-        run: npm ci
-      - name: Mettre en cache les navigateurs Playwright
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            playwright-chromium-
-      - name: Installer Chromium (Playwright)
-        run: npx playwright install chromium
       - name: Collecter les statuts
         run: node collect.mjs
       - name: Vérifier le JSON produit
