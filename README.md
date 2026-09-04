@@ -13,7 +13,7 @@ providers.json          liste déclarative des fournisseurs (id, nom, groupe, p�
 collect.mjs             CLI : lit providers.json, table famille de source → adaptateur, écrit le JSON
 lib/collect.mjs         runner (exécute chaque adaptateur, isole et classe les échecs) et assemblage
                         du contrat v2 (pur, testé) : statut, résumé, raisons et erreurs FR / EN
-lib/normalize.mjs       enum des états, tables de correspondance, worstOf, classifyKind
+lib/normalize.mjs       tables de correspondance, worstOf, classifyKind
 lib/errors.mjs          erreurs typées (code http | timeout | network | schema | scope | browser…)
 lib/http.mjs            client `get(url, {as, accept, timeoutMs})` : timeout, UA navigateur, HttpError hors 2xx
 adapters/unavailable.mjs source connue mais injoignable ou inexistante : aucune requête, jamais vert
@@ -30,7 +30,7 @@ adapters/aws.mjs        AWS Health Dashboard (Bedrock) : currentevents + service
 adapters/azure.mjs      Azure status : tableau HTML des services, lignes IA
 adapters/tencent.mjs    Tencent Cloud status (Hunyuan) : API JSON de la page
 adapters/volcengine.mjs Volcengine status (Ark / Doubao) : flux RSS par région
-public/                 site statique (index.html, style.css, app.js), sans dépendance ; interface FR / EN
+public/                 site statique et contrat v2 partagé, sans dépendance ; interface FR / EN
 public/data/status.json généré par la collecte, jamais versionné (dans .gitignore)
 test/                   tests sans réseau, fixtures réelles dans test/fixtures/
 .github/workflows/      collect.yml : tests, collecte, publication GitHub Pages
@@ -38,9 +38,9 @@ test/                   tests sans réseau, fixtures réelles dans test/fixtures
 
 Ajouter un fournisseur Statuspage : une entrée dans `providers.json` (`kind: statuspage`, `url`, `group` parmi `us`, `eu`, `cn`, `cloud`, `scope` et `scopeEn`, éventuellement `modelPattern`) et une ligne dans la table ci-dessous. Toute autre famille de source demande un adaptateur avec sa fixture réelle et ses tests.
 
-Forme d'un adaptateur (`adapters/<famille>.mjs`) : une fonction `collect(provider, get)` qui lit la source avec le client `get` (`as: json | text | bytes`) et rend un résultat de lecture `{ indicator, rawStatus, components, incidents, maintenances, note, noteEn }` ; `indicator` est l'état de page normalisé publié par la source (ou la règle propre de l'adaptateur), `null` si elle n'en publie pas, et le statut fournisseur est dérivé par le contrat : pire de l'indicateur, des composants et d'une maintenance en cours. Elle lève `fail('schema', détail)` sur structure inattendue et `fail('scope', détail)` quand le périmètre demandé est absent ; réseau, HTTP et timeout remontent d'eux-mêmes. Le runner (`lib/collect.mjs`) capture tout échec, le classe et rend le fournisseur « Non vérifié » avec un texte FR / EN : un adaptateur ne fabrique jamais d'état « inconnu » lui-même. Une `note` non fatale (services absents, région illisible) accompagne une lecture réussie. Le module exporte aussi `METHOD = { fr, en }`, le libellé « Lu via … » que la page affiche, transporté dans le contrat (`collect.methodLabel`, `collect.methodLabelEn`). Enregistrer le module dans la table `ADAPTERS` de `collect.mjs`.
+Forme d'un adaptateur (`adapters/<famille>.mjs`) : une fonction `collect(provider, get)` qui lit la source avec le client `get` (`as: json | text | bytes`) et rend un résultat de lecture `{ indicator, rawStatus, components, incidents, maintenances, note, noteEn }` ; `indicator` est l'état de page normalisé publié par la source (ou la règle propre de l'adaptateur), `null` si elle n'en publie pas, et le statut fournisseur est dérivé par le contrat : pire de l'indicateur, des composants et d'une maintenance en cours. Elle lève `fail('schema', détail)` sur structure inattendue et `fail('scope', détail)` quand le périmètre demandé est absent ; réseau, HTTP et timeout remontent d'eux-mêmes. Le runner (`lib/collect.mjs`) valide aussi le résultat résolu avant de le déclarer réussi : une structure mal formée n'affecte que son fournisseur, rendu « Non vérifié ». Une `note` non fatale (services absents, région illisible) accompagne une lecture réussie. Le module exporte aussi `METHOD = { fr, en }`, le libellé « Lu via … » que la page affiche, transporté dans le contrat (`collect.methodLabel`, `collect.methodLabelEn`). Enregistrer le module dans la table `ADAPTERS` de `collect.mjs`.
 
-Flux : GitHub Actions exécute `node collect.mjs` à `:07` et `:37` de chaque heure (et sur push `main` ou lancement manuel), vérifie le JSON produit, puis publie `public/` comme artefact GitHub Pages dans le même workflow. Ce décalage réduit le risque de retard des tâches GitHub planifiées sans garantir leur ponctualité. Rien n'est commité par la CI : la page et ses données partent ensemble, atomiquement. Le front ne lit que `data/status.json` ; aucune API propriétaire côté client.
+Flux : GitHub Actions exécute `node collect.mjs` à `:07` et `:37` de chaque heure (et sur push `main` ou lancement manuel), vérifie le JSON produit avec le même contrat v2 que le navigateur, puis publie `public/` comme artefact GitHub Pages dans le même workflow. Le collecteur valide le document sérialisé et remplace `status.json` atomiquement. Ce décalage réduit le risque de retard des tâches GitHub planifiées sans garantir leur ponctualité. Rien n'est commité par la CI : la page et ses données partent ensemble. Le front ne lit que `data/status.json` ; aucune API propriétaire côté client.
 
 ## Fournisseurs et méthode de collecte
 
@@ -125,7 +125,7 @@ npm run serve                               # puis http://localhost:8080
 ## Workflow `.github/workflows/collect.yml`
 
 - `test` : `npm test` sur chaque push `main`, lancement manuel, cron et pull request.
-- `collect` (hors pull request) : collecte, vérifie que le JSON est non vide et bien formé, téléverse `public/` comme artefact Pages. Sans JSON valide, le job est rouge et Pages conserve la publication précédente.
+- `collect` (hors pull request) : collecte, vérifie le contrat v2 complet, les identités de `providers.json` et la borne de taille, puis téléverse `public/` comme artefact Pages. Sans JSON valide, le job est rouge et Pages conserve la publication précédente.
 - `deploy` : publie l'artefact, uniquement sur `main`.
 
 Réglage requis dans Settings → Pages : « Build and deployment → Source : GitHub Actions ». Le mode « Deploy from branch » servirait un site sans données, puisque `status.json` n'est pas versionné.
@@ -149,6 +149,7 @@ Concurrence : un seul run à la fois par ref (`concurrency.group = collect-<ref>
 ## Limites
 
 - Les sources externes sont non fiables : contenu jamais exécuté, aucun secret ni jeton stocké ; tout texte affiché est inséré via `textContent`, pas `innerHTML`.
+- Les résultats d'adaptateur et le document final ont des bornes finies de taille et de cardinalité. Les URL de détail sont limitées à HTTPS sur l'origine officielle du fournisseur ; les liens courts `stspg.io` sont admis uniquement pour Statuspage. Une URL refusée est omise et le navigateur réapplique cette garde avant tout lien externe.
 - Un échec de collecte produit toujours le statut `inconnu` (« Non vérifié »), jamais `operationnel` : la distinction « aucun incident déclaré » et « information inconnue » est préservée.
 - Un CAPTCHA ou défi Cloudflare interactif n'est jamais contourné ; seul le défi automatique (JavaScript) est attendu, pour xAI.
 - L'état par composant reflète ce que la source publie. Statuspage masque les composants « only_show_if_degraded » tant qu'ils sont sains ; Google, Alibaba et Volcengine n'exposent pas d'état par produit hors incident (« opérationnel » = aucun incident déclaré) ; DeepSeek, Mistral, Tencent et Volcengine n'ont jamais été observés en incident, le mapping de leurs événements reste à confirmer sur un cas réel.

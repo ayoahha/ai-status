@@ -25,6 +25,7 @@ import { parseAzureRows } from '../adapters/azure.mjs';
 import * as tencent from '../adapters/tencent.mjs';
 import * as volcengine from '../adapters/volcengine.mjs';
 import { parseVolcengineRss } from '../adapters/volcengine.mjs';
+import { MAX_STATUS_BYTES, STATUS_LIMITS, safeExternalUrl, validateStatusDocument } from '../public/status-contract.js';
 
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8'));
 const fixtureText = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
@@ -171,7 +172,7 @@ assert.strictEqual(s7.status, 'maintenance');
 assert.deepStrictEqual(impacted(s7.components), ['API']);
 
 // 4. Google : flux officiels, périmètre par préfixe.
-const gProvider = { ...provider, source: { kind: 'google', url: 'https://status.cloud.google.com', productPrefixes: ['Vertex', 'Gemini'] } };
+const gProvider = { ...provider, statusUrl: 'https://status.cloud.google.com', source: { kind: 'google', url: 'https://status.cloud.google.com', productPrefixes: ['Vertex', 'Gemini'] } };
 const products = fixture('google-products.json');
 assert.ok(products.products.some((p) => p.title === 'Vertex Gemini API'), 'produit du périmètre attendu dans la fixture');
 const g1 = await read(google, gProvider, byUrl({ 'products.json': products, 'incidents.json': fixture('google-incidents-ia.json') }));
@@ -197,7 +198,7 @@ assert.strictEqual(g7.status, 'inconnu');
 assert.ok(/Inexistant/.test(g7.collect.error));
 
 // 5. Flashcat (DeepSeek) : fixture réelle, aucun changement actif → operationnel.
-const fProvider = { ...provider, source: { kind: 'flashcat', url: 'https://status.deepseek.com', pageId: '6410630422455' } };
+const fProvider = { ...provider, statusUrl: 'https://status.deepseek.com', source: { kind: 'flashcat', url: 'https://status.deepseek.com', pageId: '6410630422455' } };
 const f1 = await read(flashcat, fProvider, okJson(fixture('flashcat-deepseek-active.json')));
 assert.strictEqual(f1.status, 'operationnel');
 assert.strictEqual(f1.components.length, 8);
@@ -234,7 +235,7 @@ assert.strictEqual(pillStatus('Operational'), 'inconnu', 'vocabulaire inconnu �
 assert.strictEqual(worstOf(['operationnel', 'operationnel', pillStatus('???')]), 'inconnu');
 
 // 7b. Instatus (Perplexity) : fixture réelle, tout OPERATIONAL ; états dégradés ; réponses cassées.
-const iProvider = { ...provider, source: { kind: 'instatus', url: 'https://status.perplexity.com' } };
+const iProvider = { ...provider, statusUrl: 'https://status.perplexity.com', source: { kind: 'instatus', url: 'https://status.perplexity.com' } };
 const i1 = await read(instatus, iProvider, byUrl({ 'summary.json': fixture('instatus-perplexity-summary.json'), 'components.json': fixture('instatus-perplexity-components.json') }));
 assert.strictEqual(i1.status, 'operationnel');
 assert.deepStrictEqual(names(i1.components), ['Website', 'API', 'Computer']);
@@ -257,7 +258,7 @@ for (const map of [{ 'summary.json': { page: { status: 'UP' } }, 'components.jso
 assert.strictEqual((await read(instatus, iProvider, failing)).status, 'inconnu');
 
 // 7c. Better Stack (Together AI) : fixture réelle ; rapport ouvert ; ressource non surveillée ; cassé.
-const bProvider = { ...provider, source: { kind: 'betterstack', url: 'https://status.together.ai' } };
+const bProvider = { ...provider, statusUrl: 'https://status.together.ai', source: { kind: 'betterstack', url: 'https://status.together.ai' } };
 const together = fixture('betterstack-together-index.json');
 const b1 = await read(betterstack, bProvider, okJson(together));
 assert.strictEqual(b1.status, 'operationnel');
@@ -285,7 +286,7 @@ for (const body of [{}, { data: {} }, { data: { attributes: { aggregate_state: '
 assert.strictEqual((await read(betterstack, bProvider, httpFail(503))).status, 'inconnu');
 
 // 7d. Checkly (Mistral) : fixture réelle sans incident ; incident ouvert ciblé ; incident sans services ; cassé.
-const cProvider = { ...provider, source: { kind: 'checkly', url: 'https://status.mistral.ai', slug: 'mistral-ai' } };
+const cProvider = { ...provider, statusUrl: 'https://status.mistral.ai', source: { kind: 'checkly', url: 'https://status.mistral.ai', slug: 'mistral-ai' } };
 const uptime = fixture('checkly-mistral-uptime.json');
 const cMap = (incidents, windows = { upcoming: [], active: [], recentlyCompleted: [], past: [] }) => byUrl({ '/uptime': uptime, 'unresolved-incidents': { incidents }, 'maintenance-windows': windows });
 const c1 = await read(checkly, cProvider, cMap([]));
@@ -312,7 +313,7 @@ assert.strictEqual((await read(checkly, cProvider, byUrl({ '/uptime': uptime, 'u
 
 // 7e. OnlineOrNot (OpenRouter) : décodage turbo-stream ; fixture HTML réelle ; composant dégradé ; page sans données.
 assert.deepStrictEqual(decodeTurboStream([{ _1: 2, _3: 4 }, 'a', 5, 'b', [6, -5], ['D', 7], '2026-09-04T00:00:00Z']), { a: 5, b: ['2026-09-04T00:00:00Z', null] });
-const oProvider = { ...provider, source: { kind: 'onlineornot', url: 'https://status.openrouter.ai' } };
+const oProvider = { ...provider, statusUrl: 'https://status.openrouter.ai', source: { kind: 'onlineornot', url: 'https://status.openrouter.ai' } };
 const orHtml = fixtureText('onlineornot-openrouter.html');
 const orDoc = parseOnlineornotHtml(orHtml);
 assert.strictEqual(orDoc.loaderData.root.result.statusPage.name, 'OpenRouter');
@@ -356,7 +357,7 @@ assert.strictEqual(awsCode('0'), 'operationnel');
 assert.strictEqual(awsCode('1'), 'degradation');
 assert.strictEqual(awsCode('3'), 'incident_majeur');
 assert.strictEqual(awsCode('7'), 'inconnu');
-const wProvider = { ...provider, source: { kind: 'aws', url: 'https://health.aws.amazon.com/health/status', eventsUrl: 'https://health.aws.amazon.com/public/currentevents', servicesUrl: 'https://servicedata-eu-west-1-prod.s3.amazonaws.com/services.json', serviceName: 'Amazon Bedrock' } };
+const wProvider = { ...provider, statusUrl: 'https://health.aws.amazon.com/health/status', source: { kind: 'aws', url: 'https://health.aws.amazon.com/health/status', eventsUrl: 'https://health.aws.amazon.com/public/currentevents', servicesUrl: 'https://servicedata-eu-west-1-prod.s3.amazonaws.com/services.json', serviceName: 'Amazon Bedrock' } };
 const awsEvents = fixture('aws-currentevents.json');
 const awsServices = fixture('aws-services.json');
 const w1 = await read(aws, wProvider, byUrlBytes({ currentevents: utf16(awsEvents), 'services.json': utf8bom(awsServices) }));
@@ -376,7 +377,7 @@ assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16
 assert.strictEqual((await read(aws, wProvider, byUrlBytes({ currentevents: utf16([]), 'services.json': utf8bom([{ service: 'ec2-us-east-1', service_name: 'Amazon EC2' }]) }))).status, 'inconnu', 'aucun service du périmètre → inconnu');
 
 // 7g. Azure : fixture réelle expurgée (Good partout) ; Warning ; label inconnu ; service absent ; page vide.
-const zProvider = { ...provider, source: { kind: 'azure', url: 'https://azure.status.microsoft/en-us/status', services: ['Azure OpenAI Service', 'Foundry Models', 'Azure AI Search'] } };
+const zProvider = { ...provider, statusUrl: 'https://azure.status.microsoft/en-us/status', source: { kind: 'azure', url: 'https://azure.status.microsoft/en-us/status', services: ['Azure OpenAI Service', 'Foundry Models', 'Azure AI Search'] } };
 const azHtml = fixtureText('azure-status-rows.html');
 assert.ok(parseAzureRows(azHtml).get('Azure OpenAI Service').length > 10, 'cellules agrégées sur toutes les zones');
 const z1 = await read(azure, zProvider, okText(azHtml));
@@ -396,7 +397,7 @@ assert.strictEqual((await read(azure, zProvider, okText('<html></html>'))).statu
 assert.strictEqual((await read(azure, zProvider, httpFail(500))).status, 'inconnu');
 
 // 7h. Tencent (Hunyuan) : fixture réelle ; ABNORMAL ; région vide ; cassé.
-const tProvider = { ...provider, source: { kind: 'tencent', url: 'https://status.cloud.tencent.com', regionId: 'non-regional', productIds: ['hunyuan', 'aiart'] } };
+const tProvider = { ...provider, statusUrl: 'https://status.cloud.tencent.com', source: { kind: 'tencent', url: 'https://status.cloud.tencent.com', regionId: 'non-regional', productIds: ['hunyuan', 'aiart'] } };
 const t1 = await read(tencent, tProvider, okJson(fixture('tencent-nonregional.json')));
 assert.strictEqual(t1.status, 'operationnel');
 assert.deepStrictEqual(names(t1.components).sort(), ['腾讯混元大模型', '腾讯混元生图']);
@@ -408,7 +409,7 @@ assert.strictEqual((await read(tencent, tProvider, okJson({ Response: { Data: { 
 assert.strictEqual((await read(tencent, tProvider, okJson({}))).status, 'inconnu');
 
 // 7i. Volcengine (Ark) : flux réels (Pékin : événements résolus ; Shanghai : vide) ; événement en cours ; région bidon.
-const vProvider = { ...provider, source: { kind: 'volcengine', url: 'https://status.volcengine.com', product: 'ModelArk', productLabel: '火山方舟', regions: ['cn-beijing', 'cn-shanghai'] } };
+const vProvider = { ...provider, statusUrl: 'https://status.volcengine.com', source: { kind: 'volcengine', url: 'https://status.volcengine.com', product: 'ModelArk', productLabel: '火山方舟', regions: ['cn-beijing', 'cn-shanghai'] } };
 const rssBeijing = fixtureText('volcengine-modelark-cn-beijing.rss');
 assert.strictEqual(parseVolcengineRss(rssBeijing).region, '华北2（北京）');
 assert.strictEqual(parseVolcengineRss(rssBeijing).items.length, 2);
@@ -491,35 +492,76 @@ const py = buildProvider(decl[2], { status: 'rejected', reason: new Error('x') }
 assert.strictEqual(py.status, 'inconnu');
 assert.strictEqual(py.collect.state, 'error');
 // 8d. Sans « inconnu », worst reste calculé sur les états réels ; tout inconnu → operationnel avec compteur.
-const out2 = buildOutput([decl[3]], [settled[3]], 'now');
+const out2 = buildOutput([decl[3]], [settled[3]], '2026-09-03T12:00:00Z');
 assert.strictEqual(out2.summary.worst, 'operationnel');
 assert.strictEqual(out2.summary.counts.inconnu, 1);
 
-// 9. Validateur du contrat v2 (inline, sans dépendance).
-function validate(doc) {
-  assert.strictEqual(doc.schemaVersion, 2);
-  assert.strictEqual(typeof doc.generatedAt, 'string');
-  assert.ok(STATUSES.includes(doc.summary.worst));
-  for (const s of STATUSES) assert.strictEqual(typeof doc.summary.counts[s], 'number');
-  for (const p of doc.providers) {
-    for (const k of ['id', 'name', 'statusUrl', 'status', 'reason', 'reasonEn', 'collectedAt']) assert.strictEqual(typeof p[k], 'string', `${p.id}.${k}`);
-    assert.ok(p.scopeEn === null || typeof p.scopeEn === 'string', `${p.id}.scopeEn`);
-    assert.ok(STATUSES.includes(p.status), `${p.id}.status`);
-    assert.ok(['ok', 'error'].includes(p.collect.state));
-    assert.ok(p.collect.state === 'ok' || typeof p.collect.error === 'string', `${p.id} : erreur sans message`);
-    assert.ok(p.collect.state === 'error' || p.status !== 'inconnu' || p.components.some((c) => c.status === 'inconnu') || true);
-    for (const c of p.components) {
-      assert.strictEqual(typeof c.name, 'string');
-      assert.ok(['model', 'service'].includes(c.kind));
-      assert.ok(STATUSES.includes(c.status));
-    }
-    for (const i of p.incidents) assert.ok(typeof i.title === 'string' && typeof i.status === 'string' && Array.isArray(i.components));
-    for (const m of p.maintenances) assert.ok(typeof m.title === 'string' && typeof m.state === 'string');
-    if (p.collect.state === 'error') assert.strictEqual(p.status, 'inconnu', `${p.id} : erreur de collecte mais statut ${p.status}`);
-  }
+// 9. Frontière de confiance : un résultat mal formé est rejeté avant allSettled,
+// sans contaminer le fournisseur valide ni le contrat final.
+const strictProviders = [
+  { ...provider, id: 'good', name: 'Good', source: { kind: 'strict', url: 'https://ex.com' } },
+  { ...provider, id: 'bad', name: 'Bad', source: { kind: 'strict', url: 'https://ex.com' } },
+];
+const goodResult = { indicator: 'operationnel', components: [{ name: 'API', status: 'operationnel' }] };
+const malformed = [
+  { indicator: 'operationnel', components: 'oops' },
+  { indicator: 'operationnel', components: [{ name: null, status: 'operationnel' }] },
+  { indicator: 'operationnel', components: [], incidents: [{ title: 7, state: 'en cours' }] },
+  { indicator: 'operationnel', components: [], incidents: [{ title: 'X', state: 'en cours', createdAt: 'jamais' }] },
+  { indicator: null, components: [] },
+  { indicator: 'operationnel', components: Array(STATUS_LIMITS.components + 1).fill({ name: 'API', status: 'operationnel' }) },
+];
+for (const badResult of malformed) {
+  const strict = { collect: async (p) => p.id === 'good' ? goodResult : badResult };
+  const results = await collectAll(strictProviders, { strict }, okJson({}));
+  assert.strictEqual(results[0].status, 'fulfilled');
+  assert.strictEqual(results[1].status, 'rejected');
+  const isolated = buildOutput(strictProviders, results, '2026-09-03T12:00:00Z', { strict });
+  assert.strictEqual(isolated.providers[0].status, 'operationnel');
+  assert.strictEqual(isolated.providers[1].status, 'inconnu');
+  assert.strictEqual(isolated.providers[1].collect.state, 'error');
+  assert.strictEqual(validateStatusDocument(isolated, strictProviders), true);
 }
-validate(out);
-validate(out2);
+
+// Les URL facultatives hostiles disparaissent ; même origine et shortlinks Statuspage restent.
+const links = await collectAll([provider], { statuspage: { collect: async () => ({
+  indicator: 'operationnel',
+  components: [],
+  incidents: [
+    { title: 'Safe', state: 'investigating', url: 'https://stspg.io/ok' },
+    { title: 'Hostile', state: 'monitoring', url: 'javascript:alert(1)' },
+  ],
+}) } }, okJson({}));
+const linked = buildProvider(provider, links[0]);
+assert.deepStrictEqual(linked.incidents.map((incident) => incident.url), ['https://stspg.io/ok', null]);
+assert.strictEqual(safeExternalUrl('https://ex.com/detail', provider.statusUrl, 'statuspage'), 'https://ex.com/detail');
+assert.strictEqual(safeExternalUrl('https://stspg.io/x', provider.statusUrl, 'statuspage'), 'https://stspg.io/x');
+for (const url of ['http://ex.com/x', 'https://evil.test/x', 'https://user@ex.com/x', 'javascript:alert(1)', 'data:text/plain,x']) {
+  assert.strictEqual(safeExternalUrl(url, provider.statusUrl, 'statuspage'), null, url);
+}
+
+// Le même validateur couvre producteur, CI et navigateur, sans garde toujours vraie.
+assert.strictEqual(validateStatusDocument(out, decl), true);
+assert.strictEqual(validateStatusDocument(out2, [decl[3]]), true);
+assert.ok(Buffer.byteLength(JSON.stringify(out) + '\n') < MAX_STATUS_BYTES);
+const boundedFailure = buildOutput(
+  [provider],
+  [{ status: 'rejected', reason: new Error('x'.repeat(STATUS_LIMITS.string + 100)) }],
+  '2026-09-03T12:00:00Z',
+);
+assert.strictEqual(boundedFailure.providers[0].collect.error.length, STATUS_LIMITS.string);
+assert.strictEqual(validateStatusDocument(boundedFailure, [provider]), true, 'une erreur énorme reste isolée et bornée');
+for (const mutate of [
+  (doc) => { doc.providers[0].components[0].name = null; },
+  (doc) => { doc.providers[1].id = doc.providers[0].id; },
+  (doc) => { doc.summary.counts.inconnu += 1; },
+  (doc) => { doc.providers[0].collectedAt = 'jamais'; },
+  (doc) => { doc.providers[0].incidents[0].url = 'javascript:alert(1)'; },
+]) {
+  const invalid = structuredClone(out);
+  mutate(invalid);
+  assert.strictEqual(validateStatusDocument(invalid, decl), false);
+}
 
 // 10. providers.json : cohérence des déclarations.
 const providers = JSON.parse(readFileSync(new URL('../providers.json', import.meta.url), 'utf8'));
