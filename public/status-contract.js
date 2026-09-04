@@ -1,5 +1,7 @@
 // Contrat v2 partagé par le collecteur, la CI et le navigateur
 export const STATUS_VALUES = Object.freeze(['operationnel', 'maintenance', 'degradation', 'incident_majeur', 'indisponible', 'inconnu']);
+export const INCIDENT_STATES = Object.freeze(['investigating', 'identified', 'monitoring', 'en cours']);
+export const MAINTENANCE_STATES = Object.freeze(['scheduled', 'in_progress', 'verifying']);
 export const MAX_STATUS_BYTES = 10 * 1024 * 1024;
 
 // ponytail: bornes de publication généreuses ; ne les relever qu'après une mesure légitime
@@ -14,6 +16,7 @@ const isOptionalString = (value) => value === undefined || isStringOrNull(value)
 const isDate = (value) => isString(value, { empty: false }) && Number.isFinite(Date.parse(value));
 const isDateOrNull = (value) => value === null || isDate(value);
 const isList = (value, limit) => Array.isArray(value) && value.length <= limit;
+export const isActiveMaintenanceState = (state) => state !== 'scheduled';
 
 function basicHttpsUrl(value) {
   if (!isString(value, { empty: false })) return null;
@@ -54,7 +57,7 @@ function validProvider(provider) {
   if (!provider.incidents.every((incident) =>
     isObject(incident)
       && isString(incident.title, { empty: false })
-      && isString(incident.status, { empty: false })
+      && INCIDENT_STATES.includes(incident.status)
       && [incident.impact, incident.url].every(isStringOrNull)
       && (incident.url === null || safeExternalUrl(incident.url, provider.statusUrl, provider.collect.method) === incident.url)
       && [incident.startedAt, incident.updatedAt].every(isDateOrNull)
@@ -64,11 +67,12 @@ function validProvider(provider) {
   if (!provider.maintenances.every((maintenance) =>
     isObject(maintenance)
       && isString(maintenance.title, { empty: false })
-      && isString(maintenance.state, { empty: false })
+      && MAINTENANCE_STATES.includes(maintenance.state)
       && [maintenance.scheduledFor, maintenance.scheduledUntil].every(isDateOrNull)
       && isStringOrNull(maintenance.url)
       && (maintenance.url === null || safeExternalUrl(maintenance.url, provider.statusUrl, provider.collect.method) === maintenance.url)
   )) return false;
+  if (provider.status === 'operationnel' && (provider.incidents.length || provider.maintenances.some((maintenance) => isActiveMaintenanceState(maintenance.state)))) return false;
   return provider.collect.state !== 'error' || (provider.components.length === 0 && provider.incidents.length === 0 && provider.maintenances.length === 0);
 }
 
@@ -105,7 +109,7 @@ export function validateStatusDocument(doc, expectedProviders = null) {
   if (doc.summary.worst !== worst) return false;
   if (doc.summary.activeIncidents !== doc.providers.reduce((total, provider) => total + provider.incidents.length, 0)) return false;
   return doc.summary.activeMaintenances === doc.providers.reduce(
-    (total, provider) => total + provider.maintenances.filter((maintenance) => maintenance.state !== 'scheduled').length,
+    (total, provider) => total + provider.maintenances.filter((maintenance) => isActiveMaintenanceState(maintenance.state)).length,
     0,
   );
 }

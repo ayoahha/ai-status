@@ -315,6 +315,7 @@ details[open] > .card-line::before { transform: rotate(90deg); }
 .incident { margin: 4px 0; font-size: .86rem; }
 .incident-title { font-weight: 600; }
 .incident-meta { color: var(--muted); font-size: .78rem; }
+.ongoing-comps, .ongoing-err, .card-reason, .err, .incident { overflow-wrap: anywhere; }
 .incident-link, .card a, .foot a { color: var(--link); }
 a:hover { text-decoration: underline; }
 

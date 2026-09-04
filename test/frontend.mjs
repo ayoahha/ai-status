@@ -177,18 +177,45 @@ try {
   });
 
   const links = statusDoc(new Date(NOW).toISOString(), 'Liens filtrés');
+  links.providers[0].status = 'degradation';
+  links.providers[0].reason = '1 incident en cours';
+  links.providers[0].reasonEn = '1 incident in progress';
+  links.providers[0].components = [{ name: 'Composant \u202E piégé', kind: 'service', status: 'degradation' }];
   links.providers[0].incidents = [
-    { title: 'Lien sûr', status: 'investigating', impact: null, startedAt: null, updatedAt: null, url: 'https://example.com/incidents/ok', components: [] },
+    { title: 'Lien \u202E sûr', status: 'investigating', impact: null, startedAt: null, updatedAt: null, url: 'https://example.com/incidents/ok', components: ['Composant \u202E piégé'] },
   ];
+  links.summary.worst = 'degradation';
+  links.summary.counts.operationnel = 0;
+  links.summary.counts.degradation = 1;
   links.summary.activeIncidents = 1;
   await scenario([{ body: links }], async (page) => {
-    await page.getByText('Liens filtrés', { exact: true }).waitFor();
+    await page.getByRole('heading', { name: 'Liens filtrés', exact: true }).waitFor();
     await page.locator('#test details').evaluate((details) => { details.open = true; });
     assert.equal(await page.locator('#test .incident-link').count(), 1);
     assert.equal(await page.locator('#test .incident-link').getAttribute('href'), 'https://example.com/incidents/ok');
     assert.equal(await page.locator('#test .incident-link').getAttribute('rel'), 'noopener noreferrer');
+    assert.equal(await page.locator('#test .incident-title').first().evaluate((node) => node.tagName), 'BDI');
+    assert.equal(await page.locator('#test .incident-title').first().getAttribute('dir'), 'auto');
+    assert.equal(await page.locator('#test .incident-meta bdi').getAttribute('dir'), 'auto');
+    assert.equal(await page.locator('#test .comp-name').evaluate((node) => node.tagName), 'BDI');
+    assert.equal(await page.locator('#ongoing .ongoing-comps bdi').getAttribute('dir'), 'auto');
     assert.equal(await page.getByRole('link', { name: 'page officielle' }).getAttribute('rel'), 'noopener noreferrer');
   });
+
+  const longText = 'x'.repeat(60_000);
+  const longDoc = statusDoc(new Date(NOW).toISOString(), 'Texte public borné');
+  longDoc.providers[0].status = 'degradation';
+  longDoc.providers[0].reason = '1 incident en cours';
+  longDoc.providers[0].reasonEn = '1 incident in progress';
+  longDoc.providers[0].incidents = [{ title: longText, status: 'investigating', impact: null, startedAt: null, updatedAt: null, url: null, components: [] }];
+  longDoc.summary = { worst: 'degradation', counts: { operationnel: 0, degradation: 1, incident_majeur: 0, maintenance: 0, indisponible: 0, inconnu: 0 }, activeIncidents: 1, activeMaintenances: 0 };
+  for (const width of [390, 1440]) {
+    await scenario([{ body: longDoc }], async (page) => {
+      await page.getByRole('heading', { name: 'Texte public borné', exact: true }).waitFor();
+      await page.locator('#test details').evaluate((details) => { details.open = true; });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), true, `${width}px texte sans espace`);
+    }, { viewport: { width, height: 900 } });
+  }
 
   const oversized = statusDoc(new Date(NOW).toISOString(), 'Document excessif');
   oversized.providers[0].components = Array.from({ length: 5_000 }, (_, index) => ({

@@ -1,10 +1,11 @@
 import { worstOf } from '../lib/normalize.mjs';
 import { fail } from '../lib/errors.mjs';
-import { elements } from '../lib/markup.mjs';
+import { attribute, elements } from '../lib/markup.mjs';
 
 // Azure status (azure.status.microsoft, ex status.azure.com) : page rendue côté serveur,
 // sans JSON ; le flux RSS documenté ne couvre que les incidents publiés, sans état par
-// service. On lit le tableau HTML : une ligne <tr><td>Service</td><td data-label="…">…
+// service. On lit le tableau HTML : une ligne <tr><td>Service</td><td class="status-cell">
+// <span class="status-icon" data-label="…">…
 // par service et par zone géographique. Légende de la page : Good, Information (« no current
 // service availability issues »), Warning (« potential service issues in a region »),
 // Critical (« widespread issues »), Not available (service non proposé dans la région).
@@ -15,14 +16,28 @@ export function azureLabel(label) {
   return LABEL[label] ?? 'inconnu';
 }
 
+const hasClass = (tag, wanted) => (attribute(tag.attributes, 'class', { caseInsensitive: true }) ?? '').split(/\s+/).includes(wanted);
+
 export function parseAzureRows(html) {
   const rows = new Map();
   for (const row of elements(html, 'tr', { tolerant: true }) ?? []) {
-    const name = elements(row.body, 'td', { tolerant: true })?.[0]?.body.trim();
+    const cells = elements(row.body, 'td', { tolerant: true }) ?? [];
+    const name = cells[0]?.body.trim();
     if (!name || name.includes('<')) continue;
-    const labels = [...row.body.matchAll(/data-label="([^"]+)"/g)].map((x) => x[1]).filter((l) => l !== 'Not available');
+    const labels = [];
+    for (const cell of cells.slice(1)) {
+      const spans = elements(cell.body, 'span', { tolerant: true }) ?? [];
+      if (!hasClass(cell, 'status-cell')) {
+        if (spans.some((tag) => /(?:^|\s)data-label\s*=/i.test(tag.attributes))) labels.push('\0');
+        continue;
+      }
+      for (const tag of spans) {
+        if (!/(?:^|\s)data-label\s*=/i.test(tag.attributes)) continue;
+        labels.push(hasClass(tag, 'status-icon') ? attribute(tag.attributes, 'data-label', { caseInsensitive: true }) ?? '\0' : '\0');
+      }
+    }
     const list = rows.get(name) ?? [];
-    list.push(...labels);
+    list.push(...labels.filter((label) => label !== 'Not available'));
     rows.set(name, list);
   }
   return rows;
