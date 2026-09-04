@@ -1,6 +1,9 @@
 // Lecture de data/status.json (contrat v2, généré par la collecte GitHub Actions).
 // Tout texte externe est inséré via textContent (pas d'innerHTML) → aucun contenu
 // externe exécuté ou interprété comme instructions
+const FRESHNESS_MS = 60 * 1000;
+const REFRESH_MS = 30 * 60 * 1000;
+const FETCH_TIMEOUT_MS = 15 * 1000;
 const STALE_MS = 2 * 60 * 60 * 1000; // 4 cadences de collecte ratées
 const SEVERITY_ORDER = ['indisponible', 'incident_majeur', 'degradation', 'maintenance', 'inconnu', 'operationnel'];
 // Groupes d'affichage : ordre et libellés ; un groupe absent du contrat tombe dans « Autres »
@@ -41,6 +44,9 @@ let labels = FALLBACK_LABELS;
 let filter = 'all';
 let query = '';
 let sortMode = 'severity';
+let refreshing = false;
+let lastAttemptAt = 0;
+let refreshTimer;
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, className, text) => {
@@ -150,6 +156,7 @@ function countButton(status, text, n) {
 }
 
 function renderFreshness() {
+  if (!data) return;
   const at = $('collected-at');
   const age = ageLabel(data.generatedAt);
   at.textContent = `Mis à jour ${fmtDate(data.generatedAt)}${age ? ` (${age})` : ''}`;
@@ -386,6 +393,130 @@ function renderAll() {
   renderFreshness();
 }
 
+const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const isStringOrNull = (value) => value === null || typeof value === 'string';
+const isValidDate = (value) => typeof value === 'string' && Number.isFinite(Date.parse(value));
+const hasStrings = (value, keys) => isObject(value) && keys.every((key) => typeof value[key] === 'string');
+
+function validateData(doc) {
+  if (!isObject(doc) || doc.schemaVersion !== 2 || !isValidDate(doc.generatedAt)) return false;
+  if (!isObject(doc.summary) || !SEVERITY_ORDER.includes(doc.summary.worst) || !isObject(doc.summary.counts)) return false;
+  if (!['activeIncidents', 'activeMaintenances'].every((key) => Number.isInteger(doc.summary[key]) && doc.summary[key] >= 0)) return false;
+  if (!SEVERITY_ORDER.every((status) => Number.isInteger(doc.summary.counts[status]) && doc.summary.counts[status] >= 0)) return false;
+  if (doc.labels != null && (!isObject(doc.labels) || !SEVERITY_ORDER.every((status) => typeof doc.labels[status] === 'string'))) return false;
+  if (!Array.isArray(doc.providers) || doc.providers.length === 0) return false;
+
+  const validProviders = doc.providers.every((provider) => {
+    if (!hasStrings(provider, ['id', 'name', 'statusUrl', 'status', 'reason', 'collectedAt'])) return false;
+    if (!SEVERITY_ORDER.includes(provider.status) || !isValidDate(provider.collectedAt)) return false;
+    if (!isStringOrNull(provider.group) || !isStringOrNull(provider.scope) || !isStringOrNull(provider.sourceText)) return false;
+    if (!isObject(provider.collect) || !['ok', 'error'].includes(provider.collect.state) || typeof provider.collect.method !== 'string' || !isStringOrNull(provider.collect.error)) return false;
+    if (provider.collect.state === 'error' && (provider.status !== 'inconnu' || typeof provider.collect.error !== 'string')) return false;
+    if (![provider.components, provider.incidents, provider.maintenances].every(Array.isArray)) return false;
+    if (!provider.components.every((component) => hasStrings(component, ['name', 'kind', 'status']) && ['model', 'service'].includes(component.kind) && SEVERITY_ORDER.includes(component.status))) return false;
+    if (!provider.incidents.every((incident) => hasStrings(incident, ['title', 'status']) && Array.isArray(incident.components) && incident.components.every((name) => typeof name === 'string') && ['impact', 'startedAt', 'updatedAt', 'url'].every((key) => isStringOrNull(incident[key])))) return false;
+    return provider.maintenances.every((maintenance) => hasStrings(maintenance, ['title', 'state']) && ['scheduledFor', 'scheduledUntil', 'url'].every((key) => isStringOrNull(maintenance[key])));
+  });
+  if (!validProviders || new Set(doc.providers.map((provider) => provider.id)).size !== doc.providers.length) return false;
+
+  const counts = Object.fromEntries(SEVERITY_ORDER.map((status) => [status, 0]));
+  for (const provider of doc.providers) counts[provider.status] += 1;
+  if (SEVERITY_ORDER.some((status) => counts[status] !== doc.summary.counts[status])) return false;
+  const worst = [...doc.providers]
+    .map((provider) => provider.status)
+    .filter((status) => status !== 'inconnu')
+    .sort((a, b) => severity(a) - severity(b))[0] ?? 'operationnel';
+  if (doc.summary.worst !== worst) return false;
+  if (doc.summary.activeIncidents !== doc.providers.reduce((total, provider) => total + provider.incidents.length, 0)) return false;
+  return doc.summary.activeMaintenances === doc.providers.reduce((total, provider) => total + provider.maintenances.filter((maintenance) => maintenance.state !== 'scheduled').length, 0);
+}
+
+function resetUnavailable() {
+  data = null;
+  labels = FALLBACK_LABELS;
+  $('overall').textContent = 'Données indisponibles';
+  $('collected-at').textContent = 'Impossible de charger les données.';
+  $('counts').textContent = '';
+  $('ongoing').hidden = true;
+  $('ongoing-list').textContent = '';
+  $('providers').textContent = '';
+  $('result-count').textContent = '';
+  $('stale').hidden = true;
+  $('stale').textContent = '';
+}
+
+async function refreshData(source) {
+  if (refreshing) return;
+  refreshing = true;
+  lastAttemptAt = Date.now();
+  scheduleRefresh(REFRESH_MS);
+  const button = $('refresh');
+  const status = $('refresh-status');
+  const error = $('refresh-error');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  button.disabled = true;
+  button.setAttribute('aria-busy', 'true');
+  if (source === 'manual') status.textContent = 'Actualisation en cours…';
+
+  try {
+    const res = await fetch('data/status.json', { cache: 'no-store', signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const nextData = await res.json();
+    if (!validateData(nextData)) throw new Error('format de données inattendu');
+    if (data && Date.parse(nextData.generatedAt) < Date.parse(data.generatedAt)) throw new Error('données plus anciennes que celles affichées');
+
+    if (!data || nextData.generatedAt !== data.generatedAt) {
+      const previousData = data;
+      const openCards = [...document.querySelectorAll('.card details[open]')].map((details) => details.closest('.card')?.id);
+      data = nextData;
+      try {
+        renderAll();
+      } catch (renderError) {
+        data = previousData;
+        if (previousData) {
+          try {
+            renderAll();
+            for (const id of openCards) document.querySelector(`#${CSS.escape(id)} details`)?.setAttribute('open', '');
+          } catch {
+            resetUnavailable();
+          }
+        } else {
+          resetUnavailable();
+        }
+        throw renderError;
+      }
+    } else {
+      renderFreshness();
+    }
+
+    error.hidden = true;
+    error.textContent = '';
+    if (source === 'manual') status.textContent = 'Données actualisées.';
+  } catch {
+    if (!data) resetUnavailable();
+    error.textContent = 'Actualisation impossible : dernières données valides conservées.';
+    error.hidden = false;
+    if (source === 'manual') status.textContent = 'Échec de l’actualisation.';
+  } finally {
+    clearTimeout(timeout);
+    refreshing = false;
+    button.disabled = false;
+    button.setAttribute('aria-busy', 'false');
+  }
+}
+
+function refreshIfDue() {
+  const remaining = REFRESH_MS - (Date.now() - lastAttemptAt);
+  if (remaining <= 0) refreshData('automatic');
+  else scheduleRefresh(remaining);
+}
+
+function scheduleRefresh(delay) {
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(refreshIfDue, delay);
+}
+
 $('search').addEventListener('input', (e) => {
   query = e.target.value;
   renderSections();
@@ -395,22 +526,12 @@ $('sort').addEventListener('change', (e) => {
   renderOngoing();
   renderSections();
 });
-
-(async () => {
-  try {
-    const res = await fetch('data/status.json', { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    data = await res.json();
-    if (data.schemaVersion !== 2 || !Array.isArray(data.providers)) throw new Error('format de données inattendu');
-  } catch (err) {
-    $('overall').textContent = 'Données indisponibles';
-    $('collected-at').textContent = `Impossible de charger les données (${err.message}).`;
-    return;
-  }
-  try {
-    renderAll();
-    setInterval(renderFreshness, 60000);
-  } catch (err) {
-    $('collected-at').textContent = `Erreur d’affichage : ${err.message}`;
-  }
-})();
+$('refresh').addEventListener('click', () => refreshData('manual'));
+window.addEventListener('online', () => refreshData('automatic'));
+window.addEventListener('focus', refreshIfDue);
+window.addEventListener('pageshow', refreshIfDue);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') refreshIfDue();
+});
+setInterval(renderFreshness, FRESHNESS_MS);
+refreshData('startup');
