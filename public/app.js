@@ -9,9 +9,9 @@ const SEVERITY_ORDER = ['indisponible', 'incident_majeur', 'degradation', 'maint
 // Groupes d'affichage : ordre et libellés ; un groupe absent du contrat tombe dans « Autres ».
 // Un groupe avec `empty` est affiché même sans fournisseur, avec ce texte
 const GROUPS = [
-  { id: 'us', label: 'Fournisseurs USA' },
-  { id: 'eu', label: 'Fournisseurs Europe', empty: 'Aucune source suivie pour l’instant.' },
-  { id: 'cn', label: 'Fournisseurs Chine' },
+  { id: 'us', label: 'Fournisseurs · USA' },
+  { id: 'eu', label: 'Fournisseurs · Europe', empty: 'Aucune source suivie pour l’instant.' },
+  { id: 'cn', label: 'Fournisseurs · Chine' },
   { id: 'cloud', label: 'Clouds d’inférence et API' },
   { id: 'other', label: 'Autres' },
 ];
@@ -126,7 +126,7 @@ function renderSummary() {
     ? (unknown ? 'Aucun incident déclaré' : 'Tous les fournisseurs sont opérationnels')
     : `${label(s.worst)} chez ${countWord(data.providers.filter((p) => p.status === s.worst).length, 'fournisseur')}`;
   overall.appendChild(el('span', null, text));
-  if (unknown) overall.appendChild(el('span', 'overall-unknown', ` · ${countWord(unknown, 'source')} non vérifiée${unknown > 1 ? 's' : ''}`));
+  if (unknown) overall.appendChild(el('span', 'overall-unknown', `${countWord(unknown, 'source')} non vérifiée${unknown > 1 ? 's' : ''}`));
 
   const counts = $('counts');
   counts.textContent = '';

@@ -115,10 +115,11 @@ Concurrence : un seul run à la fois par ref (`concurrency.group = collect-<ref>
 
 - Bandeau : pire état réel parmi les fournisseurs, nombre de sources non vérifiées, horodatage avec fuseau et âge relatif rafraîchi chaque minute. Les données sont rechargées toutes les 30 minutes, au retour dans un onglet ancien, au retour en ligne ou avec le bouton « Rafraîchir ». Un échec conserve les dernières données valides et affiche une alerte. Les compteurs par état filtrent les cartes.
 - « En cours » : fournisseurs dans un état réel (dégradation, incident, indisponibilité, maintenance) avec leurs incidents et maintenances actives ; absent quand tout est vert. Une source non lue n'y figure pas : elle a son compteur et sa carte grise.
-- Quatre sections fixes : fournisseurs USA, fournisseurs Europe, fournisseurs Chine, clouds d'inférence et API. Sous-titre « N fournisseurs · M en alerte · K non vérifiés ». Section vide masquée après filtre ou recherche ; la section Europe, sans fournisseur suivi pour l'instant, affiche un message à la place de la liste.
+- Quatre sections fixes : Fournisseurs · USA, Fournisseurs · Europe, Fournisseurs · Chine, Clouds d'inférence et API. Sous-titre « N fournisseurs · M en alerte · K non vérifiés ». Section vide masquée après filtre ou recherche ; la section Europe, sans fournisseur suivi pour l'instant, affiche un message à la place de la liste.
 - Ligne fermée : icône d'état, nom, périmètre, nombre de composants, libellé d'état ; raison seulement hors « opérationnel ». Aucune ligne n'est ouverte d'office : « En cours » porte l'urgence.
 - Ligne dépliée : erreur de collecte éventuelle, incidents, maintenances, modèles et services avec leur état, méthode de lecture, fraîcheur et lien vers la page officielle. Rien n'est accessible uniquement au survol.
-- Chaque état a une forme d'icône distincte et un libellé : la couleur n'est jamais le seul signal. Thème sombre par défaut, clair si le système le demande ; contrastes ≥ 4,5:1 (texte) et ≥ 3:1 (contrôles) mesurés dans les deux thèmes.
+- Chaque état a une forme d'icône distincte et un libellé : la couleur n'est jamais le seul signal. Thème clair par défaut (papier chaud, encre, accent ocre), sombre si le système le demande ; contrastes ≥ 4,5:1 (texte) et ≥ 3:1 (bords de contrôles, icônes) mesurés dans les deux thèmes.
+- Polices auto-hébergées dans `public/fonts/` (Fraunces pour la phrase d'état, IBM Plex Sans pour le corps, IBM Plex Mono pour horodatages et compteurs ; sous-ensemble latin, licences OFL jointes). Aucune requête vers un service tiers. Aucune animation : le dépliage et les filtres sont des actions répétées.
 - Données de plus de deux heures : bandeau d'alerte.
 
 ## Limites
