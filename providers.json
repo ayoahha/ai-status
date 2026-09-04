@@ -228,7 +228,10 @@
     "statusUrl": "https://replicatestatus.com",
     "source": {
       "kind": "statuspage",
-      "url": "https://replicatestatus.com"
+      "url": "https://replicatestatus.com",
+      "redirectOrigins": [
+        "https://www.replicatestatus.com"
+      ]
     },
     "scope": "API Replicate et matériel GPU",
     "scopeEn": "Replicate API and GPU hardware"
@@ -307,6 +310,7 @@
     "source": {
       "kind": "azure",
       "url": "https://azure.status.microsoft/en-us/status",
+      "maxResponseBytes": 16777216,
       "services": [
         "Azure OpenAI Service",
         "Foundry Models",
