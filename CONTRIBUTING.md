@@ -4,7 +4,7 @@
 
 ## Signaler un problème
 
-Ouvrir une [issue](https://github.com/ayoahha/ai-status/issues) avec le fournisseur concerné, le résultat attendu, le résultat affiché et l’heure de collecte. Joindre le lien de la source officielle si possible. Pour un problème d’affichage, préciser le navigateur et la langue utilisée.
+Ouvrir une [issue](https://github.com/eliasprunaire/ai-status/issues) avec le fournisseur concerné, le résultat attendu, le résultat affiché et l’heure de collecte. Joindre le lien de la source officielle si possible. Pour un problème d’affichage, préciser le navigateur et la langue utilisée.
 
 Ne joindre aucune clé API, aucun cookie ni jeton de session.
 

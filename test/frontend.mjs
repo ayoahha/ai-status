@@ -96,7 +96,7 @@ try {
       await page.locator('#refresh[aria-busy="false"]').waitFor();
       await run(page);
       assert.equal(await page.locator('#build-version').textContent(), `${BUILD_INFO.version} · ${BUILD_INFO.sha.slice(0, 7)}`);
-      assert.equal(await page.locator('#build-version').getAttribute('href'), `https://github.com/ayoahha/ai-status/commit/${BUILD_INFO.sha}`);
+      assert.equal(await page.locator('#build-version').getAttribute('href'), `https://github.com/eliasprunaire/ai-status/commit/${BUILD_INFO.sha}`);
       assert.deepEqual(pageErrors, [], 'aucune erreur JavaScript dans la page');
     } finally {
       for (const pending of held.splice(0)) pending.res.destroy();

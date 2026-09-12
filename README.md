@@ -8,12 +8,12 @@
 
 23 fournisseurs · Français / English · GitHub Pages
 
-[Ouvrir le tableau de bord](https://status.librenet.fr/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
+[Ouvrir le tableau de bord](https://status.librenet.fr/) · [Signaler un problème](https://github.com/eliasprunaire/ai-status/issues)
 
-[![Tests, collecte et publication](https://github.com/ayoahha/ai-status/actions/workflows/collect.yml/badge.svg?branch=main)](https://github.com/ayoahha/ai-status/actions/workflows/collect.yml)
+[![Tests, collecte et publication](https://github.com/eliasprunaire/ai-status/actions/workflows/collect.yml/badge.svg?branch=main)](https://github.com/eliasprunaire/ai-status/actions/workflows/collect.yml)
 [![Node.js ≥ 22](https://img.shields.io/badge/Node.js-%E2%89%A5_22-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![Python 3 · serveur local](https://img.shields.io/badge/Python-3-3776AB?logo=python&logoColor=white)](#lancer-en-local)
-[![Dernière release](https://img.shields.io/github/v/release/ayoahha/ai-status)](https://github.com/ayoahha/ai-status/releases/latest)
+[![Dernière release](https://img.shields.io/github/v/release/eliasprunaire/ai-status)](https://github.com/eliasprunaire/ai-status/releases/latest)
 
 </div>
 
@@ -87,7 +87,7 @@ Dans **Settings → Pages**, choisir **GitHub Actions** comme source. Ajouter `M
 
 Les PR lancent les tests. Sur `main`, le workflow teste, collecte et publie la page avec ses données. Un lancement manuel sur une autre branche permet de vérifier la collecte sans déployer. Le fichier généré `public/data/status.json` n’est pas versionné.
 
-Le pied de page indique la version du code et son commit. Les [notes de version](https://github.com/ayoahha/ai-status/releases) sont publiées sur GitHub ; une collecte périodique ne change pas la version. Le processus SemVer est décrit dans le [guide de contribution](CONTRIBUTING.md#versions).
+Le pied de page indique la version du code et son commit. Les [notes de version](https://github.com/eliasprunaire/ai-status/releases) sont publiées sur GitHub ; une collecte périodique ne change pas la version. Le processus SemVer est décrit dans le [guide de contribution](CONTRIBUTING.md#versions).
 
 ## Contribuer
 
@@ -97,6 +97,6 @@ Pour signaler un problème, corriger une collecte ou ajouter un fournisseur, con
 
 <div align="center">
 
-[Licence MIT](LICENSE) · [Tableau de bord](https://status.librenet.fr/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
+[Licence MIT](LICENSE) · [Tableau de bord](https://status.librenet.fr/) · [Signaler un problème](https://github.com/eliasprunaire/ai-status/issues)
 
 </div>

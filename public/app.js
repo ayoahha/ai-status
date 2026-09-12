@@ -597,7 +597,7 @@ function setLang(next) {
 document.querySelectorAll('.lang-btn').forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang)));
 applyLang();
 $('build-version').textContent = `${BUILD_INFO.version} · ${BUILD_INFO.sha.slice(0, 7)}`;
-$('build-version').href = `https://github.com/ayoahha/ai-status/commit/${BUILD_INFO.sha}`;
+$('build-version').href = `https://github.com/eliasprunaire/ai-status/commit/${BUILD_INFO.sha}`;
 
 $('search').addEventListener('input', (e) => {
   query = e.target.value;
