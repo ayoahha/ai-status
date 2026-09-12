@@ -102,13 +102,12 @@
     "group": "eu",
     "statusUrl": "https://status.mistral.ai",
     "source": {
-      "kind": "checkly",
-      "url": "https://status.mistral.ai",
-      "slug": "mistral-ai"
+      "kind": "mistral_probe",
+      "url": "https://api.mistral.ai/v1/chat/completions"
     },
-    "modelPattern": "API$",
-    "scope": "API Mistral (chat, embeddings, OCR, agents…), Le Chat, console et site",
-    "scopeEn": "Mistral API (chat, embeddings, OCR, agents…), Le Chat, console and website"
+    "modelPattern": "^Ministral 3 3B",
+    "scope": "Sonde de génération sur Ministral 3 3B via API Mistral ; autres modèles et services non testés",
+    "scopeEn": "Generation probe on Ministral 3 3B via Mistral API; other models and services not tested"
   },
   {
     "id": "alibaba",

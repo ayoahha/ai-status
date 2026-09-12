@@ -903,7 +903,7 @@ assert.ok(validateStatusDocument(buildOutput([scopedProvider], scopedSettled, ne
 
 // 10. providers.json : cohérence des déclarations.
 const providers = JSON.parse(readFileSync(new URL('../providers.json', import.meta.url), 'utf8'));
-const kinds = new Set(['incidentio', 'datadog', 'statuspage', 'alibaba', 'google', 'flashcat', 'xai', 'unavailable', 'instatus', 'betterstack', 'checkly', 'onlineornot', 'aws', 'azure', 'tencent', 'volcengine']);
+const kinds = new Set(['mistral_probe', 'incidentio', 'datadog', 'statuspage', 'alibaba', 'google', 'flashcat', 'xai', 'unavailable', 'instatus', 'betterstack', 'checkly', 'onlineornot', 'aws', 'azure', 'tencent', 'volcengine']);
 assert.strictEqual(providers.length, 23, 'les 23 identités fournisseur restent présentes');
 assert.strictEqual(new Set(providers.map((p) => p.id)).size, providers.length, 'ids fournisseurs dupliqués');
 for (const p of providers) {
@@ -940,3 +940,5 @@ assert.ok(providers.some((p) => p.group === 'eu'), 'au moins un fournisseur euro
 console.log(`OK — ${providers.length} fournisseurs déclarés, tests verts`);
 
 await import('./provider-readers.mjs');
+
+await import('./mistral-probe.mjs');
