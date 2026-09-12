@@ -5,6 +5,9 @@ import * as incidentio from '../adapters/incidentio.mjs';
 import { collectAll, buildOutput } from '../lib/collect.mjs';
 import { validateStatusDocument } from '../public/status-contract.js';
 const fixture = (name) => readFileSync(new URL(`fixtures/${name}`, import.meta.url), 'utf8');
+// Fixtures observées le 12/09/2026 : https://status.openrouter.ai/config.json et https://status.perplexity.com/
+// Datadog conserve le document public ; incident.io conserve le résumé réel dans une enveloppe Flight réduite
+// Les variations d’incidents actifs, de maintenances, de fragmentation et de références sont synthétiques
 const dd = JSON.parse(fixture('datadog-openrouter.json'));
 const html = fixture('incidentio-perplexity.html');
 const p = (kind, name, url) => ({ id: kind, name, group: 'us', scope: 'official services', scopeEn: 'official services', statusUrl: url, source: { kind, url, pageName: name } });
