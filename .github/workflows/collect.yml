@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-  pull_request:
 
 # Aucun droit par défaut : chaque job déclare le minimum
 permissions: {}
@@ -19,32 +18,11 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    uses: ./.github/workflows/tests.yml
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24
-      - run: npm ci
-      - name: Mettre en cache les navigateurs Playwright
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            playwright-chromium-
-      - name: Installer Chromium (Playwright)
-        run: npx playwright install chromium
-      - run: npm test
 
   collect:
-    # Les PR ne collectent ni ne déploient : tests seulement
-    if: github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -93,3 +71,61 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: read
+      issues: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+        with:
+          script: |
+            const { publishRelease } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/releases.mjs`);
+            const result = await publishRelease({ github, context, testsPassed: process.env.TEST_RESULT === 'success' });
+            if (result) core.info(`Release ${result.tag} publiée sur ${result.sha}`);
+
+  release-pr:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - id: current
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const { canPrepareRelease } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/releases.mjs`);
+            return await canPrepareRelease({ github, context });
+      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        if: steps.current.outputs.result == 'true'
+        with:
+          target-branch: main
+          skip-github-release: true
+      - name: Tester la PR de version
+        if: steps.current.outputs.result == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const { dispatchReleaseTests } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/releases.mjs`);
+            const sha = await dispatchReleaseTests({ github, context });
+            if (sha) core.info(`Tests de version déclenchés sur ${sha}`);

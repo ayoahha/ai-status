@@ -22,6 +22,7 @@ import * as datadog from './adapters/datadog.mjs';
 import * as incidentio from './adapters/incidentio.mjs';
 import * as unavailable from './adapters/unavailable.mjs';
 import { get } from './lib/http.mjs';
+import { writeBuildInfo } from './scripts/build-info.mjs';
 import { collectAll, buildOutput } from './lib/collect.mjs';
 import { assertStatusDocument, MAX_STATUS_BYTES } from './public/status-contract.js';
 
@@ -43,6 +44,7 @@ if (Buffer.byteLength(serialized) > MAX_STATUS_BYTES) throw new Error('status.js
 assertStatusDocument(JSON.parse(serialized), providers);
 const tempPath = `${outPath}.tmp-${process.pid}`;
 writeFileSync(tempPath, serialized);
+writeBuildInfo();
 renameSync(tempPath, outPath);
 console.log(`écrit ${outPath} (${out.providers.length} fournisseurs)`);
 const ok = out.providers.filter((p) => p.collect.state === 'ok').length;

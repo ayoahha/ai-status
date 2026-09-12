@@ -1,0 +1,13 @@
+{
+  "bootstrap-sha": "0cd576987c707845735b7fc75c26aeb876e97afa",
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "initial-version": "0.1.2",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": false,
+      "skip-changelog": true,
+      "include-component-in-tag": false
+    }
+  }
+}
