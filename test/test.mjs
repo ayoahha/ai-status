@@ -868,6 +868,39 @@ assert.deepStrictEqual(summarize(out.providers), out.summary, 'buildOutput et la
 assert.deepStrictEqual(summarize([]), { worst: 'operationnel', counts: { operationnel: 0, maintenance: 0, degradation: 0, incident_majeur: 0, indisponible: 0, inconnu: 0 }, activeIncidents: 0, activeMaintenances: 0 });
 assert.deepStrictEqual(DISPLAY_ORDER, ['indisponible', 'incident_majeur', 'degradation', 'maintenance', 'inconnu', 'operationnel'], 'pire d’abord, inconnu juste avant le vert');
 
+// Statuspage filtré : état, événements et document final restent limités à Replicate
+const scopedProvider = { ...provider, statusUrl: 'https://www.cloudflarestatus.com', source: { kind: 'statuspage', url: 'https://www.cloudflarestatus.com', componentIds: { fvgfcmy66tdr: 'Replicate' } } };
+const scopedDoc = fixture('statuspage-cloudflare-replicate.json');
+const scopedHealthy = { ...scopedDoc, status: { indicator: 'major', description: 'Global outage' }, incidents: [], scheduled_maintenances: [] };
+assert.strictEqual((await read(statuspage, scopedProvider, okJson(scopedHealthy))).status, 'operationnel');
+const scopedEvent = { id: 'event', name: 'Shared incident', status: 'investigating', impact: 'major', components: [{ id: 'fvgfcmy66tdr', name: 'Replicate' }, { id: 'other', name: 'Other' }], shortlink: 'https://www.cloudflarestatus.com/incidents/event' };
+const sharedResult = await read(statuspage, scopedProvider, okJson({ ...scopedHealthy, incidents: [scopedEvent] }));
+assert.strictEqual(sharedResult.status, 'incident_majeur');
+assert.deepStrictEqual(sharedResult.incidents[0].components, ['Replicate']);
+assert.ok(sharedResult.incidents[0].url);
+assert.strictEqual((await read(statuspage, scopedProvider, okJson({ ...scopedHealthy, incidents: [{ ...scopedEvent, components: [{ id: 'other', name: 'Other' }] }] }))).status, 'operationnel');
+assert.strictEqual((await read(statuspage, scopedProvider, okJson({ ...scopedHealthy, incidents: [{ ...scopedEvent, status: 'resolved' }] }))).status, 'operationnel');
+for (const state of ['scheduled', 'in_progress', 'verifying', 'completed']) {
+  const r = await read(statuspage, scopedProvider, okJson({ ...scopedHealthy, scheduled_maintenances: [{ ...scopedEvent, status: state }] }));
+  assert.strictEqual(r.status, ['in_progress', 'verifying'].includes(state) ? 'maintenance' : 'operationnel');
+  assert.strictEqual(r.maintenances.length, state === 'completed' ? 0 : 1);
+}
+assert.strictEqual((await read(statuspage, scopedProvider, okJson({ ...scopedHealthy, scheduled_maintenances: [{ ...scopedEvent, status: 'in_progress', components: [{ id: 'other', name: 'Other' }] }] }))).status, 'operationnel');
+for (const doc of [
+  { ...scopedHealthy, components: [] },
+  { ...scopedHealthy, components: [{ ...scopedHealthy.components[0], name: 'Different' }] },
+  { ...scopedHealthy, components: [...scopedHealthy.components, ...scopedHealthy.components] },
+  { ...scopedHealthy, incidents: undefined },
+  { ...scopedHealthy, scheduled_maintenances: undefined },
+  { ...scopedHealthy, incidents: [{ ...scopedEvent, components: [] }] },
+  { ...scopedHealthy, incidents: [{ ...scopedEvent, components: [{ name: 'Replicate' }] }] },
+  { ...scopedHealthy, scheduled_maintenances: [{ ...scopedEvent, status: 'in_progress', components: null }] },
+  { ...scopedHealthy, components: [{ ...scopedHealthy.components[0], status: 'NEW' }] },
+]) assert.strictEqual((await read(statuspage, scopedProvider, okJson(doc))).status, 'inconnu');
+assert.strictEqual((await read(statuspage, scopedProvider, httpFail(403))).status, 'inconnu');
+const scopedSettled = await collectAll([scopedProvider], { statuspage }, okJson(scopedHealthy));
+assert.ok(validateStatusDocument(buildOutput([scopedProvider], scopedSettled, new Date().toISOString(), { statuspage }), [scopedProvider]));
+
 // 10. providers.json : cohérence des déclarations.
 const providers = JSON.parse(readFileSync(new URL('../providers.json', import.meta.url), 'utf8'));
 const kinds = new Set(['statuspage', 'alibaba', 'google', 'flashcat', 'xai', 'unavailable', 'instatus', 'betterstack', 'checkly', 'onlineornot', 'aws', 'azure', 'tencent', 'volcengine']);
@@ -893,6 +926,21 @@ for (const p of providers) {
   if (p.source.kind === 'volcengine') assert.ok(p.source.product && p.source.productLabel && p.source.regions?.length, `source volcengine incomplète : ${p.id}`);
   assert.ok(typeof p.scopeEn === 'string' && p.scopeEn, `scopeEn manquant : ${p.id}`);
 }
+for (const id of ['perplexity', 'openrouter']) {
+  const p = providers.find((p) => p.id === id);
+  const r = await read(unavailable, p, async () => { assert.fail('aucune requête pour une source non qualifiée'); });
+  assert.strictEqual(r.status, 'inconnu');
+  assert.match(r.collect.error, /couverture/);
+  assert.match(r.collect.errorEn, /coverage/);
+}
+const denied = await read(checkly, cProvider, httpFail(403));
+assert.match(denied.collect.error, /accès refusé/);
+assert.match(denied.collect.errorEn, /access denied/);
+assert.ok(!denied.collect.error.includes('Cloudflare'), '403 seul ne prouve pas un challenge');
+const replicateConfig = providers.find((p) => p.id === 'replicate');
+assert.strictEqual((await read(statuspage, replicateConfig, okJson(scopedHealthy))).status, 'operationnel');
+assert.match(replicateConfig.scope, /sans détail API\/GPU/);
+
 assert.ok(providers.some((p) => p.group === 'eu'), 'au moins un fournisseur européen');
 
 console.log(`OK — ${providers.length} fournisseurs déclarés, tests verts`);

@@ -84,8 +84,10 @@
     "group": "us",
     "statusUrl": "https://status.perplexity.com",
     "source": {
-      "kind": "instatus",
-      "url": "https://status.perplexity.com"
+      "kind": "unavailable",
+      "url": "https://status.perplexity.com",
+      "note": "Source incident.io examinée le 12/09/2026 : Website, App et Computer sont publiés, mais la couverture API reste non vérifiée. Aucun lecteur complet qualifié ; aucune requête de collecte tentée.",
+      "noteEn": "incident.io source examined on 2026-09-12: Website, App and Computer are published, but API coverage remains unverified. No complete reader qualified; no collection request attempted."
     },
     "scope": "Site Perplexity, API et Computer",
     "scopeEn": "Perplexity website, API and Computer"
@@ -240,16 +242,16 @@
     "id": "replicate",
     "name": "Replicate",
     "group": "cloud",
-    "statusUrl": "https://replicatestatus.com",
+    "statusUrl": "https://www.cloudflarestatus.com/services?search=replicate",
     "source": {
       "kind": "statuspage",
-      "url": "https://replicatestatus.com",
-      "redirectOrigins": [
-        "https://www.replicatestatus.com"
-      ]
+      "url": "https://www.cloudflarestatus.com",
+      "componentIds": {
+        "fvgfcmy66tdr": "Replicate"
+      }
     },
-    "scope": "API Replicate et matériel GPU",
-    "scopeEn": "Replicate API and GPU hardware"
+    "scope": "Statut global Replicate publié par Cloudflare ; sans détail API/GPU",
+    "scopeEn": "Global Replicate status published by Cloudflare; no API/GPU breakdown"
   },
   {
     "id": "cohere",
@@ -296,8 +298,10 @@
     "group": "cloud",
     "statusUrl": "https://status.openrouter.ai",
     "source": {
-      "kind": "onlineornot",
-      "url": "https://status.openrouter.ai"
+      "kind": "unavailable",
+      "url": "https://status.openrouter.ai",
+      "note": "Source Datadog examinée le 12/09/2026 : API Gateway et Web & Application Services sont publiés, mais la couverture models/generation et authentification reste non vérifiée. Aucun lecteur complet qualifié ; aucune requête de collecte tentée.",
+      "noteEn": "Datadog source examined on 2026-09-12: API Gateway and Web & Application Services are published, but models/generation and authentication coverage remains unverified. No complete reader qualified; no collection request attempted."
     },
     "scope": "Passerelle OpenRouter : site, API chat/models/generation, authentification ; pas les fournisseurs amont",
     "scopeEn": "OpenRouter gateway: website, chat/models/generation API, authentication; not upstream providers"
