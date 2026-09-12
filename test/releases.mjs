@@ -105,6 +105,8 @@ assert.equal(await dispatchReleaseTests(bot), null);
 
 // Exécuter le garde réel du workflow avec une branche stable puis déplacée
 const workflow = readFileSync(new URL('../.github/workflows/tests.yml', import.meta.url), 'utf8');
+const publisher = readFileSync(new URL('../.github/workflows/collect.yml', import.meta.url), 'utf8').split('\n  publish:\n')[1].split('\n  release-pr:\n')[0];
+assert.match(publisher, /pull-requests: write/, 'GitHub exige le droit PR en écriture pour marquer une PR publiée');
 const guard = workflow.match(/        run: \|\n([\s\S]*?)\n      - uses:/)[1].replace(/^          /gm, '');
 for (const [event, expected, actual, status] of [
   ['workflow_dispatch', sha, sha, 0],
