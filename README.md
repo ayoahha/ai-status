@@ -1,6 +1,4 @@
----
-style_gate: pass
----
+<!-- style_gate: pass -->
 
 <div align="center">
 
