@@ -5,11 +5,11 @@ import { buildInfo, writeBuildInfo } from '../scripts/build-info.mjs';
 import { publishRelease, canPrepareRelease, dispatchReleaseTests } from '../scripts/releases.mjs';
 
 const sha = 'a'.repeat(40), other = 'b'.repeat(40);
-const context = { eventName: 'push', ref: 'refs/heads/main', sha, repo: { owner: 'ayoahha', repo: 'ai-status' } };
+const context = { eventName: 'push', ref: 'refs/heads/main', sha, repo: { owner: 'eliasprunaire', repo: 'ai-status' } };
 const missing = () => { throw Object.assign(new Error('Not found'), { status: 404 }); };
 const fixture = () => {
   const state = {
-    pr: { number: 24, user: { login: 'github-actions[bot]' }, head: { ref: 'release-please--branches--main--components--ai-status', sha, repo: { full_name: 'ayoahha/ai-status' } }, base: { ref: 'main' }, labels: [{ name: 'autorelease: pending' }], merged_at: '2026-09-12T00:00:00Z', merge_commit_sha: sha, body: '## 0.1.2\n\nPremière version formelle : suivi des fournisseurs et interface bilingue.' },
+    pr: { number: 24, user: { login: 'github-actions[bot]' }, head: { ref: 'release-please--branches--main--components--ai-status', sha, repo: { full_name: 'eliasprunaire/ai-status' } }, base: { ref: 'main' }, labels: [{ name: 'autorelease: pending' }], merged_at: '2026-09-12T00:00:00Z', merge_commit_sha: sha, body: '## 0.1.2\n\nPremière version formelle : suivi des fournisseurs et interface bilingue.' },
     files: { 'package.json': { version: '0.1.2' }, 'package-lock.json': { version: '0.1.2', packages: { '': { version: '0.1.2' } } }, '.release-please-manifest.json': { '.': '0.1.2' } },
     main: sha, tag: null, release: null, latest: null, runs: [], writes: [], reads: [],
   };
