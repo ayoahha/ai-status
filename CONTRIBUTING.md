@@ -38,6 +38,18 @@ Une collecte réelle (`npm run collect`) contacte les sources ; avec `MISTRAL_AP
 
 Les PR exécutent les tests. La publication du site se fait depuis `main`.
 
+## Versions
+
+Utiliser des messages de commit [Conventional Commits](https://www.conventionalcommits.org/fr/v1.0.0/) : `fix:` et `perf:` déclenchent un correctif, `feat:` une version mineure. Avant `1.0.0`, une rupture signalée par `!` ou `BREAKING CHANGE:` déclenche une version mineure et figure dans les notes. Sans rupture, `docs:`, `test:`, `ci:` et `chore:` ne déclenchent pas seuls de release. Le passage à `1.0.0` demande une décision explicite ; le contrat JSON v2 garde sa numérotation indépendante.
+
+Après les tests d’un push sur `main`, Release Please prépare une PR de version. La première proposera **0.1.2**, sans versions antérieures. Le robot synchronise le package, le verrouillage et son manifeste ; les notes restent dans GitHub Releases, sans fichier d’historique supplémentaire.
+
+Les tests de cette PR sont déclenchés explicitement sur son commit, sans collecte ni clé Mistral. Après leur réussite, un mainteneur fusionne par **rebase**. Les tests sur `main` précèdent la création du tag et de la release, tous deux liés au commit testé. Ne pas modifier manuellement une release publiée.
+
+Si la publication échoue, relancer le workflow **collect** du commit concerné avec **Re-run jobs**. Un lancement manuel (`workflow_dispatch`) ne prépare ni ne publie de version. La reprise vérifie le tag existant et refuse toute divergence, sans créer de version de remplacement. La collecte et le déploiement restent indépendants de la publication des releases.
+
+La métadonnée `public/build-info.js` est générée avec le site et n’est pas versionnée.
+
 ---
 
 [Retour au README](README.md) · [Licence MIT](LICENSE)

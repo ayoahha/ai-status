@@ -6,3 +6,6 @@ public/data/status.json
 # Glossaire et spécifications de travail locaux, non versionnés
 CONTEXT.md
 .scratch/
+
+# Version et commit générés pour le site
+public/build-info.js

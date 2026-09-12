@@ -3,11 +3,13 @@ import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { MAX_STATUS_BYTES } from '../public/status-contract.js';
+import { BUILD_INFO } from '../public/build-info.js';
 
 const NOW = Date.parse('2026-09-04T08:00:00Z');
 const MINUTE = 60_000;
 const files = {
   '/': ['text/html; charset=utf-8', readFileSync(new URL('../public/index.html', import.meta.url))],
+  '/build-info.js': ['text/javascript; charset=utf-8', readFileSync(new URL('../public/build-info.js', import.meta.url))],
   '/app.js': ['text/javascript; charset=utf-8', readFileSync(new URL('../public/app.js', import.meta.url))],
   '/status-contract.js': ['text/javascript; charset=utf-8', readFileSync(new URL('../public/status-contract.js', import.meta.url))],
   '/style.css': ['text/css; charset=utf-8', readFileSync(new URL('../public/style.css', import.meta.url))],
@@ -93,6 +95,8 @@ try {
       await page.goto(`http://127.0.0.1:${port}/`);
       await page.locator('#refresh[aria-busy="false"]').waitFor();
       await run(page);
+      assert.equal(await page.locator('#build-version').textContent(), `${BUILD_INFO.version} · ${BUILD_INFO.sha.slice(0, 7)}`);
+      assert.equal(await page.locator('#build-version').getAttribute('href'), `https://github.com/ayoahha/ai-status/commit/${BUILD_INFO.sha}`);
       assert.deepEqual(pageErrors, [], 'aucune erreur JavaScript dans la page');
     } finally {
       for (const pending of held.splice(0)) pending.res.destroy();
