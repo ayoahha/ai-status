@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# ai-status
+# AI Status
 
 **L’état des fournisseurs IA, sur une seule page.**
 
@@ -11,6 +11,8 @@
 [Ouvrir le tableau de bord](https://status.librenet.fr/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
 
 [![Tests, collecte et publication](https://github.com/ayoahha/ai-status/actions/workflows/collect.yml/badge.svg?branch=main)](https://github.com/ayoahha/ai-status/actions/workflows/collect.yml)
+[![Node.js ≥ 22](https://img.shields.io/badge/Node.js-%E2%89%A5_22-339933?logo=nodedotjs&logoColor=white)](package.json)
+[![Python 3 · serveur local](https://img.shields.io/badge/Python-3-3776AB?logo=python&logoColor=white)](#lancer-en-local)
 
 </div>
 
@@ -27,15 +29,33 @@
 
 La page regroupe les informations publiées par les sources officielles. Une source illisible apparaît **« Non vérifié »**. Chaque carte précise le périmètre couvert ; « Opérationnel » ne garantit pas la disponibilité de tous les services d’un fournisseur.
 
-Quelques périmètres particuliers :
+Les 23 fournisseurs référencés, avec leur périmètre et leur méthode de collecte :
 
-| Fournisseur | Ce qui est suivi |
-|---|---|
-| Perplexity | Website, App et Computer ; API non couverte |
-| OpenRouter | API Gateway et Web & Application Services |
-| Mistral | Génération réelle sur **Ministral 3 3B** ; autres modèles et services non testés |
-| Replicate | Statut global publié par Cloudflare ; sans détail API/GPU |
-| GLM / Zhipu et Baidu ERNIE | Sources non vérifiées, avec la raison affichée sur la carte |
+| Fournisseur | Ce qui est suivi | Collecte |
+|---|---|---|
+| [Anthropic](https://status.claude.com) | Claude API, claude.ai et Claude Code | Statuspage |
+| [OpenAI](https://status.openai.com) | API, ChatGPT et Codex | Statuspage |
+| [xAI](https://status.x.ai) | API, Grok et applications | Flux RSS officiel |
+| [Google Cloud (Vertex AI / Gemini)](https://status.cloud.google.com) | Produits Vertex AI et Gemini, toutes régions | Flux JSON officiels |
+| [Cursor](https://status.cursor.com) | Client Cursor et modèles hébergés | Statuspage |
+| [Perplexity](https://status.perplexity.com) | Website, App et Computer ; API non couverte | incident.io |
+| [Mistral AI](https://status.mistral.ai) | Génération sur **Ministral 3 3B** uniquement | Sonde API authentifiée |
+| [Alibaba Cloud](https://status.alibabacloud.com) | Cloud global ; pas Qwen ou Model Studio en particulier | API publique |
+| [DeepSeek](https://status.deepseek.com) | API par modèle | Flashcat |
+| [Kimi / Moonshot AI](https://status.moonshot.cn) | Kimi, plateforme ouverte et modèles | Statuspage |
+| [GLM / Zhipu AI](https://status.zhipuai.cn) | GLM / BigModel | Non vérifié : source inaccessible depuis la CI |
+| [MiniMax](https://status.minimaxi.com) | API LLM, voix et vidéo | Statuspage |
+| [Tencent Hunyuan](https://status.cloud.tencent.com) | LLM, image, vidéo, 3D et agents | API publique |
+| [ByteDance / Doubao (Volcengine Ark)](https://status.volcengine.com) | Plateforme Ark servant Doubao, par région | Flux RSS officiels |
+| [Baidu ERNIE](https://cloud.baidu.com/product-s/qianfan_home) | Qianfan / modèles ERNIE | Non vérifié : aucune source publique identifiée |
+| [Groq](https://groqstatus.com) | API et modèles hébergés | Statuspage |
+| [Replicate](https://www.cloudflarestatus.com/services?search=replicate) | Statut global publié par Cloudflare ; sans détail API/GPU | Statuspage filtré |
+| [Cohere](https://status.cohere.com) | API et modèles | Statuspage |
+| [Fireworks AI](https://status.fireworks.ai) | Modèles hébergés | Statuspage |
+| [Together AI](https://status.together.ai) | Site, Playground et modèles | Better Stack |
+| [OpenRouter](https://status.openrouter.ai) | API Gateway et Web & Application Services | Datadog |
+| [AWS Bedrock](https://health.aws.amazon.com/health/status) | Amazon Bedrock par région ; autres services AWS exclus | Flux JSON publics |
+| [Microsoft Azure AI](https://azure.status.microsoft/en-us/status) | Services IA, toutes régions ; incidents à large impact uniquement | Tableau HTML officiel |
 
 La collecte est programmée toutes les 30 minutes. GitHub Actions peut la retarder : l’heure affichée fait foi, et une alerte apparaît lorsque les données ont plus de deux heures. Le bouton **Rafraîchir** recharge les dernières données publiées.
 
@@ -68,12 +88,12 @@ Les PR lancent les tests. Sur `main`, le workflow teste, collecte et publie la p
 
 ## Contribuer
 
-Les fournisseurs et leurs périmètres sont déclarés dans [providers.json](providers.json), les lecteurs dans [adapters/](adapters/) et les tests dans [test/](test/). Toute nouvelle source doit être attribuable et testée ; une lecture incomplète ne doit jamais produire un faux statut opérationnel.
+Pour signaler un problème, corriger une collecte ou ajouter un fournisseur, consulter le [guide de contribution](CONTRIBUTING.md).
 
 ---
 
 <div align="center">
 
-Projet indépendant · [Tableau de bord](https://status.librenet.fr/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
+[Licence MIT](LICENSE) · [Tableau de bord](https://status.librenet.fr/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
 
 </div>
