@@ -2,194 +2,80 @@
 style_gate: pass
 ---
 
+<div align="center">
+
 # ai-status
 
-Statut opérationnel des principaux fournisseurs de modèles IA, affiché de façon lisible et honnête sur une page statique GitHub Pages.
+**L’état des fournisseurs IA, sur une seule page.**
 
-## Architecture
+23 fournisseurs · Français / English · GitHub Pages
 
-```
-providers.json          liste déclarative des fournisseurs (id, nom, groupe, périmètre, source, motif « modèle »)
-collect.mjs             CLI : lit providers.json, table famille de source → adaptateur, écrit le JSON
-lib/collect.mjs         runner (exécute chaque adaptateur, isole et classe les échecs) et assemblage
-                        du contrat v2 (pur, testé) : statut, résumé, raisons et erreurs FR / EN
-lib/normalize.mjs       tables de correspondance propres au collecteur (Statuspage, Google), classifyKind ;
-                        ré-exporte l'enum, worstOf et les libellés du contrat partagé
-public/status-contract.js contrat v2 partagé par le collecteur, la CI et la page : enum et gravité,
-                        ordre d'affichage, libellés FR / EN, worstOf, résumé (summarize), validation, bornes
-lib/errors.mjs          erreurs typées (code http | timeout | network | schema | scope | browser…)
-lib/http.mjs            client `get` : délai total, corps borné, redirections HTTPS contrôlées, HttpError hors 2xx
-adapters/unavailable.mjs source connue mais injoignable ou inexistante : aucune requête, jamais vert
-adapters/statuspage.mjs Atlassian Statuspage (summary.json)
-adapters/google.mjs     Google Cloud (products.json + incidents.json)
-adapters/flashcat.mjs   pages Flashcat (DeepSeek)
-adapters/alibaba.mjs    Alibaba Cloud (listHistoryEvent)
-adapters/xai.mjs        flux RSS officiel xAI, liste déclarée des 13 services
-adapters/instatus.mjs   ancien lecteur Instatus conservé
-adapters/incidentio.mjs incident.io (Perplexity) : résumé structuré embarqué dans la page
-adapters/datadog.mjs    Datadog (OpenRouter) : config.json public
-adapters/betterstack.mjs Better Stack (Together AI) : index.json
-adapters/checkly.mjs    ancien lecteur Checkly conservé
-adapters/mistral-probe.mjs sonde de génération sur Ministral 3 3B
-adapters/onlineornot.mjs ancien lecteur OnlineOrNot conservé
-adapters/aws.mjs        AWS Health Dashboard (Bedrock) : currentevents + services.json
-adapters/azure.mjs      Azure status : tableau HTML des services, lignes IA
-adapters/tencent.mjs    Tencent Cloud status (Hunyuan) : API JSON de la page
-adapters/volcengine.mjs Volcengine status (Ark / Doubao) : flux RSS par région
-public/                 site statique et contrat v2 partagé, sans dépendance ; interface FR / EN
-public/data/status.json généré par la collecte, jamais versionné (dans .gitignore)
-test/                   tests sans réseau, fixtures réelles dans test/fixtures/
-.github/workflows/      collect.yml : tests, collecte, publication GitHub Pages
-```
+[Ouvrir le tableau de bord](https://ayoahha.github.io/ai-status/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
 
-Ajouter un fournisseur Statuspage : une entrée dans `providers.json` (`kind: statuspage`, `url`, `group` parmi `us`, `eu`, `cn`, `cloud`, `scope` et `scopeEn`, éventuellement `modelPattern`) et une ligne dans la table ci-dessous. Toute autre famille de source demande un adaptateur avec sa fixture réelle et ses tests.
+[![Tests, collecte et publication](https://github.com/ayoahha/ai-status/actions/workflows/collect.yml/badge.svg?branch=main)](https://github.com/ayoahha/ai-status/actions/workflows/collect.yml)
 
-Forme d'un adaptateur (`adapters/<famille>.mjs`) : une fonction `collect(provider, get)` qui lit la source avec le client `get` (`as: json | text | bytes`) et rend un résultat de lecture `{ indicator, rawStatus, components, incidents, maintenances, note, noteEn }` ; `indicator` est l'état de page normalisé publié par la source (ou la règle propre de l'adaptateur), `null` si elle n'en publie pas, et le statut fournisseur est dérivé par le contrat : pire de l'indicateur, des composants et d'une maintenance en cours. Elle lève `fail('schema', détail)` sur structure inattendue et `fail('scope', détail)` quand le périmètre demandé est absent ; réseau, HTTP et timeout remontent d'eux-mêmes. Le runner (`lib/collect.mjs`) valide aussi le résultat résolu avant de le déclarer réussi : une structure mal formée n'affecte que son fournisseur, rendu « Non vérifié ». Une `note` non fatale (services absents, région illisible) accompagne une lecture réussie. Le module exporte aussi `METHOD = { fr, en }`, le libellé « Lu via … » que la page affiche, transporté dans le contrat (`collect.methodLabel`, `collect.methodLabelEn`). Enregistrer le module dans la table `ADAPTERS` de `collect.mjs`.
+</div>
 
-Flux : GitHub Actions exécute `node collect.mjs` à `:07` et `:37` de chaque heure (et sur push `main` ou lancement manuel), vérifie le JSON produit avec le même contrat v2 que le navigateur, puis publie `public/` comme artefact GitHub Pages dans le même workflow. Le collecteur valide le document sérialisé et remplace `status.json` atomiquement. Ce décalage réduit le risque de retard des tâches GitHub planifiées sans garantir leur ponctualité. Rien n'est commité par la CI : la page et ses données partent ensemble. Le front ne lit que `data/status.json` ; aucune API propriétaire côté client.
+---
 
-## Fournisseurs et méthode de collecte
+## Ce que propose la page
 
-| Fournisseur | Source officielle | Méthode |
-|---|---|---|
-| Anthropic | https://status.claude.com | API publique Statuspage v2 (`/api/v2/summary.json` : indicateur, composants, incidents non résolus, maintenances) |
-| OpenAI | https://status.openai.com | API publique Statuspage v2 |
-| xAI | https://status.x.ai | Flux RSS officiel `https://status.x.ai/feed.xml`, lu par le client HTTP borné sans navigateur. Le flux contient l'historique des incidents, pas le registre des services : les 13 services affichés sont donc déclarés dans `providers.json`. La structure résolue observée le 2026-09-04 est validée strictement ; tout état ou service inconnu rend xAI « Non vérifié » |
-| Google Cloud (Vertex AI / Gemini) | https://status.cloud.google.com | Flux JSON officiels `products.json` + `incidents.json`, restreints aux produits dont le titre commence par « Vertex » ou « Gemini », toutes régions. « Opérationnel » signifie « aucun incident déclaré sur ce périmètre » |
-| Cursor | https://status.cursor.com | API publique Statuspage v2 |
-| Alibaba Cloud | https://status.alibabacloud.com | API JSON publique `/api/status/listHistoryEvent` : statut cloud global (toutes régions et produits), pas Qwen ni Model Studio en particulier ; seuls les événements en cours sont exposés. Aucun composant : la carte affiche « Statut global » |
-| DeepSeek | https://status.deepseek.com | API JSON de la page Flashcat (`/api/status-page/<pageId>/summary/active`) : composants et changements actifs, sans navigateur. Un payload sans composants n'est jamais traité comme sain |
-| Kimi / Moonshot | https://status.moonshot.cn | API publique Statuspage v2 |
-| GLM / Zhipu | https://status.zhipuai.cn | Aucune requête : le domaine résout mais ne répond ni en 80 ni en 443 depuis l'extérieur de la Chine, y compris depuis les runners GitHub. Affiché « Non vérifié » avec cette explication |
-| MiniMax | https://status.minimaxi.com | API publique Statuspage v2 |
-| Perplexity | https://status.perplexity.com | Données structurées incident.io embarquées dans la page Next.js, décodées sans exécuter les scripts. Website, App et Computer ; API non couverte. État courant depuis `affected_components`, incidents ouverts et maintenances depuis le résumé. La liste vide des composants affectés signifie opérationnel uniquement dans un résumé complet et identifié |
-| Mistral AI | https://api.mistral.ai/v1/chat/completions | Sonde authentifiée sur `ministral-3b-2512` (Ministral 3 3B). Une réponse complète et non vide du modèle attendu valide la génération ; aucun statut des autres modèles ou services n’est déduit. Une erreur serveur 5xx dégrade la sonde ; clé absente, accès refusé, quota, réseau ou réponse illisible donnent « Non vérifié » |
-| Tencent Hunyuan | https://status.cloud.tencent.com | API JSON de la page (`/v1/api/status/DescribeProductEventForRegionInPeriod?RegionId=non-regional`), non documentée mais publique et sans jeton : `CurrentStatus` par produit (NORMAL, NOTIFY « 提示 », ABNORMAL « 异常 »). Périmètre : produits Hunyuan (LLM, image, vidéo, 3D, agents), non régionaux. Noms de produits en chinois, conservés tels quels. Hypothèse : NOTIFY et ABNORMAL sont tous deux affichés « Dégradation » avec le titre de l'événement ; aucun cas réel observé |
-| ByteDance / Doubao (Volcengine Ark) | https://status.volcengine.com | L'API BFF de la page (`/api/v1/shd/prefetch-shd`) répond 401 hors navigateur : contrôle d'accès, non contourné. La page lie un flux RSS officiel par produit et par région (`/rss/zh/<région>/ModelArk`), lu pour cn-beijing, cn-shanghai, cn-guangzhou et ap-southeast-1. Le flux liste l'historique ; un événement terminé porte « (已恢复) » dans son titre, un événement en cours ne le porte pas. Une région inconnue renvoie un canal sans nom de région : composant « Non vérifié » |
-| Baidu ERNIE | https://cloud.baidu.com/product-s/qianfan_home | Aucune page de statut publique trouvée pour Baidu AI Cloud ni Qianfan (recherche du 2026-09-04 : cloud.baidu.com, intl.cloud.baidu.com, sous-domaines `status.*`). Aucune requête : affiché « Non vérifié » |
-| Groq | https://groqstatus.com (redirige depuis status.groq.com) | API publique Statuspage v2 |
-| Replicate | https://www.cloudflarestatus.com/services?search=replicate | Résumé Statuspage Cloudflare filtré sur `fvgfcmy66tdr` nommé Replicate. Statut global Replicate, sans détail API/GPU. Indicateur global Cloudflare ignoré ; seuls les événements associés sont retenus. Identité absente ou association ambiguë : « Non vérifié » |
-| Cohere | https://status.cohere.com | API publique Statuspage v2 |
-| Fireworks AI | https://status.fireworks.ai | API publique Statuspage v2 |
-| Together AI | https://status.together.ai | Better Stack, endpoint public documenté `/index.json` (JSON:API) : `aggregate_state`, ressources `status_page_resource` (operational, degraded, downtime, maintenance, not_monitored → « Non vérifié »), rapports `status_report` ouverts (`ends_at` null) |
-| OpenRouter | https://status.openrouter.ai | JSON public Datadog `/config.json`, utilisé par la page officielle. Composants terminaux API Gateway et Web & Application Services, incidents non résolus et maintenances. Aucun état déduit des pourcentages de disponibilité historiques |
-| AWS Bedrock | https://health.aws.amazon.com/health/status | La page charge deux flux JSON publics sans jeton, observés dans ses requêtes : `health.aws.amazon.com/public/currentevents` (événements en cours, encodé UTF-16 avec BOM) et `servicedata-eu-west-1-prod.s3.amazonaws.com/services.json` (catalogue service × région). Codes d'état du bundle de la page : 0 resolved, 1 impacted (info), 2 degraded, 3 disrupted. Périmètre : `service_name = Amazon Bedrock`, une entrée par région (AgentCore exclu). Les flux RSS documentés existent mais un par service et par région |
-| Microsoft Azure AI | https://azure.status.microsoft/en-us/status (redirection depuis status.azure.com) | Page rendue côté serveur, sans JSON. Le flux RSS documenté (`/status/feed/`) ne liste que les incidents publiés, sans état par service. Lecture du tableau HTML (une ligne par service et par zone, cellules `data-label` : Good, Information, Warning, Critical, Not available) pour onze services IA (Azure OpenAI Service, Foundry Models, Foundry Agent Service, AI Search, Speech, Language, Vision, Document Intelligence, Content Safety, Translator, Machine Learning). Microsoft ne publie sur cette page que les incidents à large impact ; « Good » ne garantit pas l'absence d'incident ciblé |
+- Les états, incidents et maintenances des fournisseurs IA et clouds d’inférence
+- Une recherche, des filtres par état et un tri par nom ou gravité
+- Le détail des modèles et services suivis, avec les sources et l’heure de collecte
+- Une interface bilingue, utilisable au clavier, avec thème clair ou sombre
 
-### Évalués mais non intégrés
+## Comprendre les statuts
 
-- **Baidu ERNIE / Qianfan** : aucune page de statut publique trouvée (voir table). Affiché « Non vérifié ».
-- **Hugging Face** : non demandé, non réévalué.
+La page regroupe les informations publiées par les sources officielles. Une source illisible apparaît **« Non vérifié »**. Chaque carte précise le périmètre couvert ; « Opérationnel » ne garantit pas la disponibilité de tous les services d’un fournisseur.
 
-Règle : un fournisseur n'est intégré que s'il existe une source publique, stable et attribuable, lue sans identifiant, jeton, endpoint privé ni contournement de contrôle d'accès. Sinon il est signalé « Non vérifié » avec la raison et le lien de la source connue, jamais « Opérationnel ».
+Quelques périmètres particuliers :
 
-## Schéma de `public/data/status.json`
+| Fournisseur | Ce qui est suivi |
+|---|---|
+| Perplexity | Website, App et Computer ; API non couverte |
+| OpenRouter | API Gateway et Web & Application Services |
+| Mistral | Génération réelle sur **Ministral 3 3B** ; autres modèles et services non testés |
+| Replicate | Statut global publié par Cloudflare ; sans détail API/GPU |
+| GLM / Zhipu et Baidu ERNIE | Sources non vérifiées, avec la raison affichée sur la carte |
 
-```jsonc
-{
-  "schemaVersion": 2,
-  "generatedAt": "2026-09-03T15:40:00Z",
-  "labels": { "operationnel": "Opérationnel", "…": "…" },   // libellés FR (conservés pour le contrat ; la page lit ceux de status-contract.js)
-  "labelsEn": { "operationnel": "Operational", "…": "…" },  // libellés EN, idem
-  "summary": {
-    "worst": "degradation",            // pire état réel ; « inconnu » n'y entre pas, il a son compteur
-    "counts": { "operationnel": 12, "degradation": 1, "inconnu": 1, "…": 0 },
-    "activeIncidents": 1,
-    "activeMaintenances": 0
-  },
-  "providers": [{
-    "id": "anthropic",
-    "name": "Anthropic",
-    "group": "us",                     // us | eu | cn | cloud : section d'affichage, libellés dans public/app.js
-    "scope": "Claude API, claude.ai, Claude Code",   // ce que la carte mesure réellement
-    "scopeEn": "Claude API, claude.ai, Claude Code", // même périmètre en anglais (providers.json)
-    "statusUrl": "https://status.claude.com",
-    "status": "degradation",           // operationnel | degradation | incident_majeur | maintenance | indisponible | inconnu
-    "reason": "1 composant en dégradation",          // phrase générée, jamais du texte brut de la source
-    "reasonEn": "1 component degraded",              // même phrase en anglais, même logique
-    "sourceText": "Partial System Outage",           // texte original si la source le fournit
-    "collectedAt": "2026-09-03T15:40:01Z",
-    "collect": { "state": "ok", "method": "statuspage", "error": null, "errorEn": null },   // error : message court, sans secret ; errorEn seulement pour les notes traduites
-    "components": [{ "name": "Claude API", "kind": "service", "status": "degradation" }],   // kind ∈ model | service, affichage seulement
-    "incidents": [{ "title": "…", "status": "investigating", "impact": "minor", "startedAt": "…", "updatedAt": "…", "url": "…", "components": ["Claude API"] }],   // actifs seulement
-    "maintenances": [{ "title": "…", "state": "scheduled", "scheduledFor": "…", "scheduledUntil": "…", "url": "…" }]
-  }]
-}
-```
+La collecte est programmée toutes les 30 minutes. GitHub Actions peut la retarder : l’heure affichée fait foi, et une alerte apparaît lorsque les données ont plus de deux heures. Le bouton **Rafraîchir** recharge les dernières données publiées.
 
-Règles : un `collect.state = error` force `status = inconnu` ; un composant à l'état illisible interdit `operationnel` au fournisseur sans écraser un état dégradé réel (`worstOf` dans `public/status-contract.js`, partagé avec la page) ; `kind = model` vient du motif `modelPattern` déclaré par fournisseur dans `providers.json`, sinon `service`.
+## Lancer en local
 
-## Lancer localement
+Prérequis : **Node.js 22 ou plus** et **Python 3** pour le serveur local.
 
 ```sh
-npm ci                                      # dépendances de développement
-npx playwright install chromium             # uniquement pour les tests d'interface
-npm test                                    # tests Node et interface, sans source fournisseur
-node collect.mjs                            # génère public/data/status.json
-npm run serve                               # puis http://localhost:8080
+npm ci
+npm run collect
+npm run serve
 ```
 
-## Workflow `.github/workflows/collect.yml`
+Ouvrir ensuite [localhost:8080](http://localhost:8080).
 
-- `test` : `npm test` sur chaque push `main`, lancement manuel, cron et pull request.
-- `collect` (hors pull request) : collecte, vérifie le contrat v2 complet, les identités de `providers.json` et la borne de taille, puis téléverse `public/` comme artefact Pages. Sans JSON valide, le job est rouge et Pages conserve la publication précédente.
-- `deploy` : publie l'artefact, uniquement sur `main`.
+La sonde Mistral utilise la variable d’environnement `MISTRAL_API_KEY`. Sans clé, les autres collectes fonctionnent et Mistral reste non vérifié. Ne pas enregistrer la clé dans le dépôt. Chaque collecte avec une clé effectue un appel facturable à `ministral-3b-2512`, limité à 8 tokens de sortie, sans nouvelle tentative automatique. Voir les [tarifs Mistral](https://mistral.ai/pricing/api/).
 
-Réglage requis dans Settings → Pages : « Build and deployment → Source : GitHub Actions ». Le mode « Deploy from branch » servirait un site sans données, puisque `status.json` n'est pas versionné.
+Pour lancer les tests, sans appel aux fournisseurs :
 
-Permissions : `contents: read` pour les tests et la collecte, sans jeton conservé dans le checkout ; `pages: write` et `id-token: write` pour le seul job de déploiement. Les actions sont épinglées par SHA.
+```sh
+npx playwright install chromium
+npm test
+```
 
-Concurrence : un seul run à la fois par ref (`concurrency.group = collect-<ref>`), mis en file d'attente et jamais annulé, pour ne pas interrompre un déploiement Pages en cours. Un run dure moins d'une minute ; les lancements à `:07` et `:37` ne créent pas de file. Le cron GitHub peut tout de même partir avec plusieurs minutes de retard ou être abandonné, et le CDN Pages peut brièvement conserver une ancienne publication : la fraîcheur affichée tolère ces délais, l'alerte « données obsolètes » ne se déclenche qu'après deux heures.
+## Publier avec GitHub Pages
 
-## Page
+Dans **Settings → Pages**, choisir **GitHub Actions** comme source. Ajouter `MISTRAL_API_KEY` aux secrets Actions du dépôt pour activer la sonde Mistral ; la clé reste dans la collecte et n’est jamais envoyée à la page publique.
 
-- Langue : sélecteur FR / EN en haut de page (boutons à état pressé, utilisables au clavier, annoncés « Français » / « Anglais »). Le français est la langue par défaut ; le changement est instantané, côté client, sans requête, et conserve filtres, recherche, tri et cartes ouvertes ; le choix est mémorisé dans `localStorage`. Toute l'interface est traduite (titre, `lang` du document, bandeau, compteurs, fraîcheur, erreurs, recherche, groupes, cartes, pied de page, textes accessibles). Les raisons et périmètres viennent du collecteur dans les deux langues (`reason` / `reasonEn`, `scope` / `scopeEn`). Les noms de fournisseurs, titres d'incidents, noms de composants et textes bruts des sources ne sont jamais traduits ; les notes techniques de collecte restent en français, marquées `lang="fr"` en mode anglais.
-- Bandeau : pire état réel parmi les fournisseurs, nombre de sources non vérifiées, horodatage avec fuseau et âge relatif rafraîchi chaque minute. Les données sont rechargées toutes les 30 minutes, au retour dans un onglet ancien, au retour en ligne ou avec le bouton « Rafraîchir ». Un échec conserve les dernières données valides et affiche une alerte. Les compteurs par état filtrent les cartes.
-- « En cours » : fournisseurs dans un état réel (dégradation, incident, indisponibilité, maintenance) avec leurs incidents et maintenances actives ; absent quand tout est vert. Une source non lue n'y figure pas : elle a son compteur et sa carte grise.
-- Quatre sections fixes : Fournisseurs · USA, Fournisseurs · Europe, Fournisseurs · Chine, Clouds d'inférence et API. Sous-titre « N fournisseurs · M en alerte · K non vérifiés ». Section vide masquée après filtre ou recherche ; la section Europe affiche un message si elle se vide.
-- Ligne fermée : icône d'état, nom, périmètre, nombre de composants (ou « Statut global » quand la source ne publie aucun composant, comme Alibaba Cloud), libellé d'état ; raison seulement hors « opérationnel ». Aucune ligne n'est ouverte d'office : « En cours » porte l'urgence.
-- Ligne dépliée : erreur de collecte éventuelle, incidents, maintenances, modèles et services avec leur état, méthode de lecture (libellé fourni par l'adaptateur, dans les deux langues), fraîcheur et lien vers la page officielle. Rien n'est accessible uniquement au survol.
-- Chaque état a une forme d'icône distincte et un libellé : la couleur n'est jamais le seul signal. Thème clair par défaut (papier chaud, encre, accent ocre), sombre si le système le demande ; contrastes ≥ 4,5:1 (texte) et ≥ 3:1 (bords de contrôles, icônes) mesurés dans les deux thèmes.
-- Polices auto-hébergées dans `public/fonts/` (Fraunces pour la phrase d'état, IBM Plex Sans pour le corps, IBM Plex Mono pour horodatages et compteurs ; sous-ensemble latin, licences OFL jointes). Aucune requête vers un service tiers. Aucune animation : le dépliage et les filtres sont des actions répétées.
-- Données de plus de deux heures : bandeau d'alerte.
+Les PR lancent les tests. Sur `main`, le workflow teste, collecte et publie la page avec ses données. Un lancement manuel sur une autre branche permet de vérifier la collecte sans déployer. Le fichier généré `public/data/status.json` n’est pas versionné.
 
-## Limites
+## Contribuer
 
-- Les sources externes sont non fiables : contenu jamais exécuté, aucun secret ni jeton stocké ; tout texte affiché est inséré via `textContent`, pas `innerHTML`.
-- Les résultats d'adaptateur et le document final ont des bornes finies de taille et de cardinalité. Les URL de détail sont limitées à HTTPS sur l'origine officielle du fournisseur ; les liens courts `stspg.io` sont admis uniquement pour Statuspage. Une URL refusée est omise et le navigateur réapplique cette garde avant tout lien externe.
-- Un échec de collecte produit toujours le statut `inconnu` (« Non vérifié »), jamais `operationnel` : la distinction « aucun incident déclaré » et « information inconnue » est préservée.
-- Le flux RSS xAI n'a été observé qu'avec des incidents résolus (`RESOLVED`, `available`). Jusqu'à l'observation d'un état actif officiel, toute autre combinaison échoue fermée et affiche xAI « Non vérifié » plutôt qu'un faux état opérationnel.
-- L'état par composant reflète ce que la source publie. Statuspage masque les composants « only_show_if_degraded » tant qu'ils sont sains ; Google, Alibaba et Volcengine n'exposent pas d'état par produit hors incident (« opérationnel » = aucun incident déclaré) ; DeepSeek, Mistral, Tencent et Volcengine n'ont jamais été observés en incident, le mapping de leurs événements reste à confirmer sur un cas réel.
-- Les endpoints JSON non documentés (Checkly, Tencent, AWS) et les données embarquées (OnlineOrNot, tableau Azure) peuvent changer sans préavis : toute structure inattendue rend le fournisseur « Non vérifié », jamais « Opérationnel ». Les fixtures de `test/fixtures/` figent la structure observée le 2026-09-04.
-- Le tableau Azure fait environ 7 Mo par collecte ; Microsoft n'y publie que les incidents à large impact.
-- Le type « modèle » ou « service » d'un composant est un motif déclaré par fournisseur, pour le regroupement à l'affichage seulement ; il n'influence aucun état.
+Les fournisseurs et leurs périmètres sont déclarés dans [providers.json](providers.json), les lecteurs dans [adapters/](adapters/) et les tests dans [test/](test/). Toute nouvelle source doit être attribuable et testée ; une lecture incomplète ne doit jamais produire un faux statut opérationnel.
 
-## Qualification des sources du 12 septembre 2026
+---
 
-Les premières fixtures `incidentio-perplexity-qualification.json` et `datadog-openrouter-qualification.json` avaient établi les limites de l'ancien périmètre. Le périmètre officiel a ensuite été accepté : les nouveaux lecteurs suivent les composants publiés, sans promettre une couverture API Perplexity ou un détail d'authentification OpenRouter.
+<div align="center">
 
-Les fixtures de lecture `incidentio-perplexity.html` et `datadog-openrouter.json` proviennent respectivement de `https://status.perplexity.com/` et `https://status.openrouter.ai/config.json`, observés le 12/09/2026. La fixture incident.io conserve l'objet `summary` réel dans une enveloppe Flight réduite ; les modules, traductions, historiques et éléments visuels sont retirés. Les tests de fragmentation et de références utilisent des enveloppes synthétiques. La fixture Datadog conserve le document public, dont les incidents résolus. Les incidents actifs et maintenances des tests sont synthétiques.
+Projet indépendant · [Tableau de bord](https://ayoahha.github.io/ai-status/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
 
-La lecture du code public incident.io (`/_next/static/chunks/0fp7_54cpgpu4.js`) confirme que `affected_components` alimente l'état courant. Les impacts d'incident dont la période est terminée ne sont pas utilisés pour annoncer une panne courante. Le résumé complet fournit les événements ouverts et les maintenances prévues indépendamment de l'historique paginé. Aucun parcours de cet historique n'est nécessaire pour l'état actuel. Les références Flight requises sont résolues uniquement par identifiant et chemin observé ; référence requise illisible, boucle ou résumé contradictoire échouent sans exécution de code.
-
-La page Datadog (`/src/status-pages-site-AJA3TWHW.min.js`) lit `/config.json`. Ses valeurs `operational`, `degraded`, `partial_outage`, `major_outage`, `maintenance` sont traduites explicitement. `maintenances: null` signifie une liste vide dans ce lecteur officiel ; un champ absent est rejeté par notre adaptateur. Le champ `created` est la date de création de la page, pas la fraîcheur du statut, et n'est pas utilisé comme telle. Les nouvelles sources ne fournissent pas de garantie de fraîcheur amont.
-
-`source.pageName` identifie la page attendue, `source.domainPrefix` identifie OpenRouter chez Datadog, et `source.requiredComponents` décrit les noms qualifiés. Leur disparition rend la lecture non vérifiée ; l'ajout de composants valides est accepté. Les listes vides, champs absents, états inconnus et associations invalides sont distingués. Le client HTTP, les limites du contrat et les gardes de liens sont conservés.
-
-Pour Replicate, la fixture conserve le composant sélectionné et les événements présents dans le résumé Cloudflare ; les autres composants sont retirés. Les scénarios d'incident partagé et de maintenance dans les tests sont des variations synthétiques, pas des événements observés. Sources : `https://www.cloudflarestatus.com/api/v2/summary.json`, `https://status.perplexity.com/` et `https://status.openrouter.ai/config.json`.
-
-La source de statut Mistral et ses appels Checkly étaient bloqués en HTTP 403 le 12/09/2026 (`cf-mitigated: challenge` observé). La collecte Mistral utilise désormais une sonde de génération indépendante ; l’ancien lecteur Checkly est conservé, sans être appelé pour cette carte.
-
-Ces modifications ne changent ni la cadence ni le seuil d'obsolescence. Une validation locale ne prouve pas l'accès depuis GitHub Actions ni une publication effective.
-
-## Sonde de génération Mistral
-
-Créer le secret GitHub Actions `MISTRAL_API_KEY` dans le dépôt. Il est transmis uniquement à l’étape de collecte, jamais aux tests ni à la page publique. Sans clé, la sonde reste non vérifiée et ne fait aucune requête. Pour un essai local, fournir la même variable d’environnement sans enregistrer la clé dans le projet.
-
-La sonde envoie exactement une requête par collecte à `https://api.mistral.ai/v1/chat/completions`, avec le modèle fixé `ministral-3b-2512`, le message `Reply with OK.`, une température de 0, un maximum de 8 tokens de sortie et sans streaming. Le délai est de 15 secondes et le corps reçu est limité à 64 Kio. Aucune redirection, nouvelle tentative automatique, substitution de modèle ou appel préalable de découverte. La clé n’est jamais confiée au client GET utilisé pour les sources tierces. Les corps d’erreur, exceptions réseau brutes et textes générés ne sont pas publiés.
-
-La carte mesure cette génération précise, pas la santé globale de Mistral. Les HTTP 5xx sont des échecs observés de la sonde, pas des incidents officiels. Les refus d’accès, quotas et réponses incomplètes restent non vérifiés. Une lecture JSON seule ne suffit pas : le modèle retourné, le rôle assistant, une sortie non vide et la fin normale sont vérifiés.
-
-Tarif consulté le 12/09/2026 : 0,10 USD par million de tokens en entrée et en sortie, selon [Mistral](https://docs.mistral.ai/models/ministral-3-3b-25-12). Avec l’hypothèse de 50 tokens d’entrée et 8 de sortie, 1 440 collectes mensuelles coûtent environ 0,0084 USD hors taxes. Chaque lancement manuel ajoute une requête ; la cadence reste inchangée et n’est pas garantie par GitHub.
-
-Les tests utilisent uniquement une fausse clé et des réponses simulées. Un test réel nécessite la clé et consomme des tokens. Le workflow manuel sur une branche permet de vérifier la sonde depuis GitHub Actions sans déployer ; vérifier le résultat Mistral dans l’artefact, car un workflow vert peut contenir une sonde non vérifiée.
+</div>
