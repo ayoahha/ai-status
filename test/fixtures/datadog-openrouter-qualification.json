@@ -1,0 +1,65 @@
+{
+  "id": "3bdfe680-d6e4-4a0b-9c04-c25058c342e0",
+  "name": "OpenRouter",
+  "domainPrefix": "openrouter",
+  "components": [
+    {
+      "id": "62d944d3-1acb-471b-81a0-099b3da0164f",
+      "name": "API - Gateway",
+      "position": 0,
+      "type": "ComponentGroup",
+      "components": [
+        {
+          "id": "9fb5ccff-e128-455a-be20-59572f8d363a",
+          "name": "Chat (/api/v1/chat/completions)",
+          "position": 0,
+          "status": "operational",
+          "type": "Component"
+        },
+        {
+          "id": "bb2402ad-3e98-4c75-9eb5-ca68ca683c5a",
+          "name": "Video (/api/v1/videos)",
+          "position": 1,
+          "status": "operational",
+          "type": "Component"
+        },
+        {
+          "id": "b108f556-36a0-43b5-aa55-a01b27855229",
+          "name": "Image (/api/v1/image)",
+          "position": 2,
+          "status": "operational",
+          "type": "Component"
+        },
+        {
+          "id": "15c7d7e9-e2b7-43dd-aa56-77c4959fc603",
+          "name": "TTS (/api/v1/audio/speech)",
+          "position": 3,
+          "status": "operational",
+          "type": "Component"
+        },
+        {
+          "id": "93008741-4362-4fb6-85c4-6cddb8412116",
+          "name": "STT (/api/v1/audio/transcriptions)",
+          "position": 4,
+          "status": "operational",
+          "type": "Component"
+        },
+        {
+          "id": "c3a7fba9-9cbc-40a4-ae83-d990bc01d51d",
+          "name": "Embeddings (/api/v1/embeddings)",
+          "position": 5,
+          "status": "operational",
+          "type": "Component"
+        }
+      ]
+    },
+    {
+      "id": "2347916e-1f82-448c-b07d-8cfbbad57322",
+      "name": "Web & Application Services",
+      "position": 1,
+      "status": "operational",
+      "type": "Component"
+    }
+  ],
+  "maintenances": null
+}

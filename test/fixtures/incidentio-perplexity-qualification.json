@@ -1,0 +1,25 @@
+{
+  "url": "https://status.perplexity.com/",
+  "observedAt": "2026-09-12T06:42:35.604Z",
+  "components": [
+    {
+      "description": "$undefined",
+      "id": "01KZSFD424KQ6VQYV4R0KCA30P",
+      "name": "Website",
+      "status_page_id": "01KZSFD3VPNK8C7QRFH0GAZ4H2"
+    },
+    {
+      "description": "$undefined",
+      "id": "01KZSFD424NN3EYBS78TMVWNEK",
+      "name": "App",
+      "status_page_id": "01KZSFD3VPNK8C7QRFH0GAZ4H2"
+    },
+    {
+      "description": "$undefined",
+      "id": "01M0TRMC3ED1PG4GRRXXMVNNZ6",
+      "name": "Computer",
+      "status_page_id": "01KZSFD3VPNK8C7QRFH0GAZ4H2"
+    }
+  ],
+  "expose_status_summary_api": false
+}
