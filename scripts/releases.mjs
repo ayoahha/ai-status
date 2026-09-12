@@ -66,7 +66,7 @@ export async function publishRelease({ github, context, testsPassed }) {
       requireValue(version === '0.1.2', 'La première release doit être 0.1.2');
     }
     if (!ref) await github.rest.git.createRef({ ...repo, ref: `refs/tags/${tag}`, sha });
-    await github.rest.repos.createRelease({ ...repo, tag_name: tag, target_commitish: sha, name: `AI Status ${tag}`, body: pr.body, draft: false, prerelease: false });
+    await github.rest.repos.createRelease({ ...repo, tag_name: tag, target_commitish: sha, name: tag, body: pr.body, draft: false, prerelease: false });
   }
   await github.rest.issues.addLabels({ ...repo, issue_number: pr.number, labels: [TAGGED] });
   if (pr.labels.some(({ name }) => name === PENDING)) {
