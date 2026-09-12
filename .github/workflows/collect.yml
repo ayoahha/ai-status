@@ -60,6 +60,8 @@ jobs:
         with:
           node-version: 24
       - name: Collecter les statuts
+        env:
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
         run: node collect.mjs
       - name: Vérifier le JSON produit
         # Même contrat que le producteur et le navigateur, avec les identités déclarées

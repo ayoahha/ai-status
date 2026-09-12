@@ -29,7 +29,8 @@ adapters/instatus.mjs   ancien lecteur Instatus conservé
 adapters/incidentio.mjs incident.io (Perplexity) : résumé structuré embarqué dans la page
 adapters/datadog.mjs    Datadog (OpenRouter) : config.json public
 adapters/betterstack.mjs Better Stack (Together AI) : index.json
-adapters/checkly.mjs    Checkly (Mistral) : endpoints JSON appelés par la page
+adapters/checkly.mjs    ancien lecteur Checkly conservé
+adapters/mistral-probe.mjs sonde de génération sur Ministral 3 3B
 adapters/onlineornot.mjs ancien lecteur OnlineOrNot conservé
 adapters/aws.mjs        AWS Health Dashboard (Bedrock) : currentevents + services.json
 adapters/azure.mjs      Azure status : tableau HTML des services, lignes IA
@@ -62,7 +63,7 @@ Flux : GitHub Actions exécute `node collect.mjs` à `:07` et `:37` de chaque he
 | GLM / Zhipu | https://status.zhipuai.cn | Aucune requête : le domaine résout mais ne répond ni en 80 ni en 443 depuis l'extérieur de la Chine, y compris depuis les runners GitHub. Affiché « Non vérifié » avec cette explication |
 | MiniMax | https://status.minimaxi.com | API publique Statuspage v2 |
 | Perplexity | https://status.perplexity.com | Données structurées incident.io embarquées dans la page Next.js, décodées sans exécuter les scripts. Website, App et Computer ; API non couverte. État courant depuis `affected_components`, incidents ouverts et maintenances depuis le résumé. La liste vide des composants affectés signifie opérationnel uniquement dans un résumé complet et identifié |
-| Mistral AI | https://status.mistral.ai | Page Checkly (Nuxt). Pas de flux ni d'API documentés par Checkly, mais la page appelle trois endpoints JSON publics sans jeton, observés dans ses requêtes : `/api/status-page/mistral-ai/uptime` (groupes et services), `/unresolved-incidents`, `/maintenance-windows`. Sévérités MINOR/MEDIUM → dégradation, MAJOR → incident majeur, CRITICAL → indisponible ; un incident ouvert sans liste de services lisible rend tous les services « Non vérifié » |
+| Mistral AI | https://api.mistral.ai/v1/chat/completions | Sonde authentifiée sur `ministral-3b-2512` (Ministral 3 3B). Une réponse complète et non vide du modèle attendu valide la génération ; aucun statut des autres modèles ou services n’est déduit. Une erreur serveur 5xx dégrade la sonde ; clé absente, accès refusé, quota, réseau ou réponse illisible donnent « Non vérifié » |
 | Tencent Hunyuan | https://status.cloud.tencent.com | API JSON de la page (`/v1/api/status/DescribeProductEventForRegionInPeriod?RegionId=non-regional`), non documentée mais publique et sans jeton : `CurrentStatus` par produit (NORMAL, NOTIFY « 提示 », ABNORMAL « 异常 »). Périmètre : produits Hunyuan (LLM, image, vidéo, 3D, agents), non régionaux. Noms de produits en chinois, conservés tels quels. Hypothèse : NOTIFY et ABNORMAL sont tous deux affichés « Dégradation » avec le titre de l'événement ; aucun cas réel observé |
 | ByteDance / Doubao (Volcengine Ark) | https://status.volcengine.com | L'API BFF de la page (`/api/v1/shd/prefetch-shd`) répond 401 hors navigateur : contrôle d'accès, non contourné. La page lie un flux RSS officiel par produit et par région (`/rss/zh/<région>/ModelArk`), lu pour cn-beijing, cn-shanghai, cn-guangzhou et ap-southeast-1. Le flux liste l'historique ; un événement terminé porte « (已恢复) » dans son titre, un événement en cours ne le porte pas. Une région inconnue renvoie un canal sans nom de région : composant « Non vérifié » |
 | Baidu ERNIE | https://cloud.baidu.com/product-s/qianfan_home | Aucune page de statut publique trouvée pour Baidu AI Cloud ni Qianfan (recherche du 2026-09-04 : cloud.baidu.com, intl.cloud.baidu.com, sous-domaines `status.*`). Aucune requête : affiché « Non vérifié » |
@@ -177,6 +178,18 @@ La page Datadog (`/src/status-pages-site-AJA3TWHW.min.js`) lit `/config.json`. S
 
 Pour Replicate, la fixture conserve le composant sélectionné et les événements présents dans le résumé Cloudflare ; les autres composants sont retirés. Les scénarios d'incident partagé et de maintenance dans les tests sont des variations synthétiques, pas des événements observés. Sources : `https://www.cloudflarestatus.com/api/v2/summary.json`, `https://status.perplexity.com/` et `https://status.openrouter.ai/config.json`.
 
-Mistral refuse actuellement la page et sa source Checkly avec HTTP 403 ; la réponse observée porte `cf-mitigated: challenge`. Aucun flux officiel alternatif n'a été qualifié. Les tentatives Checkly sont conservées pour permettre une reprise si l'accès revient ; le message de collecte indique uniquement « accès refusé », car tout HTTP 403 ne prouve pas un challenge Cloudflare.
+La source de statut Mistral et ses appels Checkly étaient bloqués en HTTP 403 le 12/09/2026 (`cf-mitigated: challenge` observé). La collecte Mistral utilise désormais une sonde de génération indépendante ; l’ancien lecteur Checkly est conservé, sans être appelé pour cette carte.
 
 Ces modifications ne changent ni la cadence ni le seuil d'obsolescence. Une validation locale ne prouve pas l'accès depuis GitHub Actions ni une publication effective.
+
+## Sonde de génération Mistral
+
+Créer le secret GitHub Actions `MISTRAL_API_KEY` dans le dépôt. Il est transmis uniquement à l’étape de collecte, jamais aux tests ni à la page publique. Sans clé, la sonde reste non vérifiée et ne fait aucune requête. Pour un essai local, fournir la même variable d’environnement sans enregistrer la clé dans le projet.
+
+La sonde envoie exactement une requête par collecte à `https://api.mistral.ai/v1/chat/completions`, avec le modèle fixé `ministral-3b-2512`, le message `Reply with OK.`, une température de 0, un maximum de 8 tokens de sortie et sans streaming. Le délai est de 15 secondes et le corps reçu est limité à 64 Kio. Aucune redirection, nouvelle tentative automatique, substitution de modèle ou appel préalable de découverte. La clé n’est jamais confiée au client GET utilisé pour les sources tierces. Les corps d’erreur, exceptions réseau brutes et textes générés ne sont pas publiés.
+
+La carte mesure cette génération précise, pas la santé globale de Mistral. Les HTTP 5xx sont des échecs observés de la sonde, pas des incidents officiels. Les refus d’accès, quotas et réponses incomplètes restent non vérifiés. Une lecture JSON seule ne suffit pas : le modèle retourné, le rôle assistant, une sortie non vide et la fin normale sont vérifiés.
+
+Tarif consulté le 12/09/2026 : 0,10 USD par million de tokens en entrée et en sortie, selon [Mistral](https://docs.mistral.ai/models/ministral-3-3b-25-12). Avec l’hypothèse de 50 tokens d’entrée et 8 de sortie, 1 440 collectes mensuelles coûtent environ 0,0084 USD hors taxes. Chaque lancement manuel ajoute une requête ; la cadence reste inchangée et n’est pas garantie par GitHub.
+
+Les tests utilisent uniquement une fausse clé et des réponses simulées. Un test réel nécessite la clé et consomme des tokens. Le workflow manuel sur une branche permet de vérifier la sonde depuis GitHub Actions sans déployer ; vérifier le résultat Mistral dans l’artefact, car un workflow vert peut contenir une sonde non vérifiée.
