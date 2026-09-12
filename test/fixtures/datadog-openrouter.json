@@ -1,0 +1,304 @@
+{
+  "companyLogoThumbnail": "",
+  "components": [
+    {
+      "id": "62d944d3-1acb-471b-81a0-099b3da0164f",
+      "name": "API - Gateway",
+      "position": 0,
+      "type": "ComponentGroup",
+      "components": [
+        {
+          "id": "9fb5ccff-e128-455a-be20-59572f8d363a",
+          "name": "Chat (/api/v1/chat/completions)",
+          "position": 0,
+          "status": "operational",
+          "type": "Component"
+        },
+        {
+          "id": "bb2402ad-3e98-4c75-9eb5-ca68ca683c5a",
+          "name": "Video (/api/v1/videos)",
+          "position": 1,
+          "status": "operational",
+          "type": "Component"
+        },
+        {
+          "id": "b108f556-36a0-43b5-aa55-a01b27855229",
+          "name": "Image (/api/v1/image)",
+          "position": 2,
+          "status": "operational",
+          "type": "Component"
+        },
+        {
+          "id": "15c7d7e9-e2b7-43dd-aa56-77c4959fc603",
+          "name": "TTS (/api/v1/audio/speech)",
+          "position": 3,
+          "status": "operational",
+          "type": "Component"
+        },
+        {
+          "id": "93008741-4362-4fb6-85c4-6cddb8412116",
+          "name": "STT (/api/v1/audio/transcriptions)",
+          "position": 4,
+          "status": "operational",
+          "type": "Component"
+        },
+        {
+          "id": "c3a7fba9-9cbc-40a4-ae83-d990bc01d51d",
+          "name": "Embeddings (/api/v1/embeddings)",
+          "position": 5,
+          "status": "operational",
+          "type": "Component"
+        }
+      ]
+    },
+    {
+      "id": "2347916e-1f82-448c-b07d-8cfbbad57322",
+      "name": "Web & Application Services",
+      "position": 1,
+      "status": "operational",
+      "type": "Component"
+    }
+  ],
+  "created": "2026-09-08T22:25:02.658427Z",
+  "customDomain": "",
+  "customDomainEnabled": false,
+  "description": "",
+  "domainPrefix": "openrouter",
+  "emailHeaderImage": "",
+  "enabled": true,
+  "favicon": "",
+  "id": "3bdfe680-d6e4-4a0b-9c04-c25058c342e0",
+  "incidents": [
+    {
+      "componentsAffected": [
+        {
+          "id": "bb2402ad-3e98-4c75-9eb5-ca68ca683c5a",
+          "name": "Video (/api/v1/videos)",
+          "position": 1,
+          "status": "operational",
+          "type": "Component"
+        }
+      ],
+      "currentStatus": "resolved",
+      "description": "This incident has been resolved.",
+      "id": "2a3d415a-1eed-417f-b269-6e308a7f7990",
+      "lastModifiedAt": "2026-09-11T02:34:01.430225Z",
+      "publishedDate": "2026-09-04T18:27:00Z",
+      "resolved": true,
+      "resolvedDate": "2026-09-04T21:12:00Z",
+      "timeline": [
+        {
+          "componentsAffected": [
+            {
+              "id": "bb2402ad-3e98-4c75-9eb5-ca68ca683c5a",
+              "name": "Video (/api/v1/videos)",
+              "position": 1,
+              "status": "operational",
+              "type": "Component"
+            }
+          ],
+          "createdAt": "2026-09-11T02:34:01.430225Z",
+          "startedAt": "2026-09-04T21:12:00Z",
+          "lastModifiedAt": "2026-09-11T02:34:01.430225Z",
+          "description": "This incident has been resolved.",
+          "id": "fccda8e3-d824-4d1b-b18a-0adb1795e75d",
+          "status": "resolved"
+        },
+        {
+          "componentsAffected": [
+            {
+              "id": "bb2402ad-3e98-4c75-9eb5-ca68ca683c5a",
+              "name": "Video (/api/v1/videos)",
+              "position": 1,
+              "status": "degraded",
+              "type": "Component"
+            }
+          ],
+          "createdAt": "2026-09-11T02:34:01.430225Z",
+          "startedAt": "2026-09-04T18:27:00Z",
+          "lastModifiedAt": "2026-09-11T02:34:01.430225Z",
+          "description": "We are investigating degraded availability for our video generation and batch jobs APIs.",
+          "id": "0e1f8339-4c5d-40d6-9d65-af81d15d7f74",
+          "status": "investigating"
+        }
+      ],
+      "title": "Degraded video generation API"
+    },
+    {
+      "componentsAffected": [
+        {
+          "id": "2347916e-1f82-448c-b07d-8cfbbad57322",
+          "name": "Web & Application Services",
+          "position": 1,
+          "status": "operational",
+          "type": "Component"
+        }
+      ],
+      "currentStatus": "resolved",
+      "description": "This incident has been resolved.",
+      "id": "7aed8b9f-0e35-479d-bf9a-42f033c08b66",
+      "lastModifiedAt": "2026-09-11T02:35:54.915283Z",
+      "publishedDate": "2026-08-28T07:05:00Z",
+      "resolved": true,
+      "resolvedDate": "2026-08-28T22:33:00Z",
+      "timeline": [
+        {
+          "componentsAffected": [
+            {
+              "id": "2347916e-1f82-448c-b07d-8cfbbad57322",
+              "name": "Web & Application Services",
+              "position": 1,
+              "status": "operational",
+              "type": "Component"
+            }
+          ],
+          "createdAt": "2026-09-11T02:35:54.915283Z",
+          "startedAt": "2026-08-28T22:33:00Z",
+          "lastModifiedAt": "2026-09-11T02:35:54.915283Z",
+          "description": "This incident has been resolved.",
+          "id": "2a405d17-d406-4037-87d7-8ef6198e8989",
+          "status": "resolved"
+        },
+        {
+          "componentsAffected": [
+            {
+              "id": "2347916e-1f82-448c-b07d-8cfbbad57322",
+              "name": "Web & Application Services",
+              "position": 1,
+              "status": "degraded",
+              "type": "Component"
+            }
+          ],
+          "createdAt": "2026-09-11T02:35:54.915283Z",
+          "startedAt": "2026-08-28T07:05:00Z",
+          "lastModifiedAt": "2026-09-11T02:35:54.915283Z",
+          "description": "We are investigating an issue that is causing certain parts of the web application to be unavailable. We will update when we have more information. Inference is unaffected.",
+          "id": "9075ae53-7712-4e48-bf9a-3893b2d0028a",
+          "status": "investigating"
+        }
+      ],
+      "title": "Web application degraded"
+    },
+    {
+      "componentsAffected": [
+        {
+          "id": "9fb5ccff-e128-455a-be20-59572f8d363a",
+          "name": "Chat (/api/v1/chat/completions)",
+          "position": 0,
+          "status": "operational",
+          "type": "Component"
+        }
+      ],
+      "currentStatus": "resolved",
+      "description": "Issue is resolved",
+      "id": "a80f04f9-7b2a-4094-bd45-e42dd5c2ed8a",
+      "lastModifiedAt": "2026-09-11T02:38:43.9346Z",
+      "publishedDate": "2026-08-28T02:15:00Z",
+      "resolved": true,
+      "resolvedDate": "2026-08-28T02:19:00Z",
+      "timeline": [
+        {
+          "componentsAffected": [
+            {
+              "id": "9fb5ccff-e128-455a-be20-59572f8d363a",
+              "name": "Chat (/api/v1/chat/completions)",
+              "position": 0,
+              "status": "operational",
+              "type": "Component"
+            }
+          ],
+          "createdAt": "2026-09-11T02:38:43.9346Z",
+          "startedAt": "2026-08-28T02:19:00Z",
+          "lastModifiedAt": "2026-09-11T02:38:43.9346Z",
+          "description": "Issue is resolved",
+          "id": "bdb886c9-bea8-4eb0-a63c-55f762b61354",
+          "status": "resolved"
+        },
+        {
+          "componentsAffected": [
+            {
+              "id": "9fb5ccff-e128-455a-be20-59572f8d363a",
+              "name": "Chat (/api/v1/chat/completions)",
+              "position": 0,
+              "status": "degraded",
+              "type": "Component"
+            }
+          ],
+          "createdAt": "2026-09-11T02:38:43.9346Z",
+          "startedAt": "2026-08-28T02:15:00Z",
+          "lastModifiedAt": "2026-09-11T02:38:43.9346Z",
+          "description": "Anthropic and OpenAI models responded with 429s at an elevated rate.",
+          "id": "4428f03a-8fc8-4523-ad2e-ae833715d1e0",
+          "status": "investigating"
+        }
+      ],
+      "title": "Elevated 429s on Anthropic and OpenAI"
+    },
+    {
+      "componentsAffected": [
+        {
+          "id": "2347916e-1f82-448c-b07d-8cfbbad57322",
+          "name": "Web & Application Services",
+          "position": 1,
+          "status": "operational",
+          "type": "Component"
+        }
+      ],
+      "currentStatus": "resolved",
+      "description": "The issue is now resolved.",
+      "id": "bf70341f-5692-41cc-8076-573b9407e356",
+      "lastModifiedAt": "2026-09-11T02:42:23.435821Z",
+      "publishedDate": "2026-05-31T13:00:00Z",
+      "resolved": true,
+      "resolvedDate": "2026-06-01T13:00:00Z",
+      "timeline": [
+        {
+          "componentsAffected": [
+            {
+              "id": "2347916e-1f82-448c-b07d-8cfbbad57322",
+              "name": "Web & Application Services",
+              "position": 1,
+              "status": "operational",
+              "type": "Component"
+            }
+          ],
+          "createdAt": "2026-09-11T02:42:23.435821Z",
+          "startedAt": "2026-06-01T13:00:00Z",
+          "lastModifiedAt": "2026-09-11T02:42:23.435821Z",
+          "description": "The issue is now resolved.",
+          "id": "7dfacaf1-c2cb-448d-b366-a1097f3fc507",
+          "status": "resolved"
+        },
+        {
+          "componentsAffected": [
+            {
+              "id": "2347916e-1f82-448c-b07d-8cfbbad57322",
+              "name": "Web & Application Services",
+              "position": 1,
+              "status": "degraded",
+              "type": "Component"
+            }
+          ],
+          "createdAt": "2026-09-11T02:42:23.435821Z",
+          "startedAt": "2026-05-31T13:00:00Z",
+          "lastModifiedAt": "2026-09-11T02:42:23.435821Z",
+          "description": "We are investigating the issue.",
+          "id": "bd3a7379-0004-4192-a435-5a2d3677b7f2",
+          "status": "investigating"
+        }
+      ],
+      "title": "Backfill"
+    }
+  ],
+  "maintenances": null,
+  "msTeamsSubscriptionsEnabled": false,
+  "name": "OpenRouter",
+  "pageType": "public",
+  "pageUrl": "https://openrouter.statuspage.datadoghq.com",
+  "public": true,
+  "sourceDatacenter": "us5",
+  "subscriptionsEnabled": true,
+  "slackSubscriptionsEnabled": true,
+  "webhooksSubscriptionsEnabled": false,
+  "visualizationType": "bars_and_uptime_percentage"
+}

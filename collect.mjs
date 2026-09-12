@@ -17,6 +17,8 @@ import * as aws from './adapters/aws.mjs';
 import * as azure from './adapters/azure.mjs';
 import * as tencent from './adapters/tencent.mjs';
 import * as volcengine from './adapters/volcengine.mjs';
+import * as datadog from './adapters/datadog.mjs';
+import * as incidentio from './adapters/incidentio.mjs';
 import * as unavailable from './adapters/unavailable.mjs';
 import { get } from './lib/http.mjs';
 import { collectAll, buildOutput } from './lib/collect.mjs';
@@ -26,7 +28,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const providers = JSON.parse(readFileSync(path.join(root, 'providers.json'), 'utf8'));
 
 // Famille de source (providers.json, source.kind) → module adaptateur
-const ADAPTERS = { statuspage, alibaba, google, flashcat, xai, instatus, betterstack, checkly, onlineornot, aws, azure, tencent, volcengine, unavailable };
+const ADAPTERS = { datadog, incidentio, statuspage, alibaba, google, flashcat, xai, instatus, betterstack, checkly, onlineornot, aws, azure, tencent, volcengine, unavailable };
 
 const now = new Date().toISOString();
 const settled = await collectAll(providers, ADAPTERS, get);
