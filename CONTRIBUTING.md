@@ -46,6 +46,8 @@ Après les tests d’un push sur `main`, Release Please prépare une PR de versi
 
 Les tests de cette PR sont déclenchés explicitement sur son commit, sans collecte ni clé Mistral. Après leur réussite, un mainteneur fusionne par **rebase**. Les tests sur `main` précèdent la création du tag et de la release, tous deux liés au commit testé. Ne pas modifier manuellement une release publiée.
 
+GitHub peut aussi afficher **Approve workflows to run** sur une PR du robot. Un mainteneur doit approuver ce lancement : les tests déclenchés explicitement ne suffisent pas à satisfaire le contrôle obligatoire tant que cette approbation manque.
+
 Si la publication échoue, relancer le workflow **collect** du commit concerné avec **Re-run jobs**. Un lancement manuel (`workflow_dispatch`) ne prépare ni ne publie de version. La reprise vérifie le tag existant et refuse toute divergence, sans créer de version de remplacement. La collecte et le déploiement restent indépendants de la publication des releases.
 
 La métadonnée `public/build-info.js` est générée avec le site et n’est pas versionnée.
