@@ -903,7 +903,7 @@ assert.ok(validateStatusDocument(buildOutput([scopedProvider], scopedSettled, ne
 
 // 10. providers.json : cohérence des déclarations.
 const providers = JSON.parse(readFileSync(new URL('../providers.json', import.meta.url), 'utf8'));
-const kinds = new Set(['statuspage', 'alibaba', 'google', 'flashcat', 'xai', 'unavailable', 'instatus', 'betterstack', 'checkly', 'onlineornot', 'aws', 'azure', 'tencent', 'volcengine']);
+const kinds = new Set(['incidentio', 'datadog', 'statuspage', 'alibaba', 'google', 'flashcat', 'xai', 'unavailable', 'instatus', 'betterstack', 'checkly', 'onlineornot', 'aws', 'azure', 'tencent', 'volcengine']);
 assert.strictEqual(providers.length, 23, 'les 23 identités fournisseur restent présentes');
 assert.strictEqual(new Set(providers.map((p) => p.id)).size, providers.length, 'ids fournisseurs dupliqués');
 for (const p of providers) {
@@ -919,19 +919,13 @@ for (const p of providers) {
     assert.strictEqual(p.source.url, 'https://status.x.ai/feed.xml');
     assert.deepStrictEqual(p.source.components, xaiComponents, 'les 13 composants xAI restent stables et ordonnés');
   }
+  if (['incidentio', 'datadog'].includes(p.source.kind)) assert.ok(p.source.pageName && p.source.requiredComponents?.length, `couverture manquante : ${p.id}`);
   if (p.source.kind === 'checkly') assert.ok(p.source.slug, `slug manquant : ${p.id}`);
   if (p.source.kind === 'aws') assert.ok(p.source.eventsUrl && p.source.servicesUrl && p.source.serviceName, `source aws incomplète : ${p.id}`);
   if (p.source.kind === 'azure') assert.ok(p.source.services?.length, `services manquants : ${p.id}`);
   if (p.source.kind === 'tencent') assert.ok(p.source.regionId && p.source.productIds?.length, `source tencent incomplète : ${p.id}`);
   if (p.source.kind === 'volcengine') assert.ok(p.source.product && p.source.productLabel && p.source.regions?.length, `source volcengine incomplète : ${p.id}`);
   assert.ok(typeof p.scopeEn === 'string' && p.scopeEn, `scopeEn manquant : ${p.id}`);
-}
-for (const id of ['perplexity', 'openrouter']) {
-  const p = providers.find((p) => p.id === id);
-  const r = await read(unavailable, p, async () => { assert.fail('aucune requête pour une source non qualifiée'); });
-  assert.strictEqual(r.status, 'inconnu');
-  assert.match(r.collect.error, /couverture/);
-  assert.match(r.collect.errorEn, /coverage/);
 }
 const denied = await read(checkly, cProvider, httpFail(403));
 assert.match(denied.collect.error, /accès refusé/);
@@ -944,3 +938,5 @@ assert.match(replicateConfig.scope, /sans détail API\/GPU/);
 assert.ok(providers.some((p) => p.group === 'eu'), 'au moins un fournisseur européen');
 
 console.log(`OK — ${providers.length} fournisseurs déclarés, tests verts`);
+
+await import('./provider-readers.mjs');

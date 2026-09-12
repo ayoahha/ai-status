@@ -84,13 +84,17 @@
     "group": "us",
     "statusUrl": "https://status.perplexity.com",
     "source": {
-      "kind": "unavailable",
+      "kind": "incidentio",
       "url": "https://status.perplexity.com",
-      "note": "Source incident.io examinée le 12/09/2026 : Website, App et Computer sont publiés, mais la couverture API reste non vérifiée. Aucun lecteur complet qualifié ; aucune requête de collecte tentée.",
-      "noteEn": "incident.io source examined on 2026-09-12: Website, App and Computer are published, but API coverage remains unverified. No complete reader qualified; no collection request attempted."
+      "pageName": "Perplexity",
+      "requiredComponents": [
+        "Website",
+        "App",
+        "Computer"
+      ]
     },
-    "scope": "Site Perplexity, API et Computer",
-    "scopeEn": "Perplexity website, API and Computer"
+    "scope": "Website, App et Computer publiés par la page officielle Perplexity ; API non couverte",
+    "scopeEn": "Website, App and Computer published on the official Perplexity status page; API not covered"
   },
   {
     "id": "mistral",
@@ -298,13 +302,22 @@
     "group": "cloud",
     "statusUrl": "https://status.openrouter.ai",
     "source": {
-      "kind": "unavailable",
+      "kind": "datadog",
       "url": "https://status.openrouter.ai",
-      "note": "Source Datadog examinée le 12/09/2026 : API Gateway et Web & Application Services sont publiés, mais la couverture models/generation et authentification reste non vérifiée. Aucun lecteur complet qualifié ; aucune requête de collecte tentée.",
-      "noteEn": "Datadog source examined on 2026-09-12: API Gateway and Web & Application Services are published, but models/generation and authentication coverage remains unverified. No complete reader qualified; no collection request attempted."
+      "pageName": "OpenRouter",
+      "domainPrefix": "openrouter",
+      "requiredComponents": [
+        "Chat (/api/v1/chat/completions)",
+        "Video (/api/v1/videos)",
+        "Image (/api/v1/image)",
+        "TTS (/api/v1/audio/speech)",
+        "STT (/api/v1/audio/transcriptions)",
+        "Embeddings (/api/v1/embeddings)",
+        "Web & Application Services"
+      ]
     },
-    "scope": "Passerelle OpenRouter : site, API chat/models/generation, authentification ; pas les fournisseurs amont",
-    "scopeEn": "OpenRouter gateway: website, chat/models/generation API, authentication; not upstream providers"
+    "scope": "API Gateway et Web & Application Services publiés par la page officielle OpenRouter",
+    "scopeEn": "API Gateway and Web & Application Services published on the official OpenRouter status page"
   },
   {
     "id": "aws-bedrock",
