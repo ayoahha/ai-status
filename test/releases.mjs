@@ -42,6 +42,7 @@ const happy = fixture();
 assert.deepEqual(await publishRelease(happy), { version: '0.1.2', sha, tag: 'v0.1.2' });
 assert.ok(happy.state.reads.every(ref => ref === sha));
 assert.equal(happy.state.release.target_commitish, sha);
+assert.equal(happy.state.release.name, 'v0.1.2');
 await publishRelease(happy);
 assert.equal(happy.state.writes.filter(([kind]) => kind === 'tag').length, 1);
 assert.equal(happy.state.writes.filter(([kind]) => kind === 'release').length, 1);
