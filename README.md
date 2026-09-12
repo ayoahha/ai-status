@@ -8,7 +8,7 @@
 
 23 fournisseurs · Français / English · GitHub Pages
 
-[Ouvrir le tableau de bord](https://ayoahha.github.io/ai-status/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
+[Ouvrir le tableau de bord](https://status.librenet.fr/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
 
 [![Tests, collecte et publication](https://github.com/ayoahha/ai-status/actions/workflows/collect.yml/badge.svg?branch=main)](https://github.com/ayoahha/ai-status/actions/workflows/collect.yml)
 
@@ -74,6 +74,6 @@ Les fournisseurs et leurs périmètres sont déclarés dans [providers.json](pro
 
 <div align="center">
 
-Projet indépendant · [Tableau de bord](https://ayoahha.github.io/ai-status/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
+Projet indépendant · [Tableau de bord](https://status.librenet.fr/) · [Signaler un problème](https://github.com/ayoahha/ai-status/issues)
 
 </div>
